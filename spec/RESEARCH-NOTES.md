@@ -126,6 +126,16 @@ This simple substring check covers: adding s/es/ed/ing/er to end, and common pre
 - **Current gaps**: No touch event handlers, buttons not adjusted in mobile breakpoint, skip button too small for touch (6px padding, 12px font), no `inputmode` attribute on hidden input
 - **Approach**: Add on-screen QWERTY keyboard shown when `(pointer: coarse)` matches. Keep hidden input for desktop. Extract `processKeyPress(currentLetters, key, maxLen)` as pure function shared by both input paths. Improve button sizing in mobile breakpoint
 
+## Trivial Extension Filter Bug — "master" from "aster" Rejected
+- Root cause: `filterTrivialExpansions` uses `word.includes(root)` substring check
+- "master".includes("aster") = true → "master" filtered out at both build time AND runtime
+- "master" IS in TWL06 dictionary (confirmed via direct lookup)
+- "tasers" is NOT in TWL06 (trademark word) — separate issue, dictionary limitation
+- The original spec's "Anti-Trivial-Word Rule" intended to block morphological suffixes (rinds, asters) but the substring check is too aggressive, catching legitimate words where the root happens to appear as a substring
+- Fix: Remove the trivial extension filter entirely. The user's repeated feedback ("all words should work") supersedes the original anti-trivial spec
+- Impact: `filterTrivialExpansions` in words.js, `isTrivialExtension` in game.js, plus tests and puzzles.json rebuild
+- Words like "rinds", "asters", "cats" will now be accepted — these are valid dictionary words and the user wants all valid words to work
+
 ## Bounds Check Bug in handleSubmit/handleSkip
 - `handleSubmit()` at `src/ui.js:253` accesses `puzzle[state.currentRound]` without checking bounds
 - After the last round (round 11, index 10), `advanceRound()` increments `state.currentRound` to 11

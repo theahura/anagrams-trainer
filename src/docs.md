@@ -11,9 +11,8 @@ Path: @/src
 ### How it fits into the larger codebase
 
 - `@/index.html` imports `game.js` and `ui.js` as entry points
-- `@/scripts/build-words.js` imports `words.js` for `buildSignatureIndex`, `findExpansions`, and `filterTrivialExpansions`
+- `@/scripts/build-words.js` imports `words.js` for `buildSignatureIndex` and `findExpansions`
 - `@/scripts/web-scraper.js` imports `letterSignature` from `words.js` for expansion key derivation
-- `@/scripts/build-words-web.js` imports `filterTrivialExpansions` from `words.js`
 - `@/tests/` tests `prng.js`, `game.js` (including streak functions), and `words.js` directly (ui.js is untested -- it requires DOM)
 - `@/data/puzzles.json` is the data contract: `game.js` expects puzzle data keyed by root word length, each entry having `{ root, expansions }` where expansions maps a variable-length key string (e.g., `"r"`, `"el"`, `"egr"`) to a word array
 
@@ -27,9 +26,8 @@ Path: @/src
 - **`game.js`** -- Puzzle selection, answer validation, and share text generation
   - `selectDailyPuzzle(puzzleData, dateStr)` selects 11 rounds from the puzzle data pools using the date-seeded PRNG, following a fixed difficulty progression (3+3+3+1+1). Each round gets `offeredLetters` assigned via `getOfferedLetters`
   - `getOfferedLetters(puzzleEntry, rng)` extracts individual letters from all expansion keys (which may be multi-char), guarantees 1 valid single-letter expansion key among 3 total offered letters (falling back to any valid letter if no single-letter keys exist); the other 2 come from a shuffled pool of the full alphabet merged with valid letters
-  - `isValidAnswer(answer, round)` iterates all expansion keys and uses `isKeySubsetOfOffered(key, offeredLetters)` to check if the key's letters are available in the offered set. The trivial extension check only applies to single-letter keys. The `isKeySubsetOfOffered` helper consumes letters from a copy of the offered array, supporting duplicate letter usage
-  - `getAnswersForRound(round)` returns all valid answer words for a round, filtered by `isKeySubsetOfOffered` against offered letters. Trivial extension filtering only applies to single-letter keys. Used by the score screen to display possible answers for skipped rounds
-  - `isTrivialExtension(root, answer)` returns true if the answer contains the root as a substring (case-insensitive)
+  - `isValidAnswer(answer, round)` iterates all expansion keys and uses `isKeySubsetOfOffered(key, offeredLetters)` to check if the key's letters are available in the offered set. Any word present in the expansion dictionary is accepted -- there is no substring or trivial-extension filtering. The `isKeySubsetOfOffered` helper consumes letters from a copy of the offered array, supporting duplicate letter usage
+  - `getAnswersForRound(round)` returns all valid answer words for a round, filtered by `isKeySubsetOfOffered` against offered letters. Used by the score screen to display possible answers for skipped rounds
   - `generateShareText(results, dateStr, totalTimeMs)` is a pure function (no DOM dependency) that produces a Wordle-style share string: header line with date, emoji grid line (green square for solved, white square for skipped), and a score line with solved count and formatted time
   - `matchTypedToTiles(typedLetters, rootLetters, offeredLetters)` is a pure function that maps each typed character to a specific tile position in either the root or offered rack. It builds a unified pool of all available tiles (root first, then offered), then greedily matches each typed letter against unused pool entries with root-first priority. Returns `{ matched, pool }` where `matched` is an array of per-character assignments (`source: 'root' | 'offered' | 'invalid'`, `index`, `used`) and `pool` tracks which rack tiles have been consumed. Used by `renderInput()` in `ui.js` to drive real-time tile highlighting
   - `getSubmitFeedbackType(answer, round)` is a pure function that returns `'correct'`, `'invalid-length'`, or `'wrong'` by checking length bounds and delegating to `isValidAnswer`. Extracts submit validation logic from `ui.js` into a testable location
@@ -43,8 +41,6 @@ Path: @/src
   - `buildSignatureIndex(dictionary)` creates a `Map<signature, words[]>` for O(1) anagram lookup
   - `findExpansions(root, dictionaryOrIndex, maxExtraLetters=3)` uses a `combinationsWithRepetition` generator to enumerate all possible letter additions of size 1 through `maxExtraLetters`. For each combination, it computes the target signature via repeated `insertSorted` calls and looks up matching words in the index. Keys in the returned object are the concatenated letter combinations (e.g., `"r"`, `"el"`, `"egr"`)
   - `combinationsWithRepetition(size, start)` is a recursive generator that yields all sorted combinations of `size` lowercase letters (with repetition allowed), ensuring no duplicate keys
-  - `filterTrivialExpansions(root, expansions)` removes expansion words containing the root as a substring, but **only for single-letter keys**. Multi-letter keys pass through unfiltered because the additional rearrangement makes substring coincidence non-trivial
-
 - **`ui.js`** -- DOM rendering, interaction, and persistence
   - `initUI(puzzle, dateStr)` builds the entire game UI imperatively inside `#game-container`, managing local state via a closure-scoped `state` object (currentRound, completedRounds, inputLetters, timer state). The `dateStr` parameter is used for localStorage lookup
   - All input handlers (`handleSubmit`, `handleSkip`, `handleKeyInput`, and the `input` event listener) include a `state.currentRound >= 11` bounds guard that returns early, preventing access to `puzzle[11]` (undefined) if input arrives after the last round completes but before the score screen renders

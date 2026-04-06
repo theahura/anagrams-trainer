@@ -1,5 +1,4 @@
 import { writeFileSync, readFileSync, existsSync } from 'fs';
-import { filterTrivialExpansions } from '../src/words.js';
 import { fetchExpansionsFromWeb, fetchWordsFromWeb, groupByExpansionKey } from './web-scraper.js';
 
 const OUTPUT_PATH = new URL('../data/puzzles.json', import.meta.url).pathname;
@@ -69,11 +68,10 @@ async function main() {
         await delay(DELAY_MS);
       }
 
-      const filtered = filterTrivialExpansions(root, webExpansions);
-      const validKeyCount = Object.keys(filtered).length;
+      const validKeyCount = Object.keys(webExpansions).length;
 
       if (validKeyCount >= MIN_EXPANSIONS) {
-        validRoots.push({ root, expansions: filtered });
+        validRoots.push({ root, expansions: webExpansions });
       }
 
       // Stop once we have enough roots

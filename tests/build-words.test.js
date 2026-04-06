@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { letterSignature, findExpansions, filterTrivialExpansions } from '../src/words.js';
+import { letterSignature, findExpansions } from '../src/words.js';
 
 const testDictionary = [
   'at', 'bat', 'cat', 'sat', 'tab', 'act',
@@ -25,18 +25,16 @@ describe('letterSignature', () => {
 describe('findExpansions', () => {
   it('finds words formed by adding one letter to root', () => {
     const expansions = findExpansions('cat', testDictionary);
-    // 'coat' = c,a,t + o (rearranged) -> valid
-    // 'taco' = c,a,t + o (rearranged) -> valid
-    // 'cart' = c,a,t + r (rearranged) -> valid
-    // 'cast' = c,a,t + s -> but contains 'cat'? no, 'cast' does not contain 'cat'
-    // 'scat' = c,a,t + s -> contains 'cat' -> trivial
-    // 'cats' = c,a,t + s -> contains 'cat' -> trivial
-    // 'acts' = c,a,t + s -> does not contain 'cat' -> valid
     expect(expansions).toHaveProperty('o');
     expect(expansions['o']).toContain('coat');
     expect(expansions['o']).toContain('taco');
     expect(expansions).toHaveProperty('r');
     expect(expansions['r']).toContain('cart');
+    expect(expansions).toHaveProperty('s');
+    expect(expansions['s']).toContain('cats');
+    expect(expansions['s']).toContain('cast');
+    expect(expansions['s']).toContain('scat');
+    expect(expansions['s']).toContain('acts');
   });
 
   it('includes words of length root+1 through root+maxExtra', () => {
@@ -46,49 +44,6 @@ describe('findExpansions', () => {
         expect(word.length).toBe(3 + key.length); // cat is 3 letters, word should be root + key length
       }
     }
-  });
-});
-
-describe('filterTrivialExpansions', () => {
-  it('removes words that contain the root as substring', () => {
-    const expansions = { s: ['cats', 'scat', 'cast', 'acts'] };
-    const filtered = filterTrivialExpansions('cat', expansions);
-    // 'cats' contains 'cat' -> removed
-    // 'scat' contains 'cat' -> removed
-    // 'cast' does NOT contain 'cat' -> kept
-    // 'acts' does NOT contain 'cat' -> kept
-    expect(filtered['s']).not.toContain('cats');
-    expect(filtered['s']).not.toContain('scat');
-    expect(filtered['s']).toContain('cast');
-    expect(filtered['s']).toContain('acts');
-  });
-
-  it('removes letter keys that have no valid expansions left', () => {
-    const expansions = { s: ['rinds'] };
-    const filtered = filterTrivialExpansions('rind', expansions);
-    expect(filtered).not.toHaveProperty('s');
-  });
-
-  it('keeps valid expansions untouched', () => {
-    const expansions = { e: ['diner'], k: ['drink'] };
-    const filtered = filterTrivialExpansions('rind', expansions);
-    expect(filtered['e']).toContain('diner');
-    expect(filtered['k']).toContain('drink');
-  });
-
-  it('filters words containing root as substring even in the middle', () => {
-    // 'grind' contains 'rind' at position 1 -> trivial
-    const expansions = { g: ['grind'] };
-    const filtered = filterTrivialExpansions('rind', expansions);
-    expect(filtered).not.toHaveProperty('g');
-  });
-
-  it('works with multi-letter expansion keys', () => {
-    const expansions = { 'el': ['cleat', 'eclat'], 'eg': ['categ'] };
-    const filtered = filterTrivialExpansions('cat', expansions);
-    // Neither 'cleat' nor 'eclat' contain 'cat' as substring
-    expect(filtered['el']).toContain('cleat');
-    expect(filtered['el']).toContain('eclat');
   });
 });
 
