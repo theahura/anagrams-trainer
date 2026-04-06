@@ -7,6 +7,7 @@ import {
   calculateScore,
   getAnswersForRound,
   generateShareText,
+  matchTypedToTiles,
 } from '../src/game.js';
 
 // Minimal puzzle data for testing
@@ -292,6 +293,67 @@ describe('generateShareText', () => {
     expect(lines[2]).toBe('0/11 | 2:00');
   });
 
+});
+
+describe('matchTypedToTiles', () => {
+  it('marks all root tiles as used when all root letters are typed', () => {
+    const { matched, pool } = matchTypedToTiles(['c', 'a', 't'], ['c', 'a', 't'], ['o', 'r', 'z']);
+    const usedRoot = pool.filter(t => t.source === 'root' && t.used);
+    expect(usedRoot).toHaveLength(3);
+  });
+
+  it('prefers root tiles over offered tiles for matching letters', () => {
+    // 'r' exists in both root and offered
+    const { matched } = matchTypedToTiles(['r'], ['r', 'i', 'n', 'd'], ['r', 'e', 'k']);
+    expect(matched[0].source).toBe('root');
+    expect(matched[0].index).toBe(0);
+  });
+
+  it('matches offered tiles after all root copies of a letter are used', () => {
+    // root has one 'e', offered has one 'e' — typing two 'e's should use root first then offered
+    const { matched } = matchTypedToTiles(['e', 'e'], ['e', 'x'], ['e', 'z']);
+    expect(matched[0].source).toBe('root');
+    expect(matched[1].source).toBe('offered');
+  });
+
+  it('marks unmatched typed letters as invalid', () => {
+    const { matched } = matchTypedToTiles(['c', 'a', 't', 'q'], ['c', 'a', 't'], ['o', 'r', 'z']);
+    expect(matched[3].source).toBe('invalid');
+  });
+
+  it('handles partial input — only typed tiles are matched', () => {
+    const { matched, pool } = matchTypedToTiles(['c'], ['c', 'a', 't'], ['o', 'r', 'z']);
+    expect(matched).toHaveLength(1);
+    const usedCount = pool.filter(t => t.used).length;
+    expect(usedCount).toBe(1);
+  });
+
+  it('handles duplicate letters in root correctly', () => {
+    // root "sass" has two 's' — typing one 's' marks only one
+    const { pool } = matchTypedToTiles(['s'], ['s', 'a', 's', 's'], ['e']);
+    const usedS = pool.filter(t => t.source === 'root' && t.letter === 's' && t.used);
+    expect(usedS).toHaveLength(1);
+  });
+
+  it('returns empty matched array for empty input', () => {
+    const { matched, pool } = matchTypedToTiles([], ['c', 'a', 't'], ['o', 'r', 'z']);
+    expect(matched).toHaveLength(0);
+    expect(pool.every(t => !t.used)).toBe(true);
+  });
+
+  it('marks full valid answer with correct root and offered assignments', () => {
+    // typing "coat" for root "cat" + offered "o" should use all 3 root tiles and 1 offered
+    const { matched, pool } = matchTypedToTiles(
+      ['c', 'o', 'a', 't'],
+      ['c', 'a', 't'],
+      ['o', 'r', 'z']
+    );
+    const usedRoot = pool.filter(t => t.source === 'root' && t.used);
+    const usedOffered = pool.filter(t => t.source === 'offered' && t.used);
+    expect(usedRoot).toHaveLength(3);
+    expect(usedOffered).toHaveLength(1);
+    expect(usedOffered[0].letter).toBe('o');
+  });
 });
 
 describe('calculateScore', () => {

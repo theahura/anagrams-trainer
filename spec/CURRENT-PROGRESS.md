@@ -1,8 +1,8 @@
 # Current Progress
 
-## Status: MVP Complete + Multi-Letter Expansion + Web-Sourced Build + Share Results
+## Status: MVP Complete + Multi-Letter Expansion + Web-Sourced Build + Share Results + Tile Feedback
 
-The full Anagram Trainer game is implemented and tested with multi-letter expansion support, a web-sourced build pipeline, and share results functionality.
+The full Anagram Trainer game is implemented and tested with multi-letter expansion support, a web-sourced build pipeline, share results functionality, and real-time tile visual feedback.
 
 ## Completed
 - Researched scrabblewordfinder.org API (no usable REST API; wordunscrambler.me has URL-based access but CORS blocks browser calls)
@@ -31,7 +31,11 @@ The full Anagram Trainer game is implemented and tested with multi-letter expans
 - `generateShareText` pure function in game.js for testable share text generation
 - Clipboard copy uses navigator.clipboard API with textarea/execCommand fallback
 - Share button on score screen with "Copied!" feedback, works for fresh and replayed games
-- 63 unit tests passing (PRNG, game logic, word processing, multi-letter expansions, web scraper, share text)
+- Real-time tile visual feedback: root and offered tiles highlight as player types, showing which tiles are "consumed"
+- `matchTypedToTiles` pure function in game.js for greedy root-first tile matching
+- Invalid (unmatched) typed letters get red feedback in the input area
+- CSS transitions for smooth tile state changes (`.used`, `.invalid` classes)
+- 71 unit tests passing (PRNG, game logic, word processing, multi-letter expansions, web scraper, share text, tile matching)
 
 ## Architecture
 - Pure static HTML/JS, no backend or framework
@@ -44,7 +48,6 @@ The full Anagram Trainer game is implemented and tested with multi-letter expans
 - localStorage keyed by `anagram-trainer-YYYY-MM-DD` for game state persistence
 
 ## Potential Future Improvements
-- Keyboard visual feedback (highlight valid/invalid letters)
 - Streak tracking with localStorage
 - Sound effects
 - Mobile-optimized touch input

@@ -29,7 +29,7 @@ Path: @/
     -> initUI(puzzle, dateStr)           [src/ui.js]
        -> checks localStorage for saved game
        -> if saved: renders score screen from saved results
-       -> if not: renders tiles, handles keyboard input, validates answers, shows score with share button, saves to localStorage
+       -> if not: renders tiles, handles keyboard input (with real-time tile highlighting via matchTypedToTiles), validates answers, shows score with share button, saves to localStorage
   ```
 - **Data flow at build time (two alternatives, same output):**
   ```
@@ -57,6 +57,7 @@ Path: @/
 - `puzzles.json` is the only data dependency at runtime; the game works entirely offline once loaded
 - The offered letters mechanic guarantees at least one valid single-letter expansion key among the 3 offered, with the remaining slots filled from the alphabet. Answer validation checks whether a given expansion key's letters are a subset of the offered letters (via `isKeySubsetOfOffered` in `@/src/game.js`), which supports both single and multi-letter keys
 - When a puzzle pool is smaller than the number of rounds requested, `selectDailyPuzzle` cycles through the pool using modulo indexing
+- Real-time tile feedback: as the player types, `matchTypedToTiles` in `@/src/game.js` greedily maps each character to root tiles first, then offered tiles. `@/src/ui.js` toggles `.used` CSS classes on the rack tiles and `.invalid` on input tiles that have no matching available tile. `@/style.css` provides visual states: `.tile.used` (green tint, reduced opacity), `.tile.offered.used` (green tint, scaled down), and `#input-area .tile.invalid` (red tint), all with 0.2s ease-out transitions
 - Timer starts on first keystroke, not on round render
 - Game results persist in `localStorage` keyed by `anagram-trainer-{YYYY-MM-DD}` (UTC). If a player returns the same UTC day, they see their previous score screen instead of replaying
 - Vitest is the only dev dependency
