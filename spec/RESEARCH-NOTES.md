@@ -72,6 +72,15 @@ This simple substring check covers: adding s/es/ed/ing/er to end, and common pre
 - Button goes in `showScore()` in `src/ui.js` after the stats row
 - Results data already available: `r.answer.length > 0` determines solved vs skipped
 
+## Keyboard Visual Feedback (Real-Time Tile Highlighting)
+- **Goal:** As player types, root and offered tiles highlight to show which are "consumed"
+- **Algorithm:** Frequency-count greedy matcher — build a pool of {letter, source, index, used} from root + offered tiles. For each typed character, greedily match root tiles first, then offered tiles. O(n*m) but n,m < 15 so trivial.
+- **Root-first priority:** Since all root letters must be used, matching root first gives more intuitive feedback
+- **Invalid letters:** When typed letter has no matching available tile, mark as `invalid` for red feedback on input tile
+- **CSS approach:** `.tile.used` class with green tint + slight scale-down + transition. Existing `.tile.offered.selected` class already has green gradient (unused in JS) — can repurpose or model after it.
+- **Integration point:** `hiddenInput` `input` event listener in ui.js — after updating `state.inputLetters`, run matcher and toggle `.used` classes on rack tiles
+- **Pure function for testability:** Extract `matchTypedToTiles(typedLetters, rootLetters, offeredLetters)` as a pure, exportable function in game.js for unit testing
+
 ## Bug: 3-Word-Per-Letter Cap Drops Valid Words
 - `build-words.js` line 72-75 caps at 3 words per expansion letter
 - For "ski" + "r", the dictionary has: irks, kirs, kris, risk — but "risk" is 4th and gets truncated

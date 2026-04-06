@@ -1,4 +1,4 @@
-import { isValidAnswer, calculateScore, getAnswersForRound, generateShareText } from './game.js';
+import { isValidAnswer, calculateScore, getAnswersForRound, generateShareText, matchTypedToTiles } from './game.js';
 
 const SCRABBLE_POINTS = {
   a:1, b:3, c:3, d:2, e:1, f:4, g:2, h:4, i:1, j:8, k:5, l:1, m:3,
@@ -142,13 +142,32 @@ export function initUI(puzzle, dateStr) {
     const minLen = round.root.length + 1;
     const displayLen = Math.max(minLen, state.inputLetters.length);
 
+    const { matched, pool } = matchTypedToTiles(
+      state.inputLetters,
+      round.root.split(''),
+      round.offeredLetters
+    );
+
     for (let i = 0; i < displayLen; i++) {
       if (i < state.inputLetters.length) {
-        inputArea.appendChild(createTile(state.inputLetters[i]));
+        const cls = matched[i].source === 'invalid' ? 'invalid' : '';
+        inputArea.appendChild(createTile(state.inputLetters[i], { className: cls }));
       } else {
         inputArea.appendChild(createTile('', { className: 'empty' }));
       }
     }
+
+    // Update rack tile highlights
+    const rootTiles = rootRack.querySelectorAll('.tile');
+    rootTiles.forEach((tile, i) => {
+      tile.classList.toggle('used', pool[i] && pool[i].used);
+    });
+
+    const offeredTiles = offeredRack.querySelectorAll('.tile');
+    offeredTiles.forEach((tile, i) => {
+      const poolIdx = round.root.length + i;
+      tile.classList.toggle('used', pool[poolIdx] && pool[poolIdx].used);
+    });
   }
 
   function setMessage(text, type = '') {
@@ -175,6 +194,7 @@ export function initUI(puzzle, dateStr) {
   }
 
   function handleSubmit() {
+    if (!state.startTime) startTimer();
     const round = puzzle[state.currentRound];
     const answer = state.inputLetters.join('');
     const minLen = round.root.length + 1;
@@ -198,6 +218,7 @@ export function initUI(puzzle, dateStr) {
   }
 
   function handleSkip() {
+    if (!state.startTime) startTimer();
     const round = puzzle[state.currentRound];
     const timeMs = Date.now() - state.roundStartTime;
     const possibleAnswers = getAnswersForRound(round);

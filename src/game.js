@@ -106,7 +106,30 @@ export function generateShareText(results, dateStr, totalTimeMs) {
   const solved = results.filter(r => r.answer.length > 0).length;
   const mins = Math.floor(totalTimeMs / 1000 / 60);
   const secs = Math.floor(totalTimeMs / 1000) % 60;
-  return `Anagram Trainer ${dateStr}\n${emojis}\n${solved}/11 | ${mins}:${secs.toString().padStart(2, '0')}`;
+  return `Anagram Trainer ${dateStr}\n${emojis}\n${solved}/${results.length} | ${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+export function matchTypedToTiles(typedLetters, rootLetters, offeredLetters) {
+  const pool = [
+    ...rootLetters.map((ch, i) => ({ letter: ch.toLowerCase(), source: 'root', index: i, used: false })),
+    ...offeredLetters.map((ch, i) => ({ letter: ch.toLowerCase(), source: 'offered', index: i, used: false })),
+  ];
+
+  const matched = [];
+  for (const typed of typedLetters) {
+    const ch = typed.toLowerCase();
+    const candidate =
+      pool.find(t => !t.used && t.letter === ch && t.source === 'root') ||
+      pool.find(t => !t.used && t.letter === ch && t.source === 'offered');
+    if (candidate) {
+      candidate.used = true;
+      matched.push({ letter: ch, source: candidate.source, index: candidate.index, used: true });
+    } else {
+      matched.push({ letter: ch, source: 'invalid', index: -1, used: true });
+    }
+  }
+
+  return { matched, pool };
 }
 
 export function calculateScore(completedRounds) {
