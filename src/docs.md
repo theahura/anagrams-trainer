@@ -12,6 +12,8 @@ Path: @/src
 
 - `@/index.html` imports `game.js` and `ui.js` as entry points
 - `@/scripts/build-words.js` imports `words.js` for `buildSignatureIndex`, `findExpansions`, and `filterTrivialExpansions`
+- `@/scripts/web-scraper.js` imports `letterSignature` from `words.js` for expansion key derivation
+- `@/scripts/build-words-web.js` imports `filterTrivialExpansions` from `words.js`
 - `@/tests/` tests `prng.js`, `game.js`, and `words.js` directly (ui.js is untested -- it requires DOM)
 - `@/data/puzzles.json` is the data contract: `game.js` expects puzzle data keyed by root word length, each entry having `{ root, expansions }` where expansions maps a variable-length key string (e.g., `"r"`, `"el"`, `"egr"`) to a word array
 

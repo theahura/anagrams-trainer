@@ -68,3 +68,14 @@ This simple substring check covers: adding s/es/ed/ing/er to end, and common pre
 - For "ski" + "r", the dictionary has: irks, kirs, kris, risk — but "risk" is 4th and gets truncated
 - Fix: remove the cap entirely, or increase it significantly
 - This is the root cause of "ski → risk doesn't work"
+
+## Web-Sourced Build Pipeline Research
+- **wordunscrambler.me HTML structure**: Words in `<a href="/dictionary/{word}">{word}</a>` tags, grouped under `<h3>` headings by word length
+- URL format: `https://wordunscrambler.me/unscramble/{root}*` (one blank), `{root}**` (two blanks), max 2 wildcards
+- No anti-bot measures observed (no Cloudflare, CAPTCHA). Rate-limit with ~500ms delay between requests
+- CORS blocks browser calls but Node.js fetch works fine
+- **Datamuse API (api.datamuse.com)**: NOT suitable — only does positional spelling patterns, not anagram solving
+- **Approach**: Regex parsing of HTML in Node.js (`/<a href="\/dictionary\/([^"]+)">/g`), no cheerio needed
+- **Expansion key derivation**: Compare sorted letter signatures of root vs answer word to determine which letters were added
+- **Limitation**: Max 2 wildcards means website can only source +1 and +2 letter expansions; +3 still needs TWL06
+- **Caching**: Store scraped results in `data/web-cache.json` keyed by query string to avoid re-scraping

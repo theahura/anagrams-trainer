@@ -12,7 +12,7 @@ Path: @/
 
 - `index.html` is the entry point -- it fetches `@/data/puzzles.json`, derives the UTC date string, calls `selectDailyPuzzle()` from `@/src/game.js`, then passes the result to `initUI()` from `@/src/ui.js`
 - `style.css` defines the Scrabble board visual theme (green felt background, cream tiles with point subscripts)
-- `@/scripts/build-words.js` is run offline via `npm run build:words` to regenerate `@/data/puzzles.json` from the TWL06 dictionary
+- `@/scripts/` contains two alternative build pipelines (`npm run build:words` for TWL06-based, `npm run build:words:web` for web-sourced via wordunscrambler.me) that both produce `@/data/puzzles.json` in the same format
 - `@/src/` contains all runtime game logic (PRNG, game rules, word processing, DOM rendering)
 - `@/tests/` contains Vitest test suites covering the non-UI modules
 
@@ -31,14 +31,21 @@ Path: @/
        -> if saved: renders score screen from saved results
        -> if not: renders tiles, handles keyboard input, validates answers, shows score, saves to localStorage
   ```
-- **Data flow at build time:**
+- **Data flow at build time (two alternatives, same output):**
   ```
-  scripts/build-words.js
+  Option A: scripts/build-words.js (npm run build:words)
     -> downloads TWL06 word list from GitHub
     -> builds letter-signature index     [src/words.js]
     -> finds expansions for each root word (+1, +2, +3 letters via combinations-with-repetition)
     -> filters trivial extensions (substring matches, single-letter keys only)
-    -> writes data/puzzles.json (capped at 500 roots per length, 30 keys per root, 5 words per key)
+    -> writes data/puzzles.json
+
+  Option B: scripts/build-words-web.js (npm run build:words:web)
+    -> downloads TWL06 for candidate root identification
+    -> fetches expansions from wordunscrambler.me  [scripts/web-scraper.js]
+    -> caches results in data/web-cache.json
+    -> filters trivial extensions, applies same size caps
+    -> writes data/puzzles.json (identical format)
   ```
 - **Difficulty progression:** 11 rounds per game: 3x3-letter roots, 3x4-letter, 3x5-letter, 1x6-letter, 1x7+-letter root
 - **Multi-letter expansions:** Expansion keys are variable-length strings (e.g., `"r"`, `"el"`, `"egr"`). Players can use 1, 2, or 3 of the offered letters. The `maxExtraLetters` varies by root length: +3 for roots of length 3-5, +2 for length 6, +1 for length 7+

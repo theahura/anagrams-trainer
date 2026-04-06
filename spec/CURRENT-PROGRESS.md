@@ -1,8 +1,8 @@
 # Current Progress
 
-## Status: MVP Complete + Multi-Letter Expansion Support
+## Status: MVP Complete + Multi-Letter Expansion + Web-Sourced Build
 
-The full Anagram Trainer game is implemented and tested with multi-letter expansion support.
+The full Anagram Trainer game is implemented and tested with multi-letter expansion support and a web-sourced build pipeline.
 
 ## Completed
 - Researched scrabblewordfinder.org API (no usable REST API; wordunscrambler.me has URL-based access but CORS blocks browser calls)
@@ -24,12 +24,18 @@ The full Anagram Trainer game is implemented and tested with multi-letter expans
 - Fixed word truncation bug: removed 3-word-per-letter cap that dropped valid answers (e.g., "risk" for ski+r)
 - Trivial extension filter is now key-length-aware: only applies to single-letter additions
 - Build script uses tiered maxExtraLetters by root length (3 for short, 2 for medium, 1 for long)
+- Web-sourced build pipeline: `npm run build:words:web` fetches word data from wordunscrambler.me
+- Web scraper module with HTML parsing, expansion key derivation, and word grouping
+- Scrape results cached in `data/web-cache.json` for performance
+- 59 unit tests passing (PRNG, game logic, word processing, multi-letter expansions, web scraper)
 
 ## Architecture
 - Pure static HTML/JS, no backend or framework
 - `data/puzzles.json` (~1.7MB) contains pre-computed puzzle data with multi-letter expansion keys
 - Expansion keys are variable-length sorted letter strings (e.g., "r", "el", "egr")
 - `scripts/build-words.js` regenerates puzzle data from TWL06 dictionary using combinations-with-repetition
+- `scripts/build-words-web.js` alternative build using wordunscrambler.me as word source (with caching)
+- `scripts/web-scraper.js` module for HTML parsing and expansion key derivation
 - UTC date ensures all players worldwide get the same daily puzzle
 - localStorage keyed by `anagram-trainer-YYYY-MM-DD` for game state persistence
 
