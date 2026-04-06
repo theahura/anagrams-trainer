@@ -6,4 +6,4 @@
 
 ~~Use the actual website too, right now i think the words are hardcoded~~ FIXED: added web-sourced build pipeline using wordunscrambler.me (`npm run build:words:web`), with caching and rate limiting
 
-I got the word 'aster' and tried to play 'master', but it did not work. Why? Tasers also did not work
+~~I got the word 'aster' and tried to play 'master', but it did not work. Why? Tasers also did not work~~ FIXED: removed trivial extension filter that was rejecting words containing the root as a substring (e.g., "master" contains "aster"). All valid dictionary words are now accepted. Note: "tasers" is not in the TWL06 dictionary (trademark word), so it will remain unavailable.

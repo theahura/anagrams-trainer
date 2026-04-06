@@ -1,5 +1,5 @@
 import { writeFileSync } from 'fs';
-import { buildSignatureIndex, findExpansions, filterTrivialExpansions } from '../src/words.js';
+import { buildSignatureIndex, findExpansions } from '../src/words.js';
 
 const WORD_LIST_URL = 'https://raw.githubusercontent.com/cviebrock/wordlists/master/TWL06.txt';
 const OUTPUT_PATH = new URL('../data/puzzles.json', import.meta.url).pathname;
@@ -29,12 +29,11 @@ function buildPuzzleData(dictionary) {
     const validRoots = [];
 
     for (const root of roots) {
-      const allExpansions = findExpansions(root, index, maxExtra);
-      const filtered = filterTrivialExpansions(root, allExpansions);
-      const validLetterCount = Object.keys(filtered).length;
+      const expansions = findExpansions(root, index, maxExtra);
+      const validLetterCount = Object.keys(expansions).length;
 
       if (validLetterCount >= MIN_EXPANSIONS) {
-        validRoots.push({ root, expansions: filtered });
+        validRoots.push({ root, expansions });
       }
     }
 

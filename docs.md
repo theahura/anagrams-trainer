@@ -37,19 +37,19 @@ Path: @/
     -> downloads TWL06 word list from GitHub
     -> builds letter-signature index     [src/words.js]
     -> finds expansions for each root word (+1, +2, +3 letters via combinations-with-repetition)
-    -> filters trivial extensions (substring matches, single-letter keys only)
+    -> applies size caps
     -> writes data/puzzles.json
 
   Option B: scripts/build-words-web.js (npm run build:words:web)
     -> downloads TWL06 for candidate root identification
     -> fetches expansions from wordunscrambler.me  [scripts/web-scraper.js]
     -> caches results in data/web-cache.json
-    -> filters trivial extensions, applies same size caps
+    -> applies same size caps
     -> writes data/puzzles.json (identical format)
   ```
 - **Difficulty progression:** 11 rounds per game: 3x3-letter roots, 3x4-letter, 3x5-letter, 1x6-letter, 1x7+-letter root
 - **Multi-letter expansions:** Expansion keys are variable-length strings (e.g., `"r"`, `"el"`, `"egr"`). Players can use 1, 2, or 3 of the offered letters. The `maxExtraLetters` varies by root length: +3 for roots of length 3-5, +2 for length 6, +1 for length 7+
-- **Trivial extension filter:** An answer is rejected if the root word appears as a substring of the answer (e.g., "rinds" from "rind"). This filter applies **only to single-letter expansion keys** -- multi-letter additions involve enough rearrangement that substring coincidence is not considered trivial. The filter runs both at build time and at runtime
+- **Word acceptance rule:** All valid dictionary words are accepted. The only validation is dictionary lookup (word must exist in the expansion data) and offered-letter availability (the expansion key's letters must be a subset of the offered letters). There is no substring or trivial-extension filtering
 
 ### Things to Know
 

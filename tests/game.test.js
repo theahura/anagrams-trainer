@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import {
-  isTrivialExtension,
   isValidAnswer,
   selectDailyPuzzle,
   getOfferedLetters,
@@ -43,29 +42,6 @@ const testPuzzleData = {
     { root: 'pointed', expansions: { s: ['deposits', 'topsides'] } },
   ],
 };
-
-describe('isTrivialExtension', () => {
-  it('returns true when answer contains root as substring', () => {
-    expect(isTrivialExtension('rind', 'rinds')).toBe(true);
-    expect(isTrivialExtension('cat', 'cats')).toBe(true);
-    expect(isTrivialExtension('cat', 'scat')).toBe(true);
-  });
-
-  it('returns true when root appears in middle of answer', () => {
-    expect(isTrivialExtension('rind', 'grind')).toBe(true);
-  });
-
-  it('returns false when answer does not contain root as substring', () => {
-    expect(isTrivialExtension('rind', 'diner')).toBe(false);
-    expect(isTrivialExtension('rind', 'drink')).toBe(false);
-    expect(isTrivialExtension('cat', 'taco')).toBe(false);
-  });
-
-  it('is case-insensitive', () => {
-    expect(isTrivialExtension('Cat', 'CATS')).toBe(true);
-    expect(isTrivialExtension('CAT', 'taco')).toBe(false);
-  });
-});
 
 describe('selectDailyPuzzle', () => {
   it('returns exactly 11 rounds', () => {
@@ -111,7 +87,7 @@ describe('selectDailyPuzzle', () => {
 });
 
 describe('isValidAnswer', () => {
-  it('accepts a valid non-trivial answer', () => {
+  it('accepts a valid answer', () => {
     const round = { root: 'rind', expansions: { e: ['diner'], k: ['drink'] }, offeredLetters: ['e', 'k', 'z'] };
     expect(isValidAnswer('diner', round)).toBe(true);
     expect(isValidAnswer('drink', round)).toBe(true);
@@ -122,10 +98,18 @@ describe('isValidAnswer', () => {
     expect(isValidAnswer('pizza', round)).toBe(false);
   });
 
-  it('rejects a trivial extension even if technically valid letters', () => {
-    // 'rinds' uses root 'rind' + 's', but contains 'rind' as substring
+  it('accepts a word containing root as substring', () => {
     const round = { root: 'rind', expansions: { s: ['rinds'] }, offeredLetters: ['s', 'g', 'e'] };
-    expect(isValidAnswer('rinds', round)).toBe(false);
+    expect(isValidAnswer('rinds', round)).toBe(true);
+  });
+
+  it('accepts master for root aster with m offered', () => {
+    const round = {
+      root: 'aster',
+      expansions: { m: ['armets', 'master', 'maters', 'matres', 'ramets', 'stream'] },
+      offeredLetters: ['m', 'x', 'z'],
+    };
+    expect(isValidAnswer('master', round)).toBe(true);
   });
 
   it('is case-insensitive', () => {
@@ -187,11 +171,10 @@ describe('getOfferedLetters', () => {
     expect(letters).toHaveLength(3);
   });
 
-  it('includes at least one letter that leads to a valid non-trivial answer', () => {
+  it('includes at least one letter that leads to a valid answer', () => {
     const puzzleEntry = { root: 'cat', expansions: { o: ['coat', 'taco'], r: ['cart'] } };
     const letters = getOfferedLetters(puzzleEntry, () => 0.5);
     // At least one of the offered letters should be a key in expansions
-    // that has a non-trivial answer
     const validLetters = Object.keys(puzzleEntry.expansions);
     const hasValid = letters.some(l => validLetters.includes(l));
     expect(hasValid).toBe(true);
@@ -383,7 +366,6 @@ describe('getSubmitFeedbackType', () => {
 
   it('returns wrong for an incorrect word of valid length', () => {
     expect(getSubmitFeedbackType('pizza', round)).toBe('wrong');
-    expect(getSubmitFeedbackType('rinds', round)).toBe('wrong');
   });
 
   it('returns wrong for a valid expansion word whose letter is not offered', () => {

@@ -61,23 +61,3 @@ function insertSorted(sortedStr, char) {
   return sortedStr + char;
 }
 
-export function filterTrivialExpansions(root, expansions) {
-  const rootLower = root.toLowerCase();
-  const filtered = {};
-
-  for (const [key, words] of Object.entries(expansions)) {
-    // Only filter trivial extensions for single-letter additions.
-    // Multi-letter additions involve enough rearrangement that substring
-    // coincidence (e.g., "rind" in "grinder") is not trivial.
-    if (key.length === 1) {
-      const validWords = words.filter(w => !w.toLowerCase().includes(rootLower));
-      if (validWords.length > 0) {
-        filtered[key] = validWords;
-      }
-    } else {
-      filtered[key] = words;
-    }
-  }
-
-  return filtered;
-}

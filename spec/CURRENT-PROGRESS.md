@@ -1,6 +1,6 @@
 # Current Progress
 
-## Status: MVP Complete + Multi-Letter Expansion + Web-Sourced Build + Share Results + Tile Feedback + Answer Animations + Streak Tracking + Mobile Touch Input + Bounds Safety + Running Letter Score
+## Status: MVP Complete + Multi-Letter Expansion + Web-Sourced Build + Share Results + Tile Feedback + Answer Animations + Streak Tracking + Mobile Touch Input + Bounds Safety + Running Letter Score + Trivial Filter Removal
 
 The full Anagram Trainer game is implemented and tested with multi-letter expansion support, a web-sourced build pipeline, share results functionality, real-time tile visual feedback, streak tracking, and mobile-optimized touch input.
 
@@ -9,7 +9,7 @@ The full Anagram Trainer game is implemented and tested with multi-letter expans
 - Built word processing pipeline using TWL06 Scrabble dictionary (~178K words)
 - Pre-computed puzzle data: 500 curated root words per length (3-8 letters), with multi-letter expansions
 - Implemented date-seeded PRNG (cyrb128 + sfc32) for daily puzzle consistency
-- Game logic: word selection with difficulty progression, answer validation, trivial extension filtering, scoring
+- Game logic: word selection with difficulty progression, answer validation, scoring
 - Scrabble-tile UI with CSS styling (cream tiles, point values, green board background)
 - Keyboard input rendered as live Scrabble tiles
 - Timer, round tracking, skip functionality, score screen
@@ -22,7 +22,7 @@ The full Anagram Trainer game is implemented and tested with multi-letter expans
 - localStorage persistence: completed puzzle results saved by date, prevents replay of same day's puzzle
 - Multi-letter expansion support: players can use 1, 2, or 3 offered letters to form longer words
 - Fixed word truncation bug: removed 3-word-per-letter cap that dropped valid answers (e.g., "risk" for ski+r)
-- Trivial extension filter is now key-length-aware: only applies to single-letter additions
+- Trivial extension filter removed entirely: all valid TWL06 dictionary words are now accepted, including words containing the root as a substring (e.g., "master" from "aster")
 - Build script uses tiered maxExtraLetters by root length (3 for short, 2 for medium, 1 for long)
 - Web-sourced build pipeline: `npm run build:words:web` fetches word data from wordunscrambler.me
 - Web scraper module with HTML parsing, expansion key derivation, and word grouping
@@ -58,6 +58,10 @@ The full Anagram Trainer game is implemented and tested with multi-letter expans
 - Bounds safety: all input handlers (`handleSubmit`, `handleSkip`, `handleKeyInput`, `input` event) guard against `state.currentRound >= 11`
 - Running letter score display: live "Letters: N" counter in game-info bar, updated after each round completion
 - 97 unit tests passing (added 2 tests for calculateScore edge cases)
+- Removed trivial extension filter: `isTrivialExtension` and `filterTrivialExpansions` deleted from game.js and words.js
+- Words containing root as substring now accepted (fixes "aster" → "master" bug)
+- Rebuilt puzzles.json with all valid dictionary words included
+- Net test count: 89 tests (removed 10 trivial filter tests, added 2 regression tests for substring acceptance)
 
 ## Architecture
 - Pure static HTML/JS, no backend or framework

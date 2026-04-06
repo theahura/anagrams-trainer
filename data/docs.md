@@ -30,14 +30,14 @@ Path: @/data
     ]
   }
   ```
-- Each `expansions` object maps an added-letters key (variable length: `"r"`, `"el"`, `"egr"`) to an array of valid anagram words. Single-letter keys are filtered for trivial extensions; multi-letter keys are not
+- Each `expansions` object maps an added-letters key (variable length: `"r"`, `"el"`, `"egr"`) to an array of valid anagram words. All valid dictionary words are included without any substring filtering
 - Capped at 500 entries per word length, 30 keys per root, 5 words per key
 
 ### Things to Know
 
 - This file must be regenerated via `npm run build:words` or `npm run build:words:web` if the dictionary source or filtering logic changes
 - The web-sourced build also produces `data/web-cache.json` (gitignored), which caches raw fetch results from wordunscrambler.me to avoid re-scraping
-- Trivial extensions (words containing the root as a substring) are excluded at build time for single-letter keys only. Multi-letter keys are not filtered for trivial extensions. `isValidAnswer` in `@/src/game.js` also performs a runtime trivial check (single-letter keys only) as a second layer
+- No substring or trivial-extension filtering is applied -- all valid dictionary anagrams are included. Word acceptance is based purely on dictionary lookup and offered-letter availability at runtime
 - The file is approximately 1.7MB due to multi-letter expansion entries (up from ~155KB when only single-letter expansions were stored)
 
 Created and maintained by Nori.

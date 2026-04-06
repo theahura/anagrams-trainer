@@ -10,7 +10,7 @@ Path: @/scripts
 
 ### How it fits into the larger codebase
 
-- Both build scripts import word processing functions from `@/src/words.js` (`letterSignature`, `filterTrivialExpansions`, etc.)
+- Both build scripts import word processing functions from `@/src/words.js` (`letterSignature`, `buildSignatureIndex`, `findExpansions`, etc.)
 - Both output to `@/data/puzzles.json` in an identical format -- no runtime code changes are needed when switching between builds
 - `web-scraper.js` is a utility module imported only by `build-words-web.js`, tested independently via `@/tests/web-scraper.test.js`
 - The TWL06-based build is tested indirectly through `@/tests/build-words.test.js`
@@ -34,7 +34,7 @@ Path: @/scripts
   - For each candidate root, calls `fetchExpansionsFromWeb(root, 2)` which queries wordunscrambler.me with wildcard patterns (e.g., `rind*`, `rind**`)
   - Results are cached in `data/web-cache.json` (gitignored) to avoid redundant scraping; cache is saved every 50 fetches
   - Rate-limited with a 500ms delay between non-cached fetches
-  - Applies the same `filterTrivialExpansions` and size caps as the TWL06 build
+  - Applies the same size caps as the TWL06 build
   - Website limitation: max 2 wildcards, so only +1 and +2 letter expansions come from the web
 
 - **`web-scraper.js` (scraping module):**

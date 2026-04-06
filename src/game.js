@@ -1,17 +1,11 @@
 import { getDailyRng, seededShuffle, seededPick } from './prng.js';
 
-export function isTrivialExtension(root, answer) {
-  return answer.toLowerCase().includes(root.toLowerCase());
-}
-
 export function isValidAnswer(answer, round) {
   const answerLower = answer.toLowerCase();
 
   const offered = round.offeredLetters || [];
   for (const [key, words] of Object.entries(round.expansions)) {
     if (!isKeySubsetOfOffered(key, offered)) continue;
-    // Only check trivial extensions for single-letter additions
-    if (key.length === 1 && isTrivialExtension(round.root, answerLower)) continue;
     if (words.some(w => w.toLowerCase() === answerLower)) return true;
   }
   return false;
@@ -33,8 +27,6 @@ export function getAnswersForRound(round) {
   for (const [key, words] of Object.entries(round.expansions)) {
     if (!isKeySubsetOfOffered(key, offered)) continue;
     for (const w of words) {
-      // Only filter trivial extensions for single-letter additions
-      if (key.length === 1 && isTrivialExtension(round.root, w)) continue;
       results.push(w);
     }
   }
