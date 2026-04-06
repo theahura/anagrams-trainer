@@ -1,4 +1,4 @@
-import { isValidAnswer, calculateScore, getAnswersForRound, generateShareText, matchTypedToTiles } from './game.js';
+import { isValidAnswer, calculateScore, getAnswersForRound, generateShareText, matchTypedToTiles, getSubmitFeedbackType } from './game.js';
 
 const SCRABBLE_POINTS = {
   a:1, b:3, c:3, d:2, e:1, f:4, g:2, h:4, i:1, j:8, k:5, l:1, m:3,
@@ -193,20 +193,44 @@ export function initUI(puzzle, dateStr) {
     }, 100);
   }
 
+  function triggerShake() {
+    inputArea.classList.remove('shake');
+    void inputArea.offsetWidth;
+    inputArea.classList.add('shake');
+    inputArea.addEventListener('animationend', () => {
+      inputArea.classList.remove('shake');
+    }, { once: true });
+  }
+
+  function triggerBounce() {
+    const tiles = inputArea.querySelectorAll('.tile');
+    tiles.forEach((tile, i) => tile.style.setProperty('--tile-index', i));
+    inputArea.classList.add('bounce');
+    const lastTile = tiles[tiles.length - 1];
+    if (lastTile) {
+      lastTile.addEventListener('animationend', () => {
+        inputArea.classList.remove('bounce');
+      }, { once: true });
+    }
+  }
+
   function handleSubmit() {
     if (!state.startTime) startTimer();
     const round = puzzle[state.currentRound];
     const answer = state.inputLetters.join('');
-    const minLen = round.root.length + 1;
-    const maxLen = round.root.length + round.offeredLetters.length;
+    const feedback = getSubmitFeedbackType(answer, round);
 
-    if (answer.length < minLen || answer.length > maxLen) {
+    if (feedback === 'invalid-length') {
+      const minLen = round.root.length + 1;
+      const maxLen = round.root.length + round.offeredLetters.length;
       setMessage(`Word must be ${minLen}-${maxLen} letters`, 'error');
+      triggerShake();
       return;
     }
 
-    if (!isValidAnswer(answer, round)) {
+    if (feedback === 'wrong') {
       setMessage('Not a valid answer. Try again!', 'error');
+      triggerShake();
       return;
     }
 
@@ -214,7 +238,8 @@ export function initUI(puzzle, dateStr) {
     const possibleAnswers = getAnswersForRound(round);
     state.completedRounds.push({ answer, timeMs, root: round.root, possibleAnswers });
     setMessage('Correct!', 'success');
-    advanceRound();
+    triggerBounce();
+    setTimeout(() => advanceRound(), 700);
   }
 
   function handleSkip() {
@@ -223,8 +248,36 @@ export function initUI(puzzle, dateStr) {
     const timeMs = Date.now() - state.roundStartTime;
     const possibleAnswers = getAnswersForRound(round);
     state.completedRounds.push({ answer: '', timeMs, root: round.root, possibleAnswers });
-    setMessage('Skipped', '');
-    advanceRound();
+    if (possibleAnswers.length > 0) {
+      setMessage(`Possible: ${possibleAnswers.slice(0, 3).join(', ')}`, '');
+      setTimeout(() => advanceRound(), 1200);
+    } else {
+      setMessage('Skipped', '');
+      advanceRound();
+    }
+  }
+
+  function fadeOutGameArea() {
+    rootRack.classList.add('fade-out');
+    offeredRack.classList.add('fade-out');
+    inputArea.classList.add('fade-out');
+  }
+
+  function fadeInGameArea() {
+    rootRack.classList.remove('fade-out');
+    offeredRack.classList.remove('fade-out');
+    inputArea.classList.remove('fade-out');
+    rootRack.classList.add('fade-in');
+    offeredRack.classList.add('fade-in');
+    inputArea.classList.add('fade-in');
+
+    const cleanup = () => {
+      rootRack.classList.remove('fade-in');
+      offeredRack.classList.remove('fade-in');
+      inputArea.classList.remove('fade-in');
+    };
+    rootRack.addEventListener('animationend', cleanup, { once: true });
+    setTimeout(cleanup, 300);
   }
 
   function advanceRound() {
@@ -233,8 +286,10 @@ export function initUI(puzzle, dateStr) {
       showScore();
       return;
     }
+    fadeOutGameArea();
     setTimeout(() => {
       renderRound();
+      fadeInGameArea();
       startTimer();
     }, 600);
   }

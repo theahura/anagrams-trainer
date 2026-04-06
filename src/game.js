@@ -132,6 +132,14 @@ export function matchTypedToTiles(typedLetters, rootLetters, offeredLetters) {
   return { matched, pool };
 }
 
+export function getSubmitFeedbackType(answer, round) {
+  const minLen = round.root.length + 1;
+  const maxLen = round.root.length + (round.offeredLetters ? round.offeredLetters.length : 0);
+  if (answer.length < minLen || answer.length > maxLen) return 'invalid-length';
+  if (isValidAnswer(answer, round)) return 'correct';
+  return 'wrong';
+}
+
 export function calculateScore(completedRounds) {
   return {
     totalLetters: completedRounds.reduce((sum, r) => sum + r.answer.length, 0),

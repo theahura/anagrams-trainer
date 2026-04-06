@@ -32,6 +32,7 @@ Path: @/src
   - `isTrivialExtension(root, answer)` returns true if the answer contains the root as a substring (case-insensitive)
   - `generateShareText(results, dateStr, totalTimeMs)` is a pure function (no DOM dependency) that produces a Wordle-style share string: header line with date, emoji grid line (green square for solved, white square for skipped), and a score line with solved count and formatted time
   - `matchTypedToTiles(typedLetters, rootLetters, offeredLetters)` is a pure function that maps each typed character to a specific tile position in either the root or offered rack. It builds a unified pool of all available tiles (root first, then offered), then greedily matches each typed letter against unused pool entries with root-first priority. Returns `{ matched, pool }` where `matched` is an array of per-character assignments (`source: 'root' | 'offered' | 'invalid'`, `index`, `used`) and `pool` tracks which rack tiles have been consumed. Used by `renderInput()` in `ui.js` to drive real-time tile highlighting
+  - `getSubmitFeedbackType(answer, round)` is a pure function that returns `'correct'`, `'invalid-length'`, or `'wrong'` by checking length bounds and delegating to `isValidAnswer`. Extracts submit validation logic from `ui.js` into a testable location
   - `calculateScore(completedRounds)` aggregates total letters, total time, and round count
 
 - **`words.js`** -- Anagram computation (used at both build-time and runtime validation)
@@ -58,7 +59,9 @@ Path: @/src
 - `getOfferedLetters` extracts individual characters from multi-char expansion keys (e.g., `"el"` yields `"e"` and `"l"`) using `join('').split('')`, then deduplicates. It prioritizes including a single-letter expansion key in the offered set to ensure at least one straightforward answer exists
 - The UI input max length is `root.length + offeredLetters.length`, allowing players to use all offered letters. Submit validation accepts answers between `root.length + 1` and this max
 - `isKeySubsetOfOffered` in `game.js` checks whether each character of a multi-letter key can be consumed from the offered letters array (removing used letters to handle duplicates). This is the core mechanism enabling multi-letter expansion matching at runtime
-- The UI uses a 600ms `setTimeout` delay between rounds after a correct answer or skip, for visual feedback
+- The UI uses a 600ms `setTimeout` delay between rounds after a correct answer or skip. During this delay, `fadeOutGameArea()` runs a CSS fade-out on the racks and input area; after the timeout, `renderRound()` rebuilds the DOM and `fadeInGameArea()` animates it back in. The `animationend` event listener on `rootRack` cleans up the fade-in classes
+- Answer feedback uses CSS-class toggling: `triggerShake()` adds `.shake` to `#input-area` (removes and re-adds with a `void offsetWidth` reflow to allow retriggering), `triggerBounce()` sets `--tile-index` CSS custom properties for staggered delays and adds `.bounce`. Both use `{ once: true }` `animationend` listeners for cleanup
+- When skipping a round, `handleSkip()` now displays up to 3 possible answers in the message area (via `getAnswersForRound`) instead of just "Skipped"
 - Timer displays elapsed time since the first keystroke of the entire game, not per-round time
 - localStorage persistence uses UTC date to match puzzle selection, so the key is always consistent regardless of timezone
 

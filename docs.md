@@ -11,7 +11,7 @@ Path: @/
 ### How it fits into the larger codebase
 
 - `index.html` is the entry point -- it fetches `@/data/puzzles.json`, derives the UTC date string, calls `selectDailyPuzzle()` from `@/src/game.js`, then passes the result to `initUI()` from `@/src/ui.js`
-- `style.css` defines the Scrabble board visual theme (green felt background, cream tiles with point subscripts)
+- `style.css` defines the Scrabble board visual theme (green felt background, cream tiles with point subscripts) and all answer feedback / round transition animations
 - `@/scripts/` contains two alternative build pipelines (`npm run build:words` for TWL06-based, `npm run build:words:web` for web-sourced via wordunscrambler.me) that both produce `@/data/puzzles.json` in the same format
 - `@/src/` contains all runtime game logic (PRNG, game rules, word processing, DOM rendering)
 - `@/tests/` contains Vitest test suites covering the non-UI modules
@@ -58,6 +58,7 @@ Path: @/
 - The offered letters mechanic guarantees at least one valid single-letter expansion key among the 3 offered, with the remaining slots filled from the alphabet. Answer validation checks whether a given expansion key's letters are a subset of the offered letters (via `isKeySubsetOfOffered` in `@/src/game.js`), which supports both single and multi-letter keys
 - When a puzzle pool is smaller than the number of rounds requested, `selectDailyPuzzle` cycles through the pool using modulo indexing
 - Real-time tile feedback: as the player types, `matchTypedToTiles` in `@/src/game.js` greedily maps each character to root tiles first, then offered tiles. `@/src/ui.js` toggles `.used` CSS classes on the rack tiles and `.invalid` on input tiles that have no matching available tile. `@/style.css` provides visual states: `.tile.used` (green tint, reduced opacity), `.tile.offered.used` (green tint, scaled down), and `#input-area .tile.invalid` (red tint), all with 0.2s ease-out transitions
+- Answer feedback animations are CSS-only, triggered by JS toggling classes on `#input-area`: shake (0.4s) on wrong/invalid-length answers, bounce (0.6s with staggered `--tile-index` delays per tile) on correct answers. Round transitions use fade-out (0.15s) and fade-in (0.2s) on the tile racks and input area. All animations respect `@media (prefers-reduced-motion: reduce)`
 - Timer starts on first keystroke, not on round render
 - Game results persist in `localStorage` keyed by `anagram-trainer-{YYYY-MM-DD}` (UTC). If a player returns the same UTC day, they see their previous score screen instead of replaying
 - Vitest is the only dev dependency
