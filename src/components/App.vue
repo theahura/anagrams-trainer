@@ -5,29 +5,33 @@
     <template v-else>
       <header>
         <h1>Reword</h1>
-        <button class="header-icon" @click="showHowToPlay = true" aria-label="How to play">?</button>
+        <button class="header-icon" @click="openHowToPlay" aria-label="How to play">?</button>
         <button id="mute-btn" role="switch" :aria-checked="String(!muted)" :aria-label="'Sound'" @click="toggleMute">
           {{ muted ? '\u{1F507}' : '\u{1F50A}' }}
         </button>
       </header>
 
-      <HowToPlay v-if="showHowToPlay" @close="showHowToPlay = false" />
+      <HowToPlay v-if="showHowToPlay" @close="handleCloseHowToPlay" />
 
       <template v-if="!gameComplete">
-        <GameBoard
-          :round="currentRound"
-          :round-number="state.currentRound + 1"
-          :input-letters="state.inputLetters"
-          :message="message"
-          :message-type="messageType"
-          @submit="handleSubmit"
-          @skip="handleSkip"
-        >
-          <template #timer>
-            <span id="letter-score">Letters: {{ runningLetterScore }}</span>
-            <span class="timer-display">{{ timerDisplay }}</span>
-          </template>
-        </GameBoard>
+        <Transition name="round" mode="out-in" @after-enter="onRoundEntered">
+          <GameBoard
+            :key="state.currentRound"
+            :round="currentRound"
+            :round-number="state.currentRound + 1"
+            :input-letters="state.inputLetters"
+            :message="message"
+            :message-type="messageType"
+            :animation-class="animationClass"
+            @submit="handleSubmit"
+            @skip="handleSkip"
+          >
+            <template #timer>
+              <span id="letter-score">Letters: {{ runningLetterScore }}</span>
+              <span class="timer-display" :class="{ urgent: timerUrgent }">{{ timerDisplay }}</span>
+            </template>
+          </GameBoard>
+        </Transition>
 
         <VirtualKeyboard @key-press="handleKeyInput" />
       </template>
@@ -47,7 +51,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
-import { selectDailyPuzzle, isValidAnswer, calculateScore, getAnswersForRound, generateShareText, getSubmitFeedbackType, updateStreakStats, processKeyPress } from '../game.js';
+import { selectDailyPuzzle, isValidAnswer, calculateScore, getAnswersForRound, generateShareText, getSubmitFeedbackType, updateStreakStats, processKeyPress, ROUND_TIME_LIMIT_MS, formatRoundTimer, serializeGameState, deserializeGameState, isTimerUrgent, shareResults } from '../game.js';
 import { getAudioContext, initSound } from '../sound.js';
 import GameBoard from './GameBoard.vue';
 import VirtualKeyboard from './VirtualKeyboard.vue';
@@ -60,6 +64,7 @@ const dateStr = ref('');
 const showHowToPlay = ref(false);
 const message = ref('');
 const messageType = ref('');
+const animationClass = ref('');
 const gameComplete = ref(false);
 const totalTimeMs = ref(0);
 const muted = ref(false);
@@ -68,13 +73,20 @@ const state = reactive({
   currentRound: 0,
   completedRounds: [],
   inputLetters: [],
-  startTime: null,
   roundStartTime: null,
   transitioning: false,
 });
 
 let timerInterval = null;
-const timerDisplay = ref('0:00');
+let pausedElapsedMs = 0;
+const timerDisplay = ref(formatRoundTimer(ROUND_TIME_LIMIT_MS));
+const timerUrgent = ref(false);
+
+function stopTimer() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+  timerUrgent.value = false;
+}
 
 let audio = null;
 
@@ -103,27 +115,67 @@ function toggleMute() {
   try { localStorage.setItem('reword-sound-muted', muted.value ? '1' : '0'); } catch (e) {}
 }
 
+function saveInProgressState() {
+  if (!dateStr.value) return;
+  try {
+    const data = serializeGameState(state.currentRound + 1, state.completedRounds, Date.now());
+    localStorage.setItem('reword-' + dateStr.value, JSON.stringify(data));
+  } catch (e) {}
+}
+
 const currentRound = computed(() => puzzle.value ? puzzle.value[state.currentRound] : null);
 const runningLetterScore = computed(() => state.completedRounds.reduce((sum, r) => sum + r.answer.length, 0));
 const streakStats = ref(null);
 
-function startTimer() {
-  if (!state.startTime) state.startTime = Date.now();
-  state.roundStartTime = Date.now();
-  if (timerInterval) clearInterval(timerInterval);
+function startTimer(alreadyElapsedMs = 0) {
+  stopTimer();
+  pausedElapsedMs = 0;
+  state.roundStartTime = Date.now() - alreadyElapsedMs;
+  const initialRemaining = Math.max(0, ROUND_TIME_LIMIT_MS - alreadyElapsedMs);
+  timerDisplay.value = formatRoundTimer(initialRemaining);
+  timerUrgent.value = isTimerUrgent(initialRemaining);
   timerInterval = setInterval(() => {
-    const elapsed = Date.now() - state.startTime;
-    const seconds = Math.floor(elapsed / 1000);
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    timerDisplay.value = `${mins}:${secs.toString().padStart(2, '0')}`;
+    const elapsed = Date.now() - state.roundStartTime;
+    const remaining = Math.max(0, ROUND_TIME_LIMIT_MS - elapsed);
+    timerDisplay.value = formatRoundTimer(remaining);
+    timerUrgent.value = isTimerUrgent(remaining);
+    if (remaining <= 0) {
+      stopTimer();
+      handleSkip();
+    }
   }, 100);
+}
+
+function openHowToPlay() {
+  showHowToPlay.value = true;
+  if (timerInterval) {
+    pausedElapsedMs = Date.now() - state.roundStartTime;
+    stopTimer();
+  }
+}
+
+function handleCloseHowToPlay() {
+  showHowToPlay.value = false;
+  if (!gameComplete.value && !timerInterval) {
+    startTimer(pausedElapsedMs);
+    pausedElapsedMs = 0;
+  }
+}
+
+let animationTimeout = null;
+
+function triggerAnimation(cls, durationMs) {
+  clearTimeout(animationTimeout);
+  animationClass.value = '';
+  requestAnimationFrame(() => {
+    animationClass.value = cls;
+    animationTimeout = setTimeout(() => { animationClass.value = ''; }, durationMs);
+  });
 }
 
 function handleSubmit() {
   ensureAudio();
   if (state.transitioning || state.currentRound >= 11) return;
-  if (!state.startTime) startTimer();
   const round = puzzle.value[state.currentRound];
   const answer = state.inputLetters.join('');
   const feedback = getSubmitFeedbackType(answer, round);
@@ -134,6 +186,7 @@ function handleSubmit() {
     message.value = `Word must be ${minLen}-${maxLen} letters`;
     messageType.value = 'error';
     playSound('playWrong');
+    triggerAnimation('shake', 400);
     return;
   }
 
@@ -141,27 +194,33 @@ function handleSubmit() {
     message.value = 'Not a valid answer. Try again!';
     messageType.value = 'error';
     playSound('playWrong');
+    triggerAnimation('shake', 400);
     return;
   }
 
-  const timeMs = Date.now() - state.roundStartTime;
+  stopTimer();
+  const timeMs = Math.min(Date.now() - state.roundStartTime, ROUND_TIME_LIMIT_MS);
   const possibleAnswers = getAnswersForRound(round);
   state.completedRounds.push({ answer, timeMs, root: round.root, possibleAnswers });
+  saveInProgressState();
   message.value = 'Correct!';
   messageType.value = 'success';
   playSound('playCorrect');
+  const bounceDuration = 600 + 80 * Math.max(0, answer.length - 1);
+  triggerAnimation('bounce', bounceDuration);
   state.transitioning = true;
-  setTimeout(() => advanceRound(), 700);
+  setTimeout(() => advanceRound(), Math.max(700, bounceDuration));
 }
 
 function handleSkip() {
   ensureAudio();
   if (state.transitioning || state.currentRound >= 11) return;
-  if (!state.startTime) startTimer();
+  stopTimer();
   const round = puzzle.value[state.currentRound];
-  const timeMs = Date.now() - state.roundStartTime;
+  const timeMs = Math.min(Date.now() - state.roundStartTime, ROUND_TIME_LIMIT_MS);
   const possibleAnswers = getAnswersForRound(round);
   state.completedRounds.push({ answer: '', timeMs, root: round.root, possibleAnswers });
+  saveInProgressState();
   playSound('playSkip');
   if (possibleAnswers.length > 0) {
     message.value = `Possible: ${possibleAnswers.slice(0, 3).join(', ')}`;
@@ -185,24 +244,28 @@ function advanceRound() {
   state.inputLetters = [];
   message.value = '';
   messageType.value = '';
-  startTimer();
+  animationClass.value = '';
+}
+
+function onRoundEntered() {
   state.transitioning = false;
+  startTimer();
 }
 
 function showScore(savedResults) {
-  clearInterval(timerInterval);
+  stopTimer();
   gameComplete.value = true;
 
-  if (savedResults) {
-    totalTimeMs.value = savedResults.reduce((sum, r) => sum + r.timeMs, 0);
-  } else {
-    totalTimeMs.value = Date.now() - state.startTime;
+  const results = savedResults || state.completedRounds;
+  totalTimeMs.value = results.reduce((sum, r) => sum + r.timeMs, 0);
+  if (!savedResults) {
     playSound('playGameComplete');
   }
 
   if (!savedResults && dateStr.value) {
     try {
       localStorage.setItem('reword-' + dateStr.value, JSON.stringify({
+        status: 'complete',
         results: state.completedRounds,
         totalTimeMs: totalTimeMs.value,
       }));
@@ -226,7 +289,6 @@ function showScore(savedResults) {
 function handleKeyInput(key) {
   ensureAudio();
   if (state.currentRound >= 11) return;
-  if (!state.startTime) startTimer();
   if (key === 'Enter') {
     handleSubmit();
     return;
@@ -241,14 +303,25 @@ function handleKeyInput(key) {
 }
 
 const shareButtonText = ref('Share Results');
+let sharing = false;
 
 async function handleShare() {
+  if (sharing) return;
+  sharing = true;
   const results = state.completedRounds;
   const shareText = generateShareText(results, dateStr.value, totalTimeMs.value);
-  try {
-    if (navigator.clipboard) {
-      await navigator.clipboard.writeText(shareText);
-    } else {
+  const { method } = await shareResults(shareText, navigator);
+
+  if (method === 'share') {
+    shareButtonText.value = 'Shared!';
+  } else if (method === 'clipboard') {
+    shareButtonText.value = 'Copied!';
+  } else if (method === 'dismissed') {
+    sharing = false;
+    return;
+  } else {
+    // Fallback: legacy execCommand
+    try {
       const ta = document.createElement('textarea');
       ta.value = shareText;
       document.body.appendChild(ta);
@@ -256,12 +329,12 @@ async function handleShare() {
       ta.select();
       document.execCommand('copy');
       ta.remove();
+      shareButtonText.value = 'Copied!';
+    } catch (e) {
+      shareButtonText.value = 'Could not copy';
     }
-    shareButtonText.value = 'Copied!';
-  } catch (e) {
-    shareButtonText.value = 'Could not copy';
   }
-  setTimeout(() => { shareButtonText.value = 'Share Results'; }, 2000);
+  setTimeout(() => { shareButtonText.value = 'Share Results'; sharing = false; }, 2000);
 }
 
 let keydownHandler = null;
@@ -269,6 +342,10 @@ let keydownHandler = null;
 onMounted(async () => {
   // Physical keyboard support
   keydownHandler = (e) => {
+    if (e.key === 'Escape' && showHowToPlay.value) {
+      handleCloseHowToPlay();
+      return;
+    }
     if (gameComplete.value || loading.value || showHowToPlay.value) return;
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -307,20 +384,46 @@ onMounted(async () => {
   loading.value = false;
 
   // Check for saved game
+  let restoredElapsedMs = 0;
   try {
     const saved = localStorage.getItem('reword-' + dateStr.value) || localStorage.getItem('anagram-trainer-' + dateStr.value);
     if (saved) {
-      const { results } = JSON.parse(saved);
-      state.completedRounds = results;
-      state.currentRound = 11;
-      showScore(results);
-      return;
+      const parsed = JSON.parse(saved);
+      const inProgress = deserializeGameState(parsed, Date.now());
+      if (inProgress) {
+        state.completedRounds = inProgress.completedRounds;
+        state.currentRound = inProgress.currentRound;
+        if (inProgress.elapsedMs >= ROUND_TIME_LIMIT_MS) {
+          // Round expired while away — auto-skip
+          const round = puzzle.value[state.currentRound];
+          const possibleAnswers = getAnswersForRound(round);
+          state.completedRounds.push({ answer: '', timeMs: ROUND_TIME_LIMIT_MS, root: round.root, possibleAnswers });
+          state.currentRound++;
+          saveInProgressState();
+          if (state.currentRound >= 11) {
+            showScore();
+            return;
+          }
+        } else {
+          restoredElapsedMs = inProgress.elapsedMs;
+        }
+      } else if (parsed.results) {
+        state.completedRounds = parsed.results;
+        state.currentRound = 11;
+        showScore(parsed.results);
+        return;
+      }
     }
   } catch (e) {}
+
+  if (!showHowToPlay.value) {
+    startTimer(restoredElapsedMs);
+  }
 });
 
 onUnmounted(() => {
-  if (timerInterval) clearInterval(timerInterval);
+  stopTimer();
+  clearTimeout(animationTimeout);
   if (keydownHandler) document.removeEventListener('keydown', keydownHandler);
 });
 </script>
