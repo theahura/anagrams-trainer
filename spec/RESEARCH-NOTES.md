@@ -106,3 +106,13 @@ This simple substring check covers: adding s/es/ed/ing/er to end, and common pre
 - **Expansion key derivation**: Compare sorted letter signatures of root vs answer word to determine which letters were added
 - **Limitation**: Max 2 wildcards means website can only source +1 and +2 letter expansions; +3 still needs TWL06
 - **Caching**: Store scraped results in `data/web-cache.json` keyed by query string to avoid re-scraping
+
+## Streak Tracking
+- **Wordle model**: Stores `currentStreak`, `maxStreak`, `lastPlayedTs`, `gamesPlayed`, `gamesWon` in a single `nyt-wordle-statistics` localStorage key
+- **Our approach**: Store in `anagram-trainer-stats` key with `{ currentStreak, maxStreak, lastPlayedDate, gamesPlayed }`
+- **Date format**: Must use UTC date strings (YYYY-MM-DD) to match existing puzzle date handling
+- **Streak algorithm**: Compare `lastPlayedDate` to today's UTC date. If yesterday → increment streak. If today → no change. If 2+ days ago or null → reset to 1. Then `maxStreak = Math.max(currentStreak, maxStreak)`
+- **"Yesterday" check**: Compare Date objects constructed from UTC date strings; difference of exactly 86400000ms = consecutive days. DST-immune since both are UTC
+- **Completion definition**: Any puzzle completion maintains the streak (not just "winning"). Matches Wordle behavior where completing the game counts regardless of guesses
+- **Integration points**: Update stats in `showScore()` after saving per-date results; load stats on game init for score screen display
+- **Display**: Horizontal stat boxes on score screen showing Games Played, Current Streak, Max Streak (matching Wordle layout)

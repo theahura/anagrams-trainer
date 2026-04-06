@@ -140,6 +140,30 @@ export function getSubmitFeedbackType(answer, round) {
   return 'wrong';
 }
 
+export function isConsecutiveDay(todayStr, previousStr) {
+  const today = new Date(todayStr + 'T00:00:00Z');
+  const previous = new Date(previousStr + 'T00:00:00Z');
+  return today.getTime() - previous.getTime() === 86400000;
+}
+
+export function updateStreakStats(existingStats, todayDateStr) {
+  if (!existingStats) {
+    return { currentStreak: 1, maxStreak: 1, lastPlayedDate: todayDateStr, gamesPlayed: 1 };
+  }
+  if (existingStats.lastPlayedDate === todayDateStr) {
+    return existingStats;
+  }
+  const consecutive = isConsecutiveDay(todayDateStr, existingStats.lastPlayedDate);
+  const currentStreak = consecutive ? existingStats.currentStreak + 1 : 1;
+  const maxStreak = Math.max(currentStreak, existingStats.maxStreak);
+  return {
+    currentStreak,
+    maxStreak,
+    lastPlayedDate: todayDateStr,
+    gamesPlayed: existingStats.gamesPlayed + 1,
+  };
+}
+
 export function calculateScore(completedRounds) {
   return {
     totalLetters: completedRounds.reduce((sum, r) => sum + r.answer.length, 0),

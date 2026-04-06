@@ -1,8 +1,8 @@
 # Current Progress
 
-## Status: MVP Complete + Multi-Letter Expansion + Web-Sourced Build + Share Results + Tile Feedback + Answer Animations
+## Status: MVP Complete + Multi-Letter Expansion + Web-Sourced Build + Share Results + Tile Feedback + Answer Animations + Streak Tracking
 
-The full Anagram Trainer game is implemented and tested with multi-letter expansion support, a web-sourced build pipeline, share results functionality, and real-time tile visual feedback.
+The full Anagram Trainer game is implemented and tested with multi-letter expansion support, a web-sourced build pipeline, share results functionality, real-time tile visual feedback, and streak tracking.
 
 ## Completed
 - Researched scrabblewordfinder.org API (no usable REST API; wordunscrambler.me has URL-based access but CORS blocks browser calls)
@@ -42,6 +42,12 @@ The full Anagram Trainer game is implemented and tested with multi-letter expans
 - Skip reveals possible answers (up to 3) before transitioning
 - Accessibility: `@media (prefers-reduced-motion: reduce)` disables all animations
 - 76 unit tests passing (added 5 tests for getSubmitFeedbackType)
+- Streak tracking: current streak, max streak, and games played persisted in localStorage
+- `isConsecutiveDay` and `updateStreakStats` pure functions in game.js for testable streak logic
+- Streak stats displayed on score screen below game stats (Played, Current Streak, Max Streak)
+- Stats stored in `anagram-trainer-stats` localStorage key, separate from per-date results
+- Uses UTC dates for streak calculation, matching existing puzzle date handling
+- 88 unit tests passing (added 12 tests for streak tracking)
 
 ## Architecture
 - Pure static HTML/JS, no backend or framework
@@ -52,8 +58,8 @@ The full Anagram Trainer game is implemented and tested with multi-letter expans
 - `scripts/web-scraper.js` module for HTML parsing and expansion key derivation
 - UTC date ensures all players worldwide get the same daily puzzle
 - localStorage keyed by `anagram-trainer-YYYY-MM-DD` for game state persistence
+- localStorage keyed by `anagram-trainer-stats` for aggregate streak statistics
 
 ## Potential Future Improvements
-- Streak tracking with localStorage
 - Sound effects
 - Mobile-optimized touch input

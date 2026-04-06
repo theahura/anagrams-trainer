@@ -9,6 +9,8 @@ import {
   generateShareText,
   matchTypedToTiles,
   getSubmitFeedbackType,
+  isConsecutiveDay,
+  updateStreakStats,
 } from '../src/game.js';
 
 // Minimal puzzle data for testing
@@ -390,6 +392,81 @@ describe('getSubmitFeedbackType', () => {
       offeredLetters: ['e', 'k', 'z'],
     };
     expect(getSubmitFeedbackType('nadir', roundWithExtra)).toBe('wrong');
+  });
+});
+
+describe('isConsecutiveDay', () => {
+  it('returns true for consecutive days', () => {
+    expect(isConsecutiveDay('2026-04-05', '2026-04-04')).toBe(true);
+  });
+
+  it('returns false for the same day', () => {
+    expect(isConsecutiveDay('2026-04-05', '2026-04-05')).toBe(false);
+  });
+
+  it('returns false for a 2-day gap', () => {
+    expect(isConsecutiveDay('2026-04-05', '2026-04-03')).toBe(false);
+  });
+
+  it('returns true across month boundary', () => {
+    expect(isConsecutiveDay('2026-03-01', '2026-02-28')).toBe(true);
+  });
+
+  it('returns true across year boundary', () => {
+    expect(isConsecutiveDay('2026-01-01', '2025-12-31')).toBe(true);
+  });
+
+  it('returns false when dates are in reverse order', () => {
+    expect(isConsecutiveDay('2026-04-04', '2026-04-05')).toBe(false);
+  });
+});
+
+describe('updateStreakStats', () => {
+  it('returns initial stats for first play (null input)', () => {
+    const stats = updateStreakStats(null, '2026-04-05');
+    expect(stats).toEqual({
+      currentStreak: 1,
+      maxStreak: 1,
+      lastPlayedDate: '2026-04-05',
+      gamesPlayed: 1,
+    });
+  });
+
+  it('increments streak on consecutive day play', () => {
+    const existing = { currentStreak: 3, maxStreak: 5, lastPlayedDate: '2026-04-04', gamesPlayed: 10 };
+    const stats = updateStreakStats(existing, '2026-04-05');
+    expect(stats.currentStreak).toBe(4);
+    expect(stats.gamesPlayed).toBe(11);
+    expect(stats.lastPlayedDate).toBe('2026-04-05');
+  });
+
+  it('returns stats unchanged on same-day play', () => {
+    const existing = { currentStreak: 3, maxStreak: 5, lastPlayedDate: '2026-04-05', gamesPlayed: 10 };
+    const stats = updateStreakStats(existing, '2026-04-05');
+    expect(stats).toEqual(existing);
+  });
+
+  it('resets streak on missed day', () => {
+    const existing = { currentStreak: 5, maxStreak: 7, lastPlayedDate: '2026-04-03', gamesPlayed: 10 };
+    const stats = updateStreakStats(existing, '2026-04-05');
+    expect(stats.currentStreak).toBe(1);
+    expect(stats.maxStreak).toBe(7);
+    expect(stats.gamesPlayed).toBe(11);
+    expect(stats.lastPlayedDate).toBe('2026-04-05');
+  });
+
+  it('updates maxStreak when current surpasses it', () => {
+    const existing = { currentStreak: 5, maxStreak: 5, lastPlayedDate: '2026-04-04', gamesPlayed: 10 };
+    const stats = updateStreakStats(existing, '2026-04-05');
+    expect(stats.currentStreak).toBe(6);
+    expect(stats.maxStreak).toBe(6);
+  });
+
+  it('preserves maxStreak when current does not surpass it', () => {
+    const existing = { currentStreak: 2, maxStreak: 10, lastPlayedDate: '2026-04-04', gamesPlayed: 20 };
+    const stats = updateStreakStats(existing, '2026-04-05');
+    expect(stats.currentStreak).toBe(3);
+    expect(stats.maxStreak).toBe(10);
   });
 });
 
