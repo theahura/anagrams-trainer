@@ -1,6 +1,6 @@
 # Current Progress
 
-## Status: Vue 3 Migration + Modern Redesign + All APPLICATION-SPEC Items Complete
+## Status: Vue 3 Migration + Modern Redesign + Per-Round Countdown Timer
 
 The game has been renamed to **Reword** and fully migrated to Vue 3 + Vite with a modern dark theme, tile click sounds, how-to-play modal, and countdown timer.
 
@@ -14,7 +14,8 @@ The game has been renamed to **Reword** and fully migrated to Vue 3 + Vite with 
 - **How-to-Play Modal**: Auto-shows on first visit (localStorage `reword-seen-how-to-play`), re-openable via `?` icon in header
 - **Countdown Timer**: Score screen shows "Next puzzle in: HH:MM:SS" countdown to UTC midnight. Pure functions `formatCountdown()` and `getTimeUntilMidnightUTC()` in game.js
 - **Favicon**: Green (#538d4e) square tile with white "R" SVG favicon at `public/favicon.svg`, linked in `index.html`
-- 127 tests passing (96 pure logic + 26 Vue component + 5 countdown/HowToPlay tests)
+- **Per-Round Countdown Timer**: 60-second countdown per round. Auto-skips when timer expires. Timer resets each round. Cumulative time shown only on score screen. `ROUND_TIME_LIMIT_MS` constant and `formatRoundTimer()` pure function in game.js
+- 132 tests passing (101 pure logic + 26 Vue component + 5 countdown/HowToPlay tests)
 
 ## Architecture
 - **Vue 3 + Vite**: Entry point `src/main.js` → `App.vue` mounts to `<div id="app">`
@@ -30,4 +31,3 @@ The game has been renamed to **Reword** and fully migrated to Vue 3 + Vite with 
 
 ## Remaining from APPLICATION-SPEC
 - Make it play nice on mobile (partially done: virtual keyboard, touch buttons, responsive CSS already exist)
-- Per-round countdown timer: each stage gives the player max one minute counting down, auto-skip on timeout, show cumulative time only at end

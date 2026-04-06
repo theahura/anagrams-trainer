@@ -47,7 +47,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
-import { selectDailyPuzzle, isValidAnswer, calculateScore, getAnswersForRound, generateShareText, getSubmitFeedbackType, updateStreakStats, processKeyPress } from '../game.js';
+import { selectDailyPuzzle, isValidAnswer, calculateScore, getAnswersForRound, generateShareText, getSubmitFeedbackType, updateStreakStats, processKeyPress, ROUND_TIME_LIMIT_MS, formatRoundTimer } from '../game.js';
 import { getAudioContext, initSound } from '../sound.js';
 import GameBoard from './GameBoard.vue';
 import VirtualKeyboard from './VirtualKeyboard.vue';
@@ -68,13 +68,17 @@ const state = reactive({
   currentRound: 0,
   completedRounds: [],
   inputLetters: [],
-  startTime: null,
   roundStartTime: null,
   transitioning: false,
 });
 
 let timerInterval = null;
-const timerDisplay = ref('0:00');
+const timerDisplay = ref(formatRoundTimer(ROUND_TIME_LIMIT_MS));
+
+function stopTimer() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+}
 
 let audio = null;
 
@@ -108,22 +112,23 @@ const runningLetterScore = computed(() => state.completedRounds.reduce((sum, r) 
 const streakStats = ref(null);
 
 function startTimer() {
-  if (!state.startTime) state.startTime = Date.now();
   state.roundStartTime = Date.now();
-  if (timerInterval) clearInterval(timerInterval);
+  stopTimer();
+  timerDisplay.value = formatRoundTimer(ROUND_TIME_LIMIT_MS);
   timerInterval = setInterval(() => {
-    const elapsed = Date.now() - state.startTime;
-    const seconds = Math.floor(elapsed / 1000);
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    timerDisplay.value = `${mins}:${secs.toString().padStart(2, '0')}`;
+    const elapsed = Date.now() - state.roundStartTime;
+    const remaining = Math.max(0, ROUND_TIME_LIMIT_MS - elapsed);
+    timerDisplay.value = formatRoundTimer(remaining);
+    if (remaining <= 0) {
+      stopTimer();
+      handleSkip();
+    }
   }, 100);
 }
 
 function handleSubmit() {
   ensureAudio();
   if (state.transitioning || state.currentRound >= 11) return;
-  if (!state.startTime) startTimer();
   const round = puzzle.value[state.currentRound];
   const answer = state.inputLetters.join('');
   const feedback = getSubmitFeedbackType(answer, round);
@@ -144,7 +149,8 @@ function handleSubmit() {
     return;
   }
 
-  const timeMs = Date.now() - state.roundStartTime;
+  stopTimer();
+  const timeMs = Math.min(Date.now() - state.roundStartTime, ROUND_TIME_LIMIT_MS);
   const possibleAnswers = getAnswersForRound(round);
   state.completedRounds.push({ answer, timeMs, root: round.root, possibleAnswers });
   message.value = 'Correct!';
@@ -157,9 +163,9 @@ function handleSubmit() {
 function handleSkip() {
   ensureAudio();
   if (state.transitioning || state.currentRound >= 11) return;
-  if (!state.startTime) startTimer();
+  stopTimer();
   const round = puzzle.value[state.currentRound];
-  const timeMs = Date.now() - state.roundStartTime;
+  const timeMs = Math.min(Date.now() - state.roundStartTime, ROUND_TIME_LIMIT_MS);
   const possibleAnswers = getAnswersForRound(round);
   state.completedRounds.push({ answer: '', timeMs, root: round.root, possibleAnswers });
   playSound('playSkip');
@@ -185,18 +191,17 @@ function advanceRound() {
   state.inputLetters = [];
   message.value = '';
   messageType.value = '';
-  startTimer();
   state.transitioning = false;
+  startTimer();
 }
 
 function showScore(savedResults) {
-  clearInterval(timerInterval);
+  stopTimer();
   gameComplete.value = true;
 
-  if (savedResults) {
-    totalTimeMs.value = savedResults.reduce((sum, r) => sum + r.timeMs, 0);
-  } else {
-    totalTimeMs.value = Date.now() - state.startTime;
+  const results = savedResults || state.completedRounds;
+  totalTimeMs.value = results.reduce((sum, r) => sum + r.timeMs, 0);
+  if (!savedResults) {
     playSound('playGameComplete');
   }
 
@@ -226,7 +231,6 @@ function showScore(savedResults) {
 function handleKeyInput(key) {
   ensureAudio();
   if (state.currentRound >= 11) return;
-  if (!state.startTime) startTimer();
   if (key === 'Enter') {
     handleSubmit();
     return;
@@ -317,10 +321,12 @@ onMounted(async () => {
       return;
     }
   } catch (e) {}
+
+  startTimer();
 });
 
 onUnmounted(() => {
-  if (timerInterval) clearInterval(timerInterval);
+  stopTimer();
   if (keydownHandler) document.removeEventListener('keydown', keydownHandler);
 });
 </script>

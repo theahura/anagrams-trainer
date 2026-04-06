@@ -13,6 +13,7 @@ import {
   processKeyPress,
   formatCountdown,
   getTimeUntilMidnightUTC,
+  formatRoundTimer,
 } from '../src/game.js';
 
 // Minimal puzzle data for testing
@@ -584,5 +585,23 @@ describe('getTimeUntilMidnightUTC', () => {
     const ms = getTimeUntilMidnightUTC();
     expect(ms).toBeGreaterThan(0);
     expect(ms).toBeLessThanOrEqual(86400000);
+  });
+});
+
+describe('formatRoundTimer', () => {
+  it('formats 60 seconds as 1:00', () => {
+    expect(formatRoundTimer(60000)).toBe('1:00');
+  });
+
+  it('formats 0 milliseconds as 0:00', () => {
+    expect(formatRoundTimer(0)).toBe('0:00');
+  });
+
+  it('formats 59999ms as 0:59 (floors sub-second remainder)', () => {
+    expect(formatRoundTimer(59999)).toBe('0:59');
+  });
+
+  it('formats 5 seconds as 0:05 (zero-padded seconds)', () => {
+    expect(formatRoundTimer(5000)).toBe('0:05');
   });
 });

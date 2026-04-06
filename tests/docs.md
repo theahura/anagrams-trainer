@@ -17,7 +17,7 @@ Path: @/tests
 ### Core Implementation
 
 - **`prng.test.js`** -- Verifies PRNG determinism (same date -> same sequence), distinctness (different dates -> different sequences), and output range [0, 1). Also tests `seededShuffle` determinism and element preservation, and `seededPick` determinism
-- **`game.test.js`** -- Tests daily puzzle selection, answer validation (including trivial suffix rejection for s/ed/er), offered letter guarantees, `getAnswersForRound`, share text generation (verifies "Reword" header), `matchTypedToTiles`, `getSubmitFeedbackType`, `isConsecutiveDay`, `updateStreakStats`, `processKeyPress`, `calculateScore`, `formatCountdown` (HH:MM:SS formatting for various durations), and `getTimeUntilMidnightUTC` (returns positive number less than 24 hours)
+- **`game.test.js`** -- Tests daily puzzle selection, answer validation (including trivial suffix rejection for s/ed/er), offered letter guarantees, `getAnswersForRound`, share text generation (verifies "Reword" header), `matchTypedToTiles`, `getSubmitFeedbackType`, `isConsecutiveDay`, `updateStreakStats`, `processKeyPress`, `calculateScore`, `formatCountdown` (HH:MM:SS formatting for various durations), `formatRoundTimer` (M:SS countdown formatting including boundary values and floor behavior), and `getTimeUntilMidnightUTC` (returns positive number less than 24 hours)
 - **`components.test.js`** -- Vue component tests using `@vue/test-utils`:
   - `ScrabbleTile`: renders uppercase letters, no `.points` element, applies tileClass prop
   - `TileRack`: renders each letter, handles empty arrays and tileClass propagation
