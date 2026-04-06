@@ -22,24 +22,29 @@ Path: @/src
   - `createApp(App).mount('#app')` -- mounts the root component into the `#app` div
 
 - **`components/App.vue`** -- Root component, owns all game state
-  - All game state lives in a `reactive()` object: `{ currentRound, completedRounds, inputLetters, startTime, roundStartTime, transitioning }`. UI flags (`loading`, `gameComplete`, `muted`, `showHowToPlay`, etc.) are individual `ref()` values
-  - On mount: checks `reword-seen-how-to-play` localStorage to auto-show `HowToPlay` on first visit, fetches `puzzles.json`, derives UTC date string, selects daily puzzle, and checks for saved game (with fallback read from old `anagram-trainer-*` keys)
+  - All game state lives in a `reactive()` object: `{ currentRound, completedRounds, inputLetters, roundStartTime, transitioning }`. UI flags (`loading`, `gameComplete`, `muted`, `showHowToPlay`, etc.) are individual `ref()` values
+  - On mount: checks `reword-seen-how-to-play` localStorage to auto-show `HowToPlay` on first visit, fetches `puzzles.json`, derives UTC date string, selects daily puzzle, and checks for saved game (with fallback read from old `anagram-trainer-*` keys). Restore logic handles two save formats: `status: 'in-progress'` (resumes mid-game via `deserializeGameState`, auto-skips if the current round's timer has expired) and `status: 'complete'` or legacy saves without status (shows score screen)
   - `handleKeyInput(key)` dispatches to `processKeyPress` from `game.js` for letter processing, and to `handleSubmit` for Enter
   - `handleSubmit()` and `handleSkip()` use `state.transitioning` flag and `state.currentRound >= 11` guard to prevent double-submission
-  - `showScore(savedResults?)` dual mode: fresh game results or saved replay. On fresh completion, persists to `reword-{date}` and updates `reword-stats` via `updateStreakStats`
-  - Physical keyboard handled via a document-level `keydown` listener that guards against `gameComplete`, `loading`, and `showHowToPlay` states
+  - `saveInProgressState()` serializes and writes game state to localStorage after each round completion (called in both `handleSubmit` and `handleSkip`). This enables mid-game persistence so a page refresh doesn't lose progress
+  - `showScore(savedResults?)` dual mode: fresh game results or saved replay. On fresh completion, persists to `reword-{date}` with `status: 'complete'` and updates `reword-stats` via `updateStreakStats`
+  - `handleShare()` delegates to `shareResults()` from `game.js` for the Web Share API and Clipboard API tiers, then handles the `'fallback'` case with a DOM-based `document.execCommand('copy')` (which cannot be a pure function). Button text shows "Shared!" for Web Share, "Copied!" for clipboard, and silently returns on user dismiss
+  - Physical keyboard handled via a document-level `keydown` listener that guards against `gameComplete`, `loading`, and `showHowToPlay` states. Escape key is checked before the `showHowToPlay` early return guard so it can close the modal
   - Audio lazily initialized via `ensureAudio()` on first user interaction
+  - Answer feedback animations: `triggerAnimation(cls, durationMs)` sets `animationClass` ref, passed as a prop to `GameBoard`. Shake (400ms) on invalid/wrong answers, bounce (600 + 80ms per tile) on correct answers. Uses `requestAnimationFrame` to force class reset/reapply for animation restart
+  - Round transitions: `<Transition name="round" mode="out-in">` wraps `GameBoard` keyed by `state.currentRound`. Timer starts via `@after-enter` hook (`onRoundEntered`) instead of immediately on `advanceRound()`
 
 - **`components/GameBoard.vue`** -- Game area: tile racks, input area, submit/skip buttons
   - Uses computed `matchTypedToTiles()` result to derive per-tile CSS classes for real-time feedback (invalid tiles highlighted)
   - Renders empty placeholder tiles up to `minLen` via `displayLen` computed property
   - Exposes a `#timer` slot used by `App.vue` to inject letter score and timer display
+  - Accepts `animationClass` prop applied to `#input-area` for shake/bounce animations. Input tiles use `:style="{ '--tile-index': i }"` for staggered bounce timing
 
 - **`components/ScoreScreen.vue`** -- End-of-game display with countdown
-  - Shows per-round breakdown (root, answer or SKIPPED, possible answers for skipped rounds)
+  - Shows per-round breakdown (root, answer or SKIPPED, possible answers for skipped rounds). Possible answers for skipped rounds are capped at 5 displayed, with a "+N more" indicator when there are additional answers
   - Displays a "Next puzzle in: HH:MM:SS" countdown using `formatCountdown()` and `getTimeUntilMidnightUTC()` from `game.js`, ticked every second via `setInterval`
 
-- **`components/HowToPlay.vue`** -- Tutorial modal with example tiles, closes on overlay click or X button
+- **`components/HowToPlay.vue`** -- Tutorial modal with example tiles, closes on overlay click or X button. Lists key gameplay rules: 11 rounds, 60-second per-round timer with auto-skip, daily puzzle cadence, and letter-based scoring
 
 - **`components/ScrabbleTile.vue`** -- Single tile displaying an uppercase letter. No Scrabble point subscripts
 
@@ -54,10 +59,15 @@ Path: @/src
 
 - **`game.js`** -- Puzzle selection, answer validation, share text, and countdown utilities
   - `selectDailyPuzzle(puzzleData, dateStr)` selects 11 rounds using date-seeded PRNG, difficulty progression (3+3+3+1+1)
-  - `isValidAnswer(answer, round)` checks expansion dictionary and offered-letter availability, and rejects trivial suffix appends (s, ed, er) via `TRIVIAL_SUFFIXES` constant
+  - `isValidAnswer(answer, round)` checks expansion dictionary and offered-letter availability. All valid dictionary words present in the expansion data are accepted -- there is no runtime filtering beyond dictionary lookup and offered-letter validation
   - `generateShareText(results, dateStr, totalTimeMs)` produces share string with "Reword" header (not "Anagram Trainer")
+  - `shareResults(text, nav)` async function implementing a three-tier share fallback: Web Share API (`nav.share()`), then Clipboard API (`nav.clipboard.writeText()`), then returns `{ method: 'fallback' }` for DOM-level `execCommand` handling. Uses dependency injection (`nav` parameter instead of global `navigator`) for testability. Returns `{ method: 'share' | 'clipboard' | 'dismissed' | 'fallback' }`. Handles `AbortError` (user dismissed native share sheet) gracefully by returning `'dismissed'`
   - `matchTypedToTiles(typedLetters, rootLetters, offeredLetters)` maps each typed character to a tile position with root-first priority, used by `GameBoard.vue` for real-time feedback
-  - `formatCountdown(ms)` converts milliseconds to `HH:MM:SS` string
+  - `ROUND_TIME_LIMIT_MS` (60000) defines the per-round countdown duration. `TIMER_URGENT_THRESHOLD_MS` (10000) defines the threshold at which the timer enters urgency mode. `isTimerUrgent(remainingMs)` is a pure function returning `true` when remaining time is at or below the threshold
+  - `serializeGameState(currentRound, completedRounds)` creates a serializable in-progress save object with `status: 'in-progress'` and a `roundStartTimestamp` (wall-clock `Date.now()`)
+  - `deserializeGameState(saved, now)` restores in-progress state: returns `{ currentRound, completedRounds, elapsedMs }` or `null` if the save is not in-progress (complete, legacy, or missing). Elapsed time is capped at `ROUND_TIME_LIMIT_MS` so the caller can decide whether to auto-skip the expired round
+  - `formatRoundTimer(ms)` converts remaining milliseconds to `M:SS` display string (floors to whole seconds)
+  - `formatCountdown(ms)` converts milliseconds to `HH:MM:SS` string (used by `ScoreScreen` for next-puzzle countdown)
   - `getTimeUntilMidnightUTC()` returns milliseconds until next UTC midnight
   - Other pure functions: `getOfferedLetters`, `getAnswersForRound`, `getSubmitFeedbackType`, `isConsecutiveDay`, `updateStreakStats`, `processKeyPress`, `calculateScore`
 
@@ -71,16 +81,16 @@ Path: @/src
   - `initSound(audioCtx)` creates master `GainNode`, returns `{ sounds, setMuted(val), isMuted() }`
   - `createSoundEffects(audioCtx, masterGain)` returns play methods: `playKeyClick` (filtered white noise burst -- bandpass at 1200Hz, Q=2), `playCorrect` (two-note sine chime: C5 then E5), `playWrong` (low sawtooth), `playSkip` (descending triangle wave), `playGameComplete` (ascending four-note arpeggio: C5-E5-G5-C6)
 
-- **`ui.js`** -- Legacy DOM rendering module, no longer imported. Kept in the codebase but unused; all UI logic has been migrated to Vue components
-
 ### Things to Know
 
 - `words.js` functions are shared between the build script and runtime -- `findExpansions` accepts either a raw dictionary array or a pre-built `Map` index to support both use cases
 - `getOfferedLetters` extracts individual characters from multi-char expansion keys (e.g., `"el"` yields `"e"` and `"l"`) using `join('').split('')`, then deduplicates. It prioritizes including a single-letter expansion key in the offered set to ensure at least one straightforward answer exists
 - The UI input max length is `root.length + offeredLetters.length`, allowing players to use all offered letters. Submit validation accepts answers between `root.length + 1` and this max
 - `isKeySubsetOfOffered` in `game.js` checks whether each character of a multi-letter key can be consumed from the offered letters array (removing used letters to handle duplicates). This is the core mechanism enabling multi-letter expansion matching at runtime
-- The `state.transitioning` flag in `App.vue` prevents input during the 700ms (correct) or 1200ms (skip with possible answers) delay between rounds
-- Timer displays elapsed time since the first keystroke of the entire game, not per-round time
+- The `state.transitioning` flag in `App.vue` prevents input during the delay between rounds. It is set `true` on submit/skip, and cleared in `onRoundEntered()` (after the Vue transition completes), which also restarts the timer. The advance delay is `max(700ms, bounceDuration)` for correct answers and 1200ms for skips with possible answers
+- Timer counts down from 60 seconds per round. `startTimer(alreadyElapsedMs)` resets the display, records `roundStartTime` adjusted by elapsed time, and ticks every 100ms. When remaining time hits 0, the interval auto-calls `handleSkip()`. Both `handleSubmit()` and `handleSkip()` call `stopTimer()` and cap recorded `timeMs` at `ROUND_TIME_LIMIT_MS`. The timer has three states: running (interval active), stopped (between rounds or game complete), and paused (HowToPlay modal open mid-game). `openHowToPlay()` saves elapsed time to `pausedElapsedMs` and stops the interval; `handleCloseHowToPlay()` resumes via `startTimer(pausedElapsedMs)`. On first visit, the timer doesn't start until the modal closes (the same resume path handles both cases since `pausedElapsedMs` defaults to 0). Timer restarts in `onRoundEntered()` after the round transition animation completes. Timer urgency: a `timerUrgent` ref is set via `isTimerUrgent(remaining)` on each tick and at timer start, binding an `.urgent` CSS class on `.timer-display` that turns the text red with a pulse animation
+- `showScore()` computes `totalTimeMs` as the sum of per-round `timeMs` values (not wall-clock time)
+- **localStorage save format** for `reword-{date}` has two shapes: in-progress (`{ status: 'in-progress', currentRound, completedRounds, roundStartTimestamp }`) and complete (`{ status: 'complete', results, totalTimeMs }`). Legacy saves without a `status` field are treated as complete for backwards compatibility. Timer restoration on reload uses the wall-clock `roundStartTimestamp` -- time continues to pass while the tab is closed
 - Streak calculation is pure (in `game.js`) with localStorage access only in `App.vue`, consistent with the pattern of keeping side effects out of game logic
 - Sound synthesis follows the same pure-logic-in-module, side-effects-in-UI pattern: `sound.js` is a pure factory testable with a mock AudioContext, while `App.vue` handles AudioContext creation, localStorage mute persistence, and event hookup
 

@@ -193,6 +193,60 @@ export function formatCountdown(ms) {
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
+export const ROUND_TIME_LIMIT_MS = 60000;
+
+export const TIMER_URGENT_THRESHOLD_MS = 10000;
+
+export function isTimerUrgent(remainingMs) {
+  return remainingMs <= TIMER_URGENT_THRESHOLD_MS;
+}
+
+export function formatRoundTimer(ms) {
+  const totalSeconds = Math.floor(Math.max(0, ms) / 1000);
+  const mins = Math.floor(totalSeconds / 60);
+  const secs = totalSeconds % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+export function serializeGameState(currentRound, completedRounds, now) {
+  return {
+    status: 'in-progress',
+    currentRound,
+    completedRounds,
+    roundStartTimestamp: now,
+  };
+}
+
+export function deserializeGameState(saved, now) {
+  if (!saved || saved.status !== 'in-progress') return null;
+  const elapsedMs = Math.max(0, Math.min(now - saved.roundStartTimestamp, ROUND_TIME_LIMIT_MS));
+  return {
+    currentRound: saved.currentRound,
+    completedRounds: saved.completedRounds,
+    elapsedMs,
+  };
+}
+
+export async function shareResults(text, nav) {
+  if (nav.share) {
+    try {
+      await nav.share({ text });
+      return { method: 'share' };
+    } catch (e) {
+      if (e.name === 'AbortError') return { method: 'dismissed' };
+    }
+  }
+  if (nav.clipboard) {
+    try {
+      await nav.clipboard.writeText(text);
+      return { method: 'clipboard' };
+    } catch (e) {
+      // fall through
+    }
+  }
+  return { method: 'fallback' };
+}
+
 export function getTimeUntilMidnightUTC() {
   const now = new Date();
   const tomorrow = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));

@@ -41,8 +41,11 @@ This simple substring check covers: adding s/es/ed/ing/er to end, and common pre
 - Wordle shows statistics + emoji share grid; reveals answer on failure
 - Spelling Bee shows all valid answers after day ends, differentiating found vs missed
 - Standard pattern for daily word games: per-round results + answer reveal for missed words
-- Current implementation shows only aggregate stats (words solved, letters, time)
-- Should add: per-round breakdown showing root, player answer, and possible answers for skipped/missed rounds
+- ~~Current implementation shows only aggregate stats (words solved, letters, time)~~ DONE — Per-round breakdown added in ScoreScreen.vue
+- ~~Should add: per-round breakdown showing root, player answer, and possible answers for skipped/missed rounds~~ DONE
+- **Gap**: Score screen shows ALL possible answers for skipped rounds (uncapped), while in-game skip message caps at 3. Should cap to prevent overwhelming display
+- **Gap**: HowToPlay modal doesn't mention the 60-second per-round timer or letter scoring mechanic
+- Major daily word games (Wordle, Connections, Spelling Bee) do NOT show per-round timing — only total time. Per-round time display not recommended
 
 ## Replay Prevention
 - Standard approach: localStorage keyed by date string
@@ -212,6 +215,16 @@ This simple substring check covers: adding s/es/ed/ing/er to end, and common pre
 - State management via composables (useGameState, useTimer, useSound) — no Pinia needed
 - CSS: keep global style.css, add scoped styles in SFCs where needed
 
+## SVG Favicon
+- **Design**: Green (#538d4e) square tile with white "R" letter — matches the game's accent color and is visible on both light and dark browser chrome
+- **Format**: SVG preferred — scalable, tiny file size, supports embedded dark mode CSS via `@media (prefers-color-scheme: dark)`
+- **Browser support**: Chrome, Firefox, Edge all support SVG favicons. Safari does NOT support SVG favicons (needs PNG fallback or `<link rel="mask-icon">`)
+- **Placement**: `public/favicon.svg` so Vite serves it at `/favicon.svg`
+- **HTML**: `<link rel="icon" type="image/svg+xml" href="/favicon.svg">` in `<head>`
+- **Dimensions**: SVG viewBox="0 0 32 32" — standard favicon size, scales to any resolution
+- **Typography**: Bold, uppercase "R" in Arial/Helvetica, centered in a rounded-corner tile. Matches the game's font: `'Helvetica Neue', Arial, sans-serif`
+- **No PNG fallback for now**: This is a simple game, not a commercial product. Safari will show a generic icon, which is acceptable
+
 ## Bounds Check Bug in handleSubmit/handleSkip
 - `handleSubmit()` at `src/ui.js:253` accesses `puzzle[state.currentRound]` without checking bounds
 - After the last round (round 11, index 10), `advanceRound()` increments `state.currentRound` to 11
@@ -220,9 +233,54 @@ This simple substring check covers: adding s/es/ed/ing/er to end, and common pre
 - `handleKeyInput()` and the `input` event handler also access `puzzle[state.currentRound]` without bounds checking
 - **Fix**: Add early return guard `if (state.currentRound >= 11) return;` at the top of `handleSubmit`, `handleSkip`, `handleKeyInput`, and the `input` event handler
 
+## Per-Round Countdown Timer
+- **Spec requirement**: Each stage gives max 1 minute counting down, auto-skip on timeout, show cumulative time only at end
+- **Current timer**: `startTimer()` in App.vue runs a cumulative elapsed-time display (counting UP from 0). Ticks every 100ms. `timerDisplay` ref formatted as `M:SS`.
+- **Per-round time already tracked**: `state.roundStartTime` set in `startTimer()`, used to compute `timeMs = Date.now() - state.roundStartTime` in handleSubmit/handleSkip
+- **Display location**: `timerDisplay` rendered in GameBoard via named slot `#timer`, alongside letter score
+- **Key changes needed**:
+  1. Add `ROUND_TIME_LIMIT_MS = 60000` constant and `formatRoundTimer(ms)` pure function to game.js
+  2. Replace cumulative timer with countdown: `startTimer()` sets `roundTimeRemaining` to 60000, interval counts down
+  3. When countdown hits 0, auto-call `handleSkip()` — `state.transitioning` guard prevents double-fire
+  4. Timer pauses during transitions (interval cleared when transitioning starts, restarted in `advanceRound()`)
+  5. `showScore()` computes `totalTimeMs` as sum of per-round `timeMs` (already how `calculateScore()` works)
+  6. Timer display changes from "0:00" counting up to "1:00" counting down
+- **Edge cases**: Timer should not auto-skip during transition phase. Timer should stop on game completion. Saved game restoration doesn't need timer.
+- **Format**: `M:SS` (e.g., "1:00" → "0:00"). Use `formatRoundTimer` for consistency.
+
+## Mobile Layout Optimization
+- **`100svh` vs `100vh`**: On mobile browsers, `100vh` equals the largest viewport (URL bar hidden), causing content to overflow when URL bar is visible. `100svh` (small viewport height) represents the viewport with all browser chrome visible — content never overflows. Baseline Widely Available since June 2025 (Chrome 108+, Firefox 101+, Safari 15.4+). Use `height: 100vh; height: 100svh;` (fallback first).
+- **`overscroll-behavior: none`**: Prevents pull-to-refresh on Android Chrome and rubber-band bounce on iOS Safari. Critical for game apps where accidental swipe disrupts gameplay.
+- **`touch-action: manipulation`**: Allows taps and scrolling but disables double-tap-to-zoom, eliminating the ~300ms tap delay on mobile. Apply to `#game-container`.
+- **Safe area insets**: Devices with notches/home indicators (iPhone X+) need `env(safe-area-inset-bottom)` padding on the virtual keyboard. Requires `viewport-fit=cover` in the viewport meta tag. Returns `0` on non-notched devices.
+- **`overflow: hidden` on body**: Prevents page scrolling entirely — game should fit within viewport.
+- **Flex column layout**: Make `#game-container` a flex column with `height: 100%`. Header `flex-shrink: 0`, game board `flex: 1`, keyboard `flex-shrink: 0`. Content fits without scrolling.
+- **`-webkit-tap-highlight-color: transparent`**: Already on keyboard keys, should be on all interactive elements to prevent blue/grey flash on tap.
+- **Tile overflow prevention**: On narrow screens (< 360px), 7+ letter words with 52px tiles overflow. The 420px breakpoint already scales to 40px tiles. May need a smaller breakpoint (~320px) for very small devices.
+
 ## Running Letter Score During Gameplay
 - The spec says "Score tracks total letters used across all words"
 - Currently, total letters only displayed on the score screen post-game (`src/ui.js:383`)
 - No running letter count visible during gameplay — only the timer is shown in the game-info bar
 - **Approach**: Add a `<span id="letter-score">` next to timer in game-info bar. Update it after each round completion (in `handleSubmit` after pushing to `completedRounds`, and in `handleSkip`). Show format like "Letters: 0" to match the game aesthetic
 - `calculateScore` already computes `totalLetters` from `completedRounds`, can reuse that
+
+## Vue 3 Animation Wiring Gap
+- **Problem**: CSS animations (`shake`, `bounce`, `fade-out`, `fade-in`) defined in `style.css:506-547` but never applied in Vue components
+- The original `src/ui.js` had `triggerShake()`, `triggerBounce()`, `fadeOutGameArea()`, `fadeInGameArea()` functions — lost during Vue 3 migration
+- `src/ui.js` itself is dead code — nothing imports it
+- **Shake approach (Vue 3)**: Use a `ref` boolean bound to `:class="{ shake: shaking }"` on `#input-area`. Toggle with `void el.offsetWidth` reflow trick to restart animation. Auto-remove after 400ms.
+- **Bounce approach (Vue 3)**: Same pattern with `bouncing` ref. Set `--tile-index` via `:style="{ '--tile-index': i }"` on each `ScrabbleTile` in the `v-for`. Total duration = 600 + 80 * (tileCount - 1) ms.
+- **Round transitions**: Use Vue `<Transition>` with `mode="out-in"` and `:key="state.currentRound"` on GameBoard. Reuse existing `@keyframes fade-in` / `@keyframes fade-out`. Add CSS classes `.round-enter-active` and `.round-leave-active`. Use `@after-enter` hook to start timer after fade completes.
+- **Communication**: GameBoard emits animation events up to App.vue, or App.vue passes animation state down as props and GameBoard applies classes
+- **prefers-reduced-motion**: Already handled in `style.css:550-562` — no extra work needed
+
+## Mid-Game State Persistence
+- **Problem**: If a player refreshes or closes the tab mid-game, all progress is lost. Only completed games are saved (line 241 of App.vue). This means losing 8+ rounds of progress to an accidental refresh.
+- **Wordle pattern**: Saves state after every guess to `nyt-wordle-state` with `{ boardState, evaluations, rowIndex, gameStatus: "IN_PROGRESS" | "WIN" | "FAIL" }`. On reload, restores board to saved position.
+- **Data structure**: Save to same `reword-{YYYY-MM-DD}` key with `{ status: "in-progress", currentRound, completedRounds, roundStartTimestamp }`. On completion, overwrite with `{ status: "complete", results, totalTimeMs }`.
+- **Timer on restore**: Use wall-clock `roundStartTimestamp`. On restore, compute elapsed = `Date.now() - roundStartTimestamp`. If elapsed > 60s, auto-skip that round. Otherwise resume countdown from remaining time.
+- **Save timing**: After each round completion (in `handleSubmit` and `handleSkip` after pushing to `completedRounds`). NOT on `beforeunload` — unreliable on mobile (iOS Safari doesn't guarantee it fires).
+- **Restore flow**: On mount, check saved game. If `status === "complete"` → show score (existing behavior). If `status === "in-progress"` → restore `state.currentRound` and `state.completedRounds`, start timer. If elapsed > 60s since `roundStartTimestamp`, auto-skip current round.
+- **Pure functions for testability**: `serializeGameState(currentRound, completedRounds)` and `deserializeGameState(saved, now)` in game.js. Deserialization returns `{ currentRound, completedRounds, elapsedMs }` so App.vue can decide how to resume.
+- **Edge case**: Player closes tab during round transition (state.transitioning = true). On restore, the round has already been pushed to completedRounds, so just restore at currentRound + 1.

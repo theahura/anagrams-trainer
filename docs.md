@@ -11,8 +11,8 @@ Path: @/
 
 ### How it fits into the larger codebase
 
-- `index.html` mounts the Vue app via `@/src/main.js`, which creates the root `App.vue` component
-- `style.css` defines the dark theme, tile styles (sharp square tiles, no point subscripts), animations, virtual keyboard layout for touch devices, and score screen styling including countdown timer
+- `index.html` mounts the Vue app via `@/src/main.js`, which creates the root `App.vue` component. Links the SVG favicon from `@/public/favicon.svg`. Uses `viewport-fit=cover` to support safe-area insets on notched devices
+- `style.css` defines the dark theme, tile styles (sharp square tiles, no point subscripts), animations (including timer urgency pulse), virtual keyboard layout for touch devices, and score screen styling including countdown timer. Uses a flex-column viewport layout (`100svh`) with `overflow: hidden` on body and safe-area inset padding on `#game-container`. Includes a narrow-screen breakpoint (340px) for very small devices. All animations respect `prefers-reduced-motion`
 - `@/scripts/` contains two alternative build pipelines (`npm run build:words` for TWL06-based, `npm run build:words:web` for web-sourced via wordunscrambler.me) that both produce `@/data/puzzles.json` in the same format
 - `@/src/` contains all runtime logic: Vue components in `@/src/components/`, plus pure-logic modules (game.js, prng.js, words.js, sound.js)
 - `@/tests/` contains Vitest test suites covering the pure-logic modules and Vue components
@@ -27,8 +27,9 @@ Path: @/
        -> fetch /data/puzzles.json
        -> selectDailyPuzzle(data, dateStr)  [src/game.js]
        -> checks localStorage for saved game (reword-{date}, falls back to anagram-trainer-{date})
-       -> if saved: renders ScoreScreen with previous results
-       -> if not: renders GameBoard with VirtualKeyboard, handles input, validates, plays sounds, saves on completion
+       -> if saved & complete: renders ScoreScreen with previous results
+       -> if saved & in-progress: restores round state, auto-skips expired round if needed, resumes game
+       -> if not saved: renders GameBoard with VirtualKeyboard, handles input, validates, plays sounds, saves after each round
   ```
   ```
   Component hierarchy:
@@ -59,7 +60,7 @@ Path: @/
   ```
 - **Difficulty progression:** 11 rounds per game: 3x3-letter roots, 3x4-letter, 3x5-letter, 1x6-letter, 1x7+-letter root
 - **Multi-letter expansions:** Expansion keys are variable-length strings (e.g., `"r"`, `"el"`, `"egr"`). Players can use 1, 2, or 3 of the offered letters. The `maxExtraLetters` varies by root length: +3 for roots of length 3-5, +2 for length 6, +1 for length 7+
-- **Word acceptance rule:** Valid dictionary words are accepted unless they are trivial suffix appends (s, ed, er). Validation checks dictionary lookup, offered-letter availability (the expansion key's letters must be a subset of the offered letters), and rejects trivial suffixes via `TRIVIAL_SUFFIXES` in `@/src/game.js`
+- **Word acceptance rule:** All valid dictionary words in the expansion data are accepted. `isValidAnswer()` in `@/src/game.js` checks dictionary lookup and offered-letter availability (the expansion key's letters must be a subset of the offered letters). There is no runtime filtering beyond these two checks
 
 ### Things to Know
 
@@ -67,13 +68,15 @@ Path: @/
 - `puzzles.json` is the only data dependency at runtime; the game works entirely offline once loaded
 - **State management:** All game state lives in `App.vue` as Vue reactive state (`reactive()` for round/input state, `ref()` for UI flags). Pure logic modules (game.js, prng.js, words.js, sound.js) have no state of their own
 - **localStorage migration:** Keys migrated from `anagram-trainer-*` to `reword-*`. All reads include backwards-compatible fallback to the old key names (e.g., `localStorage.getItem('reword-' + date) || localStorage.getItem('anagram-trainer-' + date)`)
-- **localStorage keys:** `reword-{YYYY-MM-DD}` for per-date game results, `reword-stats` for streak statistics, `reword-sound-muted` for mute state, `reword-seen-how-to-play` for first-visit flag
+- **localStorage keys:** `reword-{YYYY-MM-DD}` for per-date game state (in-progress or complete -- see below), `reword-stats` for streak statistics, `reword-sound-muted` for mute state, `reword-seen-how-to-play` for first-visit flag
+- **Mid-game persistence:** Game state is saved to `reword-{date}` after each round completion. The save has a `status` field: `"in-progress"` (with `currentRound`, `completedRounds`, `roundStartTimestamp`) or `"complete"` (with `results`, `totalTimeMs`). On reload, in-progress saves are restored via `deserializeGameState()` in `@/src/game.js`, which computes elapsed time from the wall-clock timestamp. If the current round's timer expired while away, it is auto-skipped. Legacy saves without a `status` field are treated as complete
 - Real-time tile feedback: as the player types, `matchTypedToTiles` in `@/src/game.js` greedily maps each character to root tiles first, then offered tiles. `GameBoard.vue` uses computed properties to derive tile classes (invalid when no matching tile available)
 - Mobile touch input: `VirtualKeyboard.vue` renders an on-screen QWERTY keyboard shown only on touch devices via `@media (pointer: coarse)` in `@/style.css`. Both physical keyboard (document keydown listener in `App.vue`) and virtual keyboard paths converge through `handleKeyInput` in `App.vue`
 - The score screen shows a "Next puzzle in: HH:MM:SS" countdown to UTC midnight, using `formatCountdown()` and `getTimeUntilMidnightUTC()` pure functions from `@/src/game.js`, ticked every second in `ScoreScreen.vue`
-- Timer starts on first keystroke, not on round render
+- Each round has a 60-second countdown timer that auto-skips when it expires. The timer auto-starts on puzzle load and resets on each round advance. The timer pauses when the HowToPlay modal is opened mid-game and resumes from the paused position when the modal closes. When remaining time drops to 10 seconds or below, the timer display turns red and pulses (animation disabled under `prefers-reduced-motion`, but red color preserved). `totalTimeMs` shown on the score screen is the sum of per-round times, not wall-clock time
+- The "Share Results" button uses a three-tier fallback: Web Share API (native OS share sheet, preferred on mobile), Clipboard API, then legacy `document.execCommand('copy')`. The first two tiers are handled by `shareResults()` in `@/src/game.js` (a pure async function using dependency injection for the navigator object); the DOM-dependent `execCommand` fallback lives in `App.vue`. User dismissal of the native share sheet (AbortError) is handled silently
 - Sound effects use Web Audio API synthesis with zero external dependencies. `playKeyClick` uses a filtered white noise burst (bandpass filter at 1200Hz). AudioContext is lazily created on first user interaction. iOS Safari compatibility via `webkitAudioContext` fallback
-- `src/ui.js` still exists in the codebase but is unused -- all UI logic was migrated to Vue components
+- The layout uses a flex-column structure from `body` through `#app`, `#game-container`, and `.game-board`, so the game board fills remaining space between the header and virtual keyboard. `touch-action: manipulation` and `-webkit-tap-highlight-color: transparent` are set on the game container for mobile touch UX
 - Vite is the build tool; Vue 3 and Vitest are the primary dev dependencies
 
 Created and maintained by Nori.
