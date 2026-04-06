@@ -26,3 +26,23 @@
 - `docs.md`, `src/docs.md`, `tests/docs.md` — Updated to reflect timer pause behavior
 
 **Tests:** 148 passing (2 new)
+
+## Timer Urgency Feedback & Escape Key for HowToPlay Modal
+
+**Problem (Timer):** The 60-second countdown timer had no visual urgency indicator. Players got auto-skipped without warning when time ran out — the timer looked identical at 60s and 1s remaining.
+
+**Problem (Escape):** The HowToPlay modal could only be closed by clicking the X button or clicking outside. Pressing Escape did nothing, missing a standard accessibility pattern.
+
+**Fix (Timer):** Added `isTimerUrgent(remainingMs)` pure function and `TIMER_URGENT_THRESHOLD_MS = 10000` constant to game.js. App.vue tracks urgency via a `timerUrgent` ref, updated in the timer interval. When remaining time drops to 10s or below, `.timer-display` gets an `.urgent` CSS class that turns the text red (#e74c3c) with a pulse animation. Respects `prefers-reduced-motion` (animation disabled, red color preserved).
+
+**Fix (Escape):** Added Escape key check in the keydown handler before the `showHowToPlay` early return guard. Pressing Escape when the modal is open calls `handleCloseHowToPlay()`, which also resumes the paused timer.
+
+**Files changed:**
+- `src/game.js` — Added `isTimerUrgent`, `TIMER_URGENT_THRESHOLD_MS`
+- `src/components/App.vue` — Added `timerUrgent` ref, urgency tracking in timer, Escape key handler, `.urgent` class binding
+- `style.css` — Added `.timer-display.urgent` styles, `@keyframes pulse`, updated `prefers-reduced-motion`
+- `tests/game.test.js` — 3 new tests for `isTimerUrgent` boundary behavior
+- `tests/components.test.js` — 4 new tests (2 Escape key, 2 timer urgency)
+- `docs.md`, `src/docs.md`, `tests/docs.md` — Updated to reflect changes
+
+**Tests:** 155 passing (7 new)

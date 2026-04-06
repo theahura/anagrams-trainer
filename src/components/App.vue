@@ -28,7 +28,7 @@
           >
             <template #timer>
               <span id="letter-score">Letters: {{ runningLetterScore }}</span>
-              <span class="timer-display">{{ timerDisplay }}</span>
+              <span class="timer-display" :class="{ urgent: timerUrgent }">{{ timerDisplay }}</span>
             </template>
           </GameBoard>
         </Transition>
@@ -51,7 +51,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
-import { selectDailyPuzzle, isValidAnswer, calculateScore, getAnswersForRound, generateShareText, getSubmitFeedbackType, updateStreakStats, processKeyPress, ROUND_TIME_LIMIT_MS, formatRoundTimer, serializeGameState, deserializeGameState } from '../game.js';
+import { selectDailyPuzzle, isValidAnswer, calculateScore, getAnswersForRound, generateShareText, getSubmitFeedbackType, updateStreakStats, processKeyPress, ROUND_TIME_LIMIT_MS, formatRoundTimer, serializeGameState, deserializeGameState, isTimerUrgent } from '../game.js';
 import { getAudioContext, initSound } from '../sound.js';
 import GameBoard from './GameBoard.vue';
 import VirtualKeyboard from './VirtualKeyboard.vue';
@@ -80,10 +80,12 @@ const state = reactive({
 let timerInterval = null;
 let pausedElapsedMs = 0;
 const timerDisplay = ref(formatRoundTimer(ROUND_TIME_LIMIT_MS));
+const timerUrgent = ref(false);
 
 function stopTimer() {
   clearInterval(timerInterval);
   timerInterval = null;
+  timerUrgent.value = false;
 }
 
 let audio = null;
@@ -129,11 +131,14 @@ function startTimer(alreadyElapsedMs = 0) {
   stopTimer();
   pausedElapsedMs = 0;
   state.roundStartTime = Date.now() - alreadyElapsedMs;
-  timerDisplay.value = formatRoundTimer(Math.max(0, ROUND_TIME_LIMIT_MS - alreadyElapsedMs));
+  const initialRemaining = Math.max(0, ROUND_TIME_LIMIT_MS - alreadyElapsedMs);
+  timerDisplay.value = formatRoundTimer(initialRemaining);
+  timerUrgent.value = isTimerUrgent(initialRemaining);
   timerInterval = setInterval(() => {
     const elapsed = Date.now() - state.roundStartTime;
     const remaining = Math.max(0, ROUND_TIME_LIMIT_MS - elapsed);
     timerDisplay.value = formatRoundTimer(remaining);
+    timerUrgent.value = isTimerUrgent(remaining);
     if (remaining <= 0) {
       stopTimer();
       handleSkip();
@@ -326,6 +331,10 @@ let keydownHandler = null;
 onMounted(async () => {
   // Physical keyboard support
   keydownHandler = (e) => {
+    if (e.key === 'Escape' && showHowToPlay.value) {
+      handleCloseHowToPlay();
+      return;
+    }
     if (gameComplete.value || loading.value || showHowToPlay.value) return;
     if (e.key === 'Enter') {
       e.preventDefault();

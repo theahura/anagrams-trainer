@@ -18,6 +18,18 @@
 ### Fix
 Remove the `TRIVIAL_SUFFIXES` constant and the suffix check from `isValidAnswer()`. Update the 3 tests that enforce this filter to instead verify these words ARE accepted. This aligns runtime behavior with the spec and the build pipeline.
 
+## Timer Urgency Feedback (Low Time Warning)
+- **Problem**: The 60-second countdown timer has no visual urgency indicator. When time drops below 10 seconds, it looks the same as at 60 seconds. Players get auto-skipped without warning.
+- **Pattern**: Chess clocks turn red under time pressure. Boggle timers flash. Wordle doesn't have per-round timing, but timed games universally use color/animation to signal urgency.
+- **Current state**: `.timer-display` in style.css has no color set — inherits `#d7dadc` from `.game-info`. Timer updates every 100ms in App.vue `startTimer()`.
+- **Approach**: Add a `timerUrgent` boolean ref in App.vue. Set to `true` when remaining time <= 10s (in the setInterval callback). Pass as prop to GameBoard, which binds a `.urgent` class on `.timer-display`. CSS `.timer-display.urgent` sets `color: #e74c3c` (existing error red) with a pulse animation. `prefers-reduced-motion` disables the pulse but keeps the red color.
+- **Pure function**: Add `isTimerUrgent(remainingMs)` to game.js with `TIMER_URGENT_THRESHOLD_MS = 10000` constant for testability.
+
+## Escape Key to Close HowToPlay Modal
+- **Problem**: The HowToPlay modal can be closed by clicking the X button or clicking outside, but not by pressing Escape. This is a standard accessibility pattern (WAI-ARIA dialog pattern).
+- **Current keydown handler** (App.vue line 328): Returns early when `showHowToPlay.value` is true — Escape check needs to come before that early return, or be added as a separate condition.
+- **Approach**: Add `e.key === 'Escape'` check in the keydown handler. If `showHowToPlay.value` is true and Escape is pressed, call `handleCloseHowToPlay()` and return.
+
 ## Bug: Timer Continues During HowToPlay Modal Mid-Game
 
 ### Problem

@@ -456,3 +456,155 @@ describe('App - Timer pauses during HowToPlay modal', () => {
     expect(wrapper.text()).not.toContain('Round 1 of 11');
   });
 });
+
+describe('App - Escape key closes HowToPlay modal', () => {
+  let fetchSpy;
+
+  beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: false });
+    fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      json: () => Promise.resolve(mockPuzzleData),
+    });
+    localStorage.clear();
+    localStorage.setItem('reword-seen-how-to-play', '1');
+    globalThis.AudioContext = vi.fn().mockImplementation(() => ({
+      state: 'running',
+      resume: vi.fn(),
+      createOscillator: vi.fn().mockReturnValue({
+        connect: vi.fn(), start: vi.fn(), stop: vi.fn(),
+        frequency: { setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() },
+        type: 'sine',
+      }),
+      createGain: vi.fn().mockReturnValue({
+        connect: vi.fn(),
+        gain: { value: 1, setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() },
+      }),
+      createBiquadFilter: vi.fn().mockReturnValue({
+        connect: vi.fn(), type: 'bandpass', frequency: { value: 0 }, Q: { value: 0 },
+      }),
+      createBuffer: vi.fn().mockReturnValue({ getChannelData: () => new Float32Array(100) }),
+      createBufferSource: vi.fn().mockReturnValue({
+        connect: vi.fn(), start: vi.fn(), stop: vi.fn(), buffer: null,
+      }),
+      currentTime: 0,
+      sampleRate: 44100,
+      destination: {},
+    }));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+    delete globalThis.AudioContext;
+  });
+
+  it('closes HowToPlay modal when Escape is pressed', async () => {
+    const wrapper = mount(App);
+    await flushPromises();
+    vi.advanceTimersByTime(0);
+    await flushPromises();
+
+    // Open HowToPlay modal
+    const helpBtn = wrapper.find('.header-icon');
+    await helpBtn.trigger('click');
+    await flushPromises();
+    expect(wrapper.findComponent(HowToPlay).exists()).toBe(true);
+
+    // Press Escape
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    await flushPromises();
+
+    // Modal should be closed
+    expect(wrapper.findComponent(HowToPlay).exists()).toBe(false);
+  });
+
+  it('does not crash when Escape is pressed with no modal open', async () => {
+    const wrapper = mount(App);
+    await flushPromises();
+    vi.advanceTimersByTime(0);
+    await flushPromises();
+
+    // Verify no modal
+    expect(wrapper.findComponent(HowToPlay).exists()).toBe(false);
+
+    // Press Escape — should do nothing
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    await flushPromises();
+
+    // Game should still be on round 1
+    expect(wrapper.text()).toContain('Round 1 of 11');
+  });
+});
+
+describe('App - Timer urgency feedback', () => {
+  let fetchSpy;
+
+  beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: false });
+    fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      json: () => Promise.resolve(mockPuzzleData),
+    });
+    localStorage.clear();
+    localStorage.setItem('reword-seen-how-to-play', '1');
+    globalThis.AudioContext = vi.fn().mockImplementation(() => ({
+      state: 'running',
+      resume: vi.fn(),
+      createOscillator: vi.fn().mockReturnValue({
+        connect: vi.fn(), start: vi.fn(), stop: vi.fn(),
+        frequency: { setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() },
+        type: 'sine',
+      }),
+      createGain: vi.fn().mockReturnValue({
+        connect: vi.fn(),
+        gain: { value: 1, setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() },
+      }),
+      createBiquadFilter: vi.fn().mockReturnValue({
+        connect: vi.fn(), type: 'bandpass', frequency: { value: 0 }, Q: { value: 0 },
+      }),
+      createBuffer: vi.fn().mockReturnValue({ getChannelData: () => new Float32Array(100) }),
+      createBufferSource: vi.fn().mockReturnValue({
+        connect: vi.fn(), start: vi.fn(), stop: vi.fn(), buffer: null,
+      }),
+      currentTime: 0,
+      sampleRate: 44100,
+      destination: {},
+    }));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+    delete globalThis.AudioContext;
+  });
+
+  it('adds urgent class to timer display when under 10 seconds remain', async () => {
+    const wrapper = mount(App);
+    await flushPromises();
+    vi.advanceTimersByTime(0);
+    await flushPromises();
+
+    // At start (60s remaining), timer should not be urgent
+    expect(wrapper.find('.timer-display.urgent').exists()).toBe(false);
+
+    // Advance to 51 seconds (9 seconds remaining)
+    vi.advanceTimersByTime(51000);
+    await flushPromises();
+
+    // Timer should now have urgent class
+    expect(wrapper.find('.timer-display.urgent').exists()).toBe(true);
+  });
+
+  it('does not show urgent class when more than 10 seconds remain', async () => {
+    const wrapper = mount(App);
+    await flushPromises();
+    vi.advanceTimersByTime(0);
+    await flushPromises();
+
+    // Advance to 30 seconds (30 seconds remaining)
+    vi.advanceTimersByTime(30000);
+    await flushPromises();
+
+    // Timer should not be urgent
+    expect(wrapper.find('.timer-display.urgent').exists()).toBe(false);
+  });
+});
