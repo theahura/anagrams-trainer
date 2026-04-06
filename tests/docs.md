@@ -17,13 +17,13 @@ Path: @/tests
 ### Core Implementation
 
 - **`prng.test.js`** -- Verifies PRNG determinism (same date -> same sequence), distinctness (different dates -> different sequences), and output range [0, 1). Also tests `seededShuffle` determinism and element preservation, and `seededPick` determinism
-- **`game.test.js`** -- Tests daily puzzle selection, answer validation (including trivial suffix rejection for s/ed/er), offered letter guarantees, `getAnswersForRound`, share text generation (verifies "Reword" header), `matchTypedToTiles`, `getSubmitFeedbackType`, `isConsecutiveDay`, `updateStreakStats`, `processKeyPress`, `calculateScore`, `formatCountdown` (HH:MM:SS formatting for various durations), and `getTimeUntilMidnightUTC` (returns positive number less than 24 hours)
+- **`game.test.js`** -- Tests daily puzzle selection, answer validation (including trivial suffix rejection for s/ed/er), offered letter guarantees, `getAnswersForRound`, share text generation (verifies "Reword" header), `matchTypedToTiles`, `getSubmitFeedbackType`, `isConsecutiveDay`, `updateStreakStats`, `updateLifetimeStats` (first game init, accumulation, min/max semantics for fastest time and best score, longest word tracking, all-skips edge case), `processKeyPress`, `calculateScore`, `formatCountdown` (HH:MM:SS formatting for various durations), and `getTimeUntilMidnightUTC` (returns positive number less than 24 hours)
 - **`components.test.js`** -- Vue component tests using `@vue/test-utils`:
   - `ScrabbleTile`: renders uppercase letters, no `.points` element, applies tileClass prop
   - `TileRack`: renders each letter, handles empty arrays and tileClass propagation
   - `VirtualKeyboard`: emits `key-press` with lowercased letters, Enter, and Backspace
   - `GameBoard`: renders root word and offered letters in tile racks, shows round indicator, emits submit/skip events
-  - `ScoreScreen`: displays solved count, per-round results, and countdown timer
+  - `ScoreScreen`: displays solved count, per-round results, countdown timer, and conditionally renders lifetime stats section (present when prop provided, hidden when null)
   - `HowToPlay`: renders modal content and emits close on button click
 - **`build-words.test.js`** -- Tests letter signature sorting, expansion finding, and a regression test verifying that "ski" + "r" produces "risk"
 - **`web-scraper.test.js`** -- Tests the pure functions in `@/scripts/web-scraper.js`: HTML parsing, expansion key derivation, and grouping words by expansion key

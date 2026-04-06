@@ -39,6 +39,7 @@
         :total-time-ms="totalTimeMs"
         :share-button-text="shareButtonText"
         :streak-stats="streakStats"
+        :lifetime-stats="lifetimeStats"
         @share="handleShare"
       />
     </template>
@@ -47,7 +48,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
-import { selectDailyPuzzle, isValidAnswer, calculateScore, getAnswersForRound, generateShareText, getSubmitFeedbackType, updateStreakStats, processKeyPress } from '../game.js';
+import { selectDailyPuzzle, isValidAnswer, calculateScore, getAnswersForRound, generateShareText, getSubmitFeedbackType, updateStreakStats, updateLifetimeStats, processKeyPress } from '../game.js';
 import { getAudioContext, initSound } from '../sound.js';
 import GameBoard from './GameBoard.vue';
 import VirtualKeyboard from './VirtualKeyboard.vue';
@@ -106,6 +107,7 @@ function toggleMute() {
 const currentRound = computed(() => puzzle.value ? puzzle.value[state.currentRound] : null);
 const runningLetterScore = computed(() => state.completedRounds.reduce((sum, r) => sum + r.answer.length, 0));
 const streakStats = ref(null);
+const lifetimeStats = ref(null);
 
 function startTimer() {
   if (!state.startTime) state.startTime = Date.now();
@@ -214,12 +216,25 @@ function showScore(savedResults) {
       const updatedStats = updateStreakStats(existingStats, dateStr.value);
       localStorage.setItem('reword-stats', JSON.stringify(updatedStats));
     } catch (e) {}
+
+    try {
+      const rawLifetime = localStorage.getItem('reword-lifetime-stats');
+      const existingLifetime = rawLifetime ? JSON.parse(rawLifetime) : null;
+      const updatedLifetime = updateLifetimeStats(existingLifetime, state.completedRounds, totalTimeMs.value);
+      localStorage.setItem('reword-lifetime-stats', JSON.stringify(updatedLifetime));
+    } catch (e) {}
   }
 
   // Load streak stats for display
   try {
     const rawStats = localStorage.getItem('reword-stats') || localStorage.getItem('anagram-trainer-stats');
     if (rawStats) streakStats.value = JSON.parse(rawStats);
+  } catch (e) {}
+
+  // Load lifetime stats for display
+  try {
+    const rawLifetime = localStorage.getItem('reword-lifetime-stats');
+    if (rawLifetime) lifetimeStats.value = JSON.parse(rawLifetime);
   } catch (e) {}
 }
 

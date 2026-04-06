@@ -26,7 +26,7 @@ Path: @/games/reword/src
   - On mount: checks `reword-seen-how-to-play` localStorage to auto-show `HowToPlay` on first visit, fetches `puzzles.json`, derives UTC date string, selects daily puzzle, and checks for saved game (with fallback read from old `anagram-trainer-*` keys)
   - `handleKeyInput(key)` dispatches to `processKeyPress` from `game.js` for letter processing, and to `handleSubmit` for Enter
   - `handleSubmit()` and `handleSkip()` use `state.transitioning` flag and `state.currentRound >= 11` guard to prevent double-submission
-  - `showScore(savedResults?)` dual mode: fresh game results or saved replay. On fresh completion, persists to `reword-{date}` and updates `reword-stats` via `updateStreakStats`
+  - `showScore(savedResults?)` dual mode: fresh game results or saved replay. On fresh completion, persists to `reword-{date}`, updates `reword-stats` via `updateStreakStats`, and updates `reword-lifetime-stats` via `updateLifetimeStats`. Lifetime stats are only written on fresh completion (not saved game restore) to prevent double-counting. Both streak and lifetime stats are loaded for display in both paths
   - Physical keyboard handled via a document-level `keydown` listener that guards against `gameComplete`, `loading`, and `showHowToPlay` states
   - Audio lazily initialized via `ensureAudio()` on first user interaction
 
@@ -38,6 +38,7 @@ Path: @/games/reword/src
 - **`components/ScoreScreen.vue`** -- End-of-game display with countdown
   - Shows per-round breakdown (root, answer or SKIPPED, possible answers for skipped rounds)
   - Displays a "Next puzzle in: HH:MM:SS" countdown using `formatCountdown()` and `getTimeUntilMidnightUTC()` from `game.js`, ticked every second via `setInterval`
+  - Conditionally renders a "Lifetime Stats" section (via `v-if` on the `lifetimeStats` prop) showing cumulative totals, fastest time, average time, best letter score, and longest word. Uses a local `formatTime(ms)` helper for time display
 
 - **`components/HowToPlay.vue`** -- Tutorial modal with example tiles, closes on overlay click or X button
 
@@ -59,6 +60,7 @@ Path: @/games/reword/src
   - `matchTypedToTiles(typedLetters, rootLetters, offeredLetters)` maps each typed character to a tile position with root-first priority, used by `GameBoard.vue` for real-time feedback
   - `formatCountdown(ms)` converts milliseconds to `HH:MM:SS` string
   - `getTimeUntilMidnightUTC()` returns milliseconds until next UTC midnight
+  - `updateLifetimeStats(existingStats, completedRounds, totalTimeMs)` accumulates cross-game stats: totalLetters, totalWords, fastestTimeMs, totalTimeMs, gamesPlayed, bestLetterScore, longestWord, totalSkips. Returns a fresh stats object on first game, or merges with existing stats using min (fastest time), max (best score, longest word), and sum (totals) semantics
   - Other pure functions: `getOfferedLetters`, `getAnswersForRound`, `getSubmitFeedbackType`, `isConsecutiveDay`, `updateStreakStats`, `processKeyPress`, `calculateScore`
 
 - **`words.js`** -- Anagram computation (used at both build-time and runtime validation)
@@ -81,7 +83,7 @@ Path: @/games/reword/src
 - `isKeySubsetOfOffered` in `game.js` checks whether each character of a multi-letter key can be consumed from the offered letters array (removing used letters to handle duplicates). This is the core mechanism enabling multi-letter expansion matching at runtime
 - The `state.transitioning` flag in `App.vue` prevents input during the 700ms (correct) or 1200ms (skip with possible answers) delay between rounds
 - Timer displays elapsed time since the first keystroke of the entire game, not per-round time
-- Streak calculation is pure (in `game.js`) with localStorage access only in `App.vue`, consistent with the pattern of keeping side effects out of game logic
+- Both streak and lifetime stat calculation are pure (in `game.js`) with localStorage access only in `App.vue`, consistent with the pattern of keeping side effects out of game logic
 - Sound synthesis follows the same pure-logic-in-module, side-effects-in-UI pattern: `sound.js` is a pure factory testable with a mock AudioContext, while `App.vue` handles AudioContext creation, localStorage mute persistence, and event hookup
 
 Created and maintained by Nori.
