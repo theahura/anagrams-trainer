@@ -47,6 +47,8 @@ Path: @/src
 
 - **`ui.js`** -- DOM rendering, interaction, and persistence
   - `initUI(puzzle, dateStr)` builds the entire game UI imperatively inside `#game-container`, managing local state via a closure-scoped `state` object (currentRound, completedRounds, inputLetters, timer state). The `dateStr` parameter is used for localStorage lookup
+  - All input handlers (`handleSubmit`, `handleSkip`, `handleKeyInput`, and the `input` event listener) include a `state.currentRound >= 11` bounds guard that returns early, preventing access to `puzzle[11]` (undefined) if input arrives after the last round completes but before the score screen renders
+  - `updateLetterScore()` computes the running total of answer letters from `state.completedRounds` and updates a "Letters: N" display in the game-info bar. Called after each round completion in both `handleSubmit` and `handleSkip`
   - On init, checks `localStorage` for a saved game keyed by `anagram-trainer-{dateStr}`. If found, shows the score screen directly without starting a new game
   - On game completion, saves results to `localStorage` under the same key, preventing replay of the same day's puzzle. Also reads/updates streak stats from `anagram-trainer-stats` localStorage key via `updateStreakStats` from `@/src/game.js`
   - On score screen display (both fresh and saved games), reads `anagram-trainer-stats` from localStorage and renders a streak stats row (Games Played, Current Streak, Max Streak) inserted above the share button

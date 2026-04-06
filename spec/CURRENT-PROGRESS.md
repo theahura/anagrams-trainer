@@ -1,6 +1,6 @@
 # Current Progress
 
-## Status: MVP Complete + Multi-Letter Expansion + Web-Sourced Build + Share Results + Tile Feedback + Answer Animations + Streak Tracking + Mobile Touch Input
+## Status: MVP Complete + Multi-Letter Expansion + Web-Sourced Build + Share Results + Tile Feedback + Answer Animations + Streak Tracking + Mobile Touch Input + Bounds Safety + Running Letter Score
 
 The full Anagram Trainer game is implemented and tested with multi-letter expansion support, a web-sourced build pipeline, share results functionality, real-time tile visual feedback, streak tracking, and mobile-optimized touch input.
 
@@ -55,6 +55,9 @@ The full Anagram Trainer game is implemented and tested with multi-letter expans
 - Touch-friendly button sizing: submit/skip/share buttons get min-height 48px and full-width on touch devices
 - Virtual keyboard keys meet Apple HIG 44px minimum touch targets, with smaller sizing on screens under 420px
 - 95 unit tests passing (added 7 tests for processKeyPress)
+- Bounds safety: all input handlers (`handleSubmit`, `handleSkip`, `handleKeyInput`, `input` event) guard against `state.currentRound >= 11`
+- Running letter score display: live "Letters: N" counter in game-info bar, updated after each round completion
+- 97 unit tests passing (added 2 tests for calculateScore edge cases)
 
 ## Architecture
 - Pure static HTML/JS, no backend or framework
