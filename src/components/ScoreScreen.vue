@@ -30,7 +30,7 @@
         <span
           v-if="!r.answer.length && r.possibleAnswers && r.possibleAnswers.length"
           class="possible-answers"
-        >{{ r.possibleAnswers.join(', ') }}</span>
+        >{{ r.possibleAnswers.slice(0, 5).join(', ') }}{{ r.possibleAnswers.length > 5 ? ` +${r.possibleAnswers.length - 5} more` : '' }}</span>
       </div>
     </div>
   </div>

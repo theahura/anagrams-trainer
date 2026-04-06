@@ -94,7 +94,7 @@ If unused: "This endpoint isn't called. Remove it (YAGNI)?"
 
 **Reference finishing-a-development-branch skill (Steps 1-2):**
 
-See `/home/amol/code/games/anagrams-trainer/.worktrees/pure-yak-20260406-051857/.claude/skills/finishing-a-development-branch/SKILL.md`
+See `/home/amol/code/games/anagrams-trainer/.worktrees/cool-van-20260406-061015/.claude/skills/finishing-a-development-branch/SKILL.md`
 
 - [ ] Run tests: `npm test` (or project equivalent)
   - If tests fail, fix before proceeding
