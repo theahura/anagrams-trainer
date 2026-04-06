@@ -12,3 +12,17 @@
 - `docs.md`, `src/docs.md`, `tests/docs.md` — Updated to reflect removal
 
 **Tests:** 146 passing (unchanged count)
+
+## Fixed Timer Running During HowToPlay Modal
+
+**Problem:** When a player opened the HowToPlay modal via the "?" button during gameplay, the 60-second countdown timer kept running. If the timer expired while the modal was open, `handleSkip()` fired and the player lost their round without playing it. The keyboard handler correctly blocked input during the modal, but the timer was not similarly paused.
+
+**Fix:** Added `openHowToPlay()` function that saves elapsed time and stops the timer when the modal opens. Updated `handleCloseHowToPlay()` to resume the timer from the saved position. Added `pausedElapsedMs` variable to track elapsed time during pause. This leverages the existing `startTimer(alreadyElapsedMs)` pattern used by mid-game persistence.
+
+**Files changed:**
+- `src/components/App.vue` — Added `openHowToPlay()`, `pausedElapsedMs`, updated `handleCloseHowToPlay()` and template
+- `tests/components.test.js` — Added 2 App.vue integration tests (timer pause + timer resume)
+- `RESEARCH-NOTES.md` — Documented bug analysis and fix approach
+- `docs.md`, `src/docs.md`, `tests/docs.md` — Updated to reflect timer pause behavior
+
+**Tests:** 148 passing (2 new)

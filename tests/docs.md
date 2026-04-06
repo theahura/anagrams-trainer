@@ -25,6 +25,7 @@ Path: @/tests
   - `GameBoard`: renders root word and offered letters in tile racks, shows round indicator, emits submit/skip events
   - `ScoreScreen`: displays solved count, per-round results, and countdown timer. Tests the 5-answer cap on possible answers for skipped rounds (shows all when <=5, truncates with "+N more" when >5). Verifies possible answers are not shown for solved rounds
   - `HowToPlay`: renders modal content and emits close on button click. Tests that the modal mentions the 60-second timer and letter-based scoring rules
+  - `App` (integration): mounts the full App component with mocked fetch and localStorage. Tests that the 60-second timer pauses when the HowToPlay modal is opened mid-game and resumes from the paused position when the modal closes (uses `vi.useFakeTimers` to control time progression)
 - **`build-words.test.js`** -- Tests letter signature sorting, expansion finding, and a regression test verifying that "ski" + "r" produces "risk"
 - **`web-scraper.test.js`** -- Tests the pure functions in `@/scripts/web-scraper.js`: HTML parsing, expansion key derivation, and grouping words by expansion key
 - **`sound.test.js`** -- Tests the sound module using a mock AudioContext. Verifies all play methods exist, mute/unmute toggling, and that all sound methods can be called without throwing
@@ -35,6 +36,6 @@ Path: @/tests
 - Tests use small inline dictionaries and puzzle data fixtures rather than loading `@/data/puzzles.json`
 - The `game.test.js` test data includes crafted edge cases for answer validation, including a regression test ensuring "master" from root "aster" + letter "m" is accepted. Tests verify that root+suffix words (e.g., "rinds", "planted", "faster") are accepted when present in the expansion dictionary
 - Some tests use a constant RNG (`() => 0.5`) to make offered letter tests deterministic without depending on the PRNG implementation
-- Component tests mount individual components in isolation with props, not the full `App.vue` (which requires fetch and localStorage)
+- Most component tests mount individual components in isolation with props. The App.vue integration tests are the exception -- they mount the full app with mocked `fetch`, `localStorage`, and `AudioContext`
 
 Created and maintained by Nori.
