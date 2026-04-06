@@ -22,7 +22,7 @@ Path: @/src
   - `createApp(App).mount('#app')` -- mounts the root component into the `#app` div
 
 - **`components/App.vue`** -- Root component, owns all game state
-  - All game state lives in a `reactive()` object: `{ currentRound, completedRounds, inputLetters, startTime, roundStartTime, transitioning }`. UI flags (`loading`, `gameComplete`, `muted`, `showHowToPlay`, etc.) are individual `ref()` values
+  - All game state lives in a `reactive()` object: `{ currentRound, completedRounds, inputLetters, roundStartTime, transitioning }`. UI flags (`loading`, `gameComplete`, `muted`, `showHowToPlay`, etc.) are individual `ref()` values
   - On mount: checks `reword-seen-how-to-play` localStorage to auto-show `HowToPlay` on first visit, fetches `puzzles.json`, derives UTC date string, selects daily puzzle, and checks for saved game (with fallback read from old `anagram-trainer-*` keys)
   - `handleKeyInput(key)` dispatches to `processKeyPress` from `game.js` for letter processing, and to `handleSubmit` for Enter
   - `handleSubmit()` and `handleSkip()` use `state.transitioning` flag and `state.currentRound >= 11` guard to prevent double-submission
@@ -57,7 +57,9 @@ Path: @/src
   - `isValidAnswer(answer, round)` checks expansion dictionary and offered-letter availability, and rejects trivial suffix appends (s, ed, er) via `TRIVIAL_SUFFIXES` constant
   - `generateShareText(results, dateStr, totalTimeMs)` produces share string with "Reword" header (not "Anagram Trainer")
   - `matchTypedToTiles(typedLetters, rootLetters, offeredLetters)` maps each typed character to a tile position with root-first priority, used by `GameBoard.vue` for real-time feedback
-  - `formatCountdown(ms)` converts milliseconds to `HH:MM:SS` string
+  - `ROUND_TIME_LIMIT_MS` (60000) defines the per-round countdown duration
+  - `formatRoundTimer(ms)` converts remaining milliseconds to `M:SS` display string (floors to whole seconds)
+  - `formatCountdown(ms)` converts milliseconds to `HH:MM:SS` string (used by `ScoreScreen` for next-puzzle countdown)
   - `getTimeUntilMidnightUTC()` returns milliseconds until next UTC midnight
   - Other pure functions: `getOfferedLetters`, `getAnswersForRound`, `getSubmitFeedbackType`, `isConsecutiveDay`, `updateStreakStats`, `processKeyPress`, `calculateScore`
 
@@ -80,7 +82,8 @@ Path: @/src
 - The UI input max length is `root.length + offeredLetters.length`, allowing players to use all offered letters. Submit validation accepts answers between `root.length + 1` and this max
 - `isKeySubsetOfOffered` in `game.js` checks whether each character of a multi-letter key can be consumed from the offered letters array (removing used letters to handle duplicates). This is the core mechanism enabling multi-letter expansion matching at runtime
 - The `state.transitioning` flag in `App.vue` prevents input during the 700ms (correct) or 1200ms (skip with possible answers) delay between rounds
-- Timer displays elapsed time since the first keystroke of the entire game, not per-round time
+- Timer counts down from 60 seconds per round. `startTimer()` resets the display to `1:00`, records `roundStartTime`, and ticks every 100ms. When remaining time hits 0, the interval auto-calls `handleSkip()`. Both `handleSubmit()` and `handleSkip()` clear the interval and cap recorded `timeMs` at `ROUND_TIME_LIMIT_MS`. The timer auto-starts on puzzle load (in `onMounted`) and on each `advanceRound()` call
+- `showScore()` computes `totalTimeMs` as the sum of per-round `timeMs` values (not wall-clock time)
 - Streak calculation is pure (in `game.js`) with localStorage access only in `App.vue`, consistent with the pattern of keeping side effects out of game logic
 - Sound synthesis follows the same pure-logic-in-module, side-effects-in-UI pattern: `sound.js` is a pure factory testable with a mock AudioContext, while `App.vue` handles AudioContext creation, localStorage mute persistence, and event hookup
 

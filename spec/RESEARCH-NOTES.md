@@ -230,6 +230,21 @@ This simple substring check covers: adding s/es/ed/ing/er to end, and common pre
 - `handleKeyInput()` and the `input` event handler also access `puzzle[state.currentRound]` without bounds checking
 - **Fix**: Add early return guard `if (state.currentRound >= 11) return;` at the top of `handleSubmit`, `handleSkip`, `handleKeyInput`, and the `input` event handler
 
+## Per-Round Countdown Timer
+- **Spec requirement**: Each stage gives max 1 minute counting down, auto-skip on timeout, show cumulative time only at end
+- **Current timer**: `startTimer()` in App.vue runs a cumulative elapsed-time display (counting UP from 0). Ticks every 100ms. `timerDisplay` ref formatted as `M:SS`.
+- **Per-round time already tracked**: `state.roundStartTime` set in `startTimer()`, used to compute `timeMs = Date.now() - state.roundStartTime` in handleSubmit/handleSkip
+- **Display location**: `timerDisplay` rendered in GameBoard via named slot `#timer`, alongside letter score
+- **Key changes needed**:
+  1. Add `ROUND_TIME_LIMIT_MS = 60000` constant and `formatRoundTimer(ms)` pure function to game.js
+  2. Replace cumulative timer with countdown: `startTimer()` sets `roundTimeRemaining` to 60000, interval counts down
+  3. When countdown hits 0, auto-call `handleSkip()` — `state.transitioning` guard prevents double-fire
+  4. Timer pauses during transitions (interval cleared when transitioning starts, restarted in `advanceRound()`)
+  5. `showScore()` computes `totalTimeMs` as sum of per-round `timeMs` (already how `calculateScore()` works)
+  6. Timer display changes from "0:00" counting up to "1:00" counting down
+- **Edge cases**: Timer should not auto-skip during transition phase. Timer should stop on game completion. Saved game restoration doesn't need timer.
+- **Format**: `M:SS` (e.g., "1:00" → "0:00"). Use `formatRoundTimer` for consistency.
+
 ## Running Letter Score During Gameplay
 - The spec says "Score tracks total letters used across all words"
 - Currently, total letters only displayed on the score screen post-game (`src/ui.js:383`)

@@ -188,6 +188,15 @@ export function formatCountdown(ms) {
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
+export const ROUND_TIME_LIMIT_MS = 60000;
+
+export function formatRoundTimer(ms) {
+  const totalSeconds = Math.floor(Math.max(0, ms) / 1000);
+  const mins = Math.floor(totalSeconds / 60);
+  const secs = totalSeconds % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
 export function getTimeUntilMidnightUTC() {
   const now = new Date();
   const tomorrow = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
