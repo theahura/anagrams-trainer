@@ -153,6 +153,65 @@ This simple substring check covers: adding s/es/ed/ing/er to end, and common pre
 - **Pure function for testability**: Extract `createSoundEffects(audioContext)` factory that returns play functions. UI calls play functions at event trigger points.
 - **Integration points in ui.js**: correct answer (line ~285), wrong answer (line ~276), invalid length (line ~270), key press (line ~469/482), skip (line ~300), game complete (line ~337)
 
+## Vue 3 + Vite Migration
+- **Approach**: Add Vue 3 + Vite to existing project (not create-vue scaffold). The project already uses ES modules and vitest.
+- **Packages**: `vue` (runtime), `vite` + `@vitejs/plugin-vue` (dev), `@vue/test-utils` + `happy-dom` (dev, for component testing)
+- **Entry point**: `index.html` stays at root, gets `<div id="app">` mount point + `<script type="module" src="/src/main.js">` entry
+- **main.js**: `createApp(App).mount('#app')` — simple, no router or Pinia needed for this small app
+- **Static assets**: Move `data/puzzles.json` to `public/data/puzzles.json` so Vite serves it as-is; fetch at runtime via `fetch('/data/puzzles.json')`
+- **vite.config.js**: `defineConfig({ plugins: [vue()], test: { environment: 'happy-dom' } })`
+- **Pure logic modules unchanged**: `game.js`, `prng.js`, `words.js`, `sound.js` have no DOM dependency — import directly into Vue composables/components
+- **CSS strategy**: Keep `style.css` as global import in `main.js`. Component-specific styles can go in SFC `<style scoped>` blocks
+- **Component structure**: App.vue (root), GameBoard.vue (main game area), TileRack.vue, ScrabbleTile.vue, VirtualKeyboard.vue, ScoreScreen.vue, GameHeader.vue, GameInfo.vue
+- **State management**: Vue 3 composables (useGameState, useTimer, useSound) — no need for Pinia in a single-page game
+- **Existing tests**: All 96 pure logic tests continue to work unchanged since they import from game.js/prng.js/words.js/sound.js directly
+- **Web Audio in Vue**: Lazy-init AudioContext on first user interaction (same pattern as current). Clean up in onUnmounted.
+
+## Wordle-Style Visual Redesign
+- **Background**: `#121213` (near-black)
+- **Tile background**: `#121213` with border `#3a3a3c`
+- **Tile text**: `#d7dadc` or `#ffffff`, bold, uppercase
+- **Tile dimensions**: 62px original, sharp corners (no border-radius)
+- **Filled tile border**: `#565758`
+- **Font**: Arial/Helvetica sans-serif (NYT uses proprietary `nyt-karnnak`)
+- **Correct feedback**: `#538d4e` green
+- **Key colors**: tone scale from `#d7dadc` (text) to `#121213` (bg), `#818384` (keyboard keys)
+- **No scrabble points**: Remove the `.points` span and SCRABBLE_POINTS map entirely
+
+## Tile Click Sound (Web Audio)
+- **Best approach**: Filtered noise burst for realistic click feel
+- Create short AudioBuffer with white noise (~40 samples at 44100Hz = ~1ms)
+- Apply bandpass filter at 800-2000Hz, Q of 1-3
+- Gain envelope: peak 0.3-0.5, exponential decay over 15-30ms
+- Alternative: short sine/triangle at 1000-1500Hz, 15-25ms, exponential decay
+- Slight frequency randomization (+/- 50Hz) for naturalness
+
+## App Naming Options
+- **Top candidates**: Jumbl, Reword, Tangle, Morph, Mixle
+- Follows Wordle pattern: short, catchy, one-word, evokes letter manipulation
+- "Reword" is a real English word and directly describes the game mechanic
+
+## How-to-Play Modal Pattern
+- **Trigger**: Auto-show on first visit (localStorage flag `hasSeenHowToPlay`), re-openable via `?` icon in header
+- **Content**: Title, tagline, rules list, visual example with tiles, close button
+- **Implementation**: Overlay with semi-transparent background, centered modal, close via X/click outside/Escape
+- **Adapted content**: "Create new words by adding one of the offered letters and rearranging all letters"
+
+## Countdown Timer to Next Puzzle
+- **Placement**: Score screen, below share button
+- **Format**: `HH:MM:SS` zero-padded, updated every second via setInterval
+- **Calculation**: `new Date().setHours(24,0,0,0) - Date.now()` for time until midnight UTC
+- **Label**: "Next puzzle in:" or "NEXT PUZZLE"
+- **Font**: monospace or `font-variant-numeric: tabular-nums` to prevent layout shift
+
+## Vue 3 Migration Notes
+- Vue/Vite already installed with `@vue/test-utils` and `happy-dom`
+- Component tests already written in `tests/components.test.js` for: ScrabbleTile, TileRack, VirtualKeyboard, ScoreScreen, GameBoard
+- Pure logic modules (game.js, prng.js, words.js, sound.js) have no DOM dependency — import directly
+- Entry: `index.html` → `<div id="app">` + `<script type="module" src="/src/main.js">`
+- State management via composables (useGameState, useTimer, useSound) — no Pinia needed
+- CSS: keep global style.css, add scoped styles in SFCs where needed
+
 ## Bounds Check Bug in handleSubmit/handleSkip
 - `handleSubmit()` at `src/ui.js:253` accesses `puzzle[state.currentRound]` without checking bounds
 - After the last round (round 11, index 10), `advanceRound()` increments `state.currentRound` to 11
