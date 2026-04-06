@@ -28,7 +28,7 @@ Path: @/tests
 - **`build-words.test.js`** -- Tests letter signature sorting, expansion finding, and a regression test verifying that "ski" + "r" produces "risk"
 - **`web-scraper.test.js`** -- Tests the pure functions in `@/scripts/web-scraper.js`: HTML parsing, expansion key derivation, and grouping words by expansion key
 - **`sound.test.js`** -- Tests the sound module using a mock AudioContext. Verifies all play methods exist, mute/unmute toggling, and that all sound methods can be called without throwing
-- **`static-assets.test.js`** -- Reads `index.html` from disk and verifies it contains a `<link rel="icon" ...>` tag, ensuring the favicon reference is not accidentally removed
+
 
 ### Things to Know
 

@@ -11,7 +11,7 @@
         </button>
       </header>
 
-      <HowToPlay v-if="showHowToPlay" @close="showHowToPlay = false" />
+      <HowToPlay v-if="showHowToPlay" @close="handleCloseHowToPlay" />
 
       <template v-if="!gameComplete">
         <GameBoard
@@ -112,8 +112,8 @@ const runningLetterScore = computed(() => state.completedRounds.reduce((sum, r) 
 const streakStats = ref(null);
 
 function startTimer() {
-  state.roundStartTime = Date.now();
   stopTimer();
+  state.roundStartTime = Date.now();
   timerDisplay.value = formatRoundTimer(ROUND_TIME_LIMIT_MS);
   timerInterval = setInterval(() => {
     const elapsed = Date.now() - state.roundStartTime;
@@ -124,6 +124,13 @@ function startTimer() {
       handleSkip();
     }
   }, 100);
+}
+
+function handleCloseHowToPlay() {
+  showHowToPlay.value = false;
+  if (!gameComplete.value && !timerInterval) {
+    startTimer();
+  }
 }
 
 function handleSubmit() {
@@ -322,7 +329,9 @@ onMounted(async () => {
     }
   } catch (e) {}
 
-  startTimer();
+  if (!showHowToPlay.value) {
+    startTimer();
+  }
 });
 
 onUnmounted(() => {
