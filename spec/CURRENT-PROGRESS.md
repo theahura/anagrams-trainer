@@ -1,8 +1,8 @@
 # Current Progress
 
-## Status: Vue 3 Migration + Modern Redesign + Per-Round Countdown Timer
+## Status: Vue 3 Migration + Modern Redesign + Per-Round Countdown Timer + Mobile Optimization
 
-The game has been renamed to **Reword** and fully migrated to Vue 3 + Vite with a modern dark theme, tile click sounds, how-to-play modal, and countdown timer.
+The game has been renamed to **Reword** and fully migrated to Vue 3 + Vite with a modern dark theme, tile click sounds, how-to-play modal, countdown timer, and mobile-optimized layout.
 
 ## Completed
 - All previous work (see git history for full detail)
@@ -15,7 +15,8 @@ The game has been renamed to **Reword** and fully migrated to Vue 3 + Vite with 
 - **Countdown Timer**: Score screen shows "Next puzzle in: HH:MM:SS" countdown to UTC midnight. Pure functions `formatCountdown()` and `getTimeUntilMidnightUTC()` in game.js
 - **Favicon**: Green (#538d4e) square tile with white "R" SVG favicon at `public/favicon.svg`, linked in `index.html`
 - **Per-Round Countdown Timer**: 60-second countdown per round. Auto-skips when timer expires. Timer resets each round. Cumulative time shown only on score screen. `ROUND_TIME_LIMIT_MS` constant and `formatRoundTimer()` pure function in game.js
-- 132 tests passing (101 pure logic + 26 Vue component + 5 countdown/HowToPlay tests)
+- **Mobile Layout Optimization**: Flex column layout filling `100svh` viewport height. `overscroll-behavior: none` prevents pull-to-refresh. `touch-action: manipulation` eliminates 300ms tap delay. Safe area insets via `env()` for notched devices. Responsive breakpoints at 420px and 340px for small screens.
+- 131 tests passing (101 pure logic + 26 Vue component + 5 countdown/HowToPlay tests)
 
 ## Architecture
 - **Vue 3 + Vite**: Entry point `src/main.js` → `App.vue` mounts to `<div id="app">`
@@ -30,4 +31,4 @@ The game has been renamed to **Reword** and fully migrated to Vue 3 + Vite with 
 - `src/ui.js` is legacy/unused — kept in codebase but no longer imported
 
 ## Remaining from APPLICATION-SPEC
-- Make it play nice on mobile (partially done: virtual keyboard, touch buttons, responsive CSS already exist)
+- All items completed

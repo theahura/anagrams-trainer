@@ -245,6 +245,16 @@ This simple substring check covers: adding s/es/ed/ing/er to end, and common pre
 - **Edge cases**: Timer should not auto-skip during transition phase. Timer should stop on game completion. Saved game restoration doesn't need timer.
 - **Format**: `M:SS` (e.g., "1:00" → "0:00"). Use `formatRoundTimer` for consistency.
 
+## Mobile Layout Optimization
+- **`100svh` vs `100vh`**: On mobile browsers, `100vh` equals the largest viewport (URL bar hidden), causing content to overflow when URL bar is visible. `100svh` (small viewport height) represents the viewport with all browser chrome visible — content never overflows. Baseline Widely Available since June 2025 (Chrome 108+, Firefox 101+, Safari 15.4+). Use `height: 100vh; height: 100svh;` (fallback first).
+- **`overscroll-behavior: none`**: Prevents pull-to-refresh on Android Chrome and rubber-band bounce on iOS Safari. Critical for game apps where accidental swipe disrupts gameplay.
+- **`touch-action: manipulation`**: Allows taps and scrolling but disables double-tap-to-zoom, eliminating the ~300ms tap delay on mobile. Apply to `#game-container`.
+- **Safe area insets**: Devices with notches/home indicators (iPhone X+) need `env(safe-area-inset-bottom)` padding on the virtual keyboard. Requires `viewport-fit=cover` in the viewport meta tag. Returns `0` on non-notched devices.
+- **`overflow: hidden` on body**: Prevents page scrolling entirely — game should fit within viewport.
+- **Flex column layout**: Make `#game-container` a flex column with `height: 100%`. Header `flex-shrink: 0`, game board `flex: 1`, keyboard `flex-shrink: 0`. Content fits without scrolling.
+- **`-webkit-tap-highlight-color: transparent`**: Already on keyboard keys, should be on all interactive elements to prevent blue/grey flash on tap.
+- **Tile overflow prevention**: On narrow screens (< 360px), 7+ letter words with 52px tiles overflow. The 420px breakpoint already scales to 40px tiles. May need a smaller breakpoint (~320px) for very small devices.
+
 ## Running Letter Score During Gameplay
 - The spec says "Score tracks total letters used across all words"
 - Currently, total letters only displayed on the score screen post-game (`src/ui.js:383`)

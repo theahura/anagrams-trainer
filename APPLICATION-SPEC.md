@@ -12,7 +12,7 @@
 
 ~~There should be a timer on the 'share' page showing when the next set of anagrams will be released~~ DONE — HH:MM:SS countdown to UTC midnight on score screen
 
-Make it play nice on mobile
+~~Make it play nice on mobile~~ DONE — Flex column layout with 100svh, overscroll-behavior: none, touch-action: manipulation, safe area insets, responsive breakpoints at 420px and 340px
 
 ~~add a favicon (come up with a good simple svg logo)~~ DONE — Green tile with white "R" SVG favicon in public/favicon.svg
 
