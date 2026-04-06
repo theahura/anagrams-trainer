@@ -11,9 +11,9 @@ Path: @/
 ### How it fits into the larger codebase
 
 - `index.html` is the entry point -- it fetches `@/data/puzzles.json`, derives the UTC date string, calls `selectDailyPuzzle()` from `@/src/game.js`, then passes the result to `initUI()` from `@/src/ui.js`
-- `style.css` defines the Scrabble board visual theme (green felt background, cream tiles with point subscripts), all answer feedback / round transition animations, a virtual QWERTY keyboard for touch devices, touch-optimized button sizing, and the in-game info bar (round indicator, running letter score, timer)
+- `style.css` defines the Scrabble board visual theme (green felt background, cream tiles with point subscripts), all answer feedback / round transition animations, a virtual QWERTY keyboard for touch devices, touch-optimized button sizing, the in-game info bar (round indicator, running letter score, timer), and the mute toggle button
 - `@/scripts/` contains two alternative build pipelines (`npm run build:words` for TWL06-based, `npm run build:words:web` for web-sourced via wordunscrambler.me) that both produce `@/data/puzzles.json` in the same format
-- `@/src/` contains all runtime game logic (PRNG, game rules, word processing, DOM rendering)
+- `@/src/` contains all runtime game logic (PRNG, game rules, word processing, sound synthesis, DOM rendering)
 - `@/tests/` contains Vitest test suites covering the non-UI modules
 
 ### Core Implementation
@@ -29,7 +29,7 @@ Path: @/
     -> initUI(puzzle, dateStr)           [src/ui.js]
        -> checks localStorage for saved game
        -> if saved: renders score screen from saved results
-       -> if not: renders tiles, handles keyboard input from physical keyboard or virtual touch keyboard (with real-time tile highlighting via matchTypedToTiles), validates answers, shows score with share button, saves to localStorage
+       -> if not: renders tiles, handles keyboard input from physical keyboard or virtual touch keyboard (with real-time tile highlighting via matchTypedToTiles), validates answers, plays sound effects via sound.js, shows score with share button, saves to localStorage
   ```
 - **Data flow at build time (two alternatives, same output):**
   ```
@@ -65,6 +65,7 @@ Path: @/
 - Timer starts on first keystroke, not on round render
 - Game results persist in `localStorage` keyed by `anagram-trainer-{YYYY-MM-DD}` (UTC). If a player returns the same UTC day, they see their previous score screen instead of replaying
 - Streak statistics are stored separately in `localStorage` under the `anagram-trainer-stats` key. On fresh game completion, `ui.js` calls `updateStreakStats` (a pure function in `@/src/game.js`) to compute updated `{ currentStreak, maxStreak, lastPlayedDate, gamesPlayed }`. The streak row displays on the score screen for both fresh and saved games. `isConsecutiveDay` determines day adjacency using a strict 86400000ms check on UTC dates
+- Sound effects use Web Audio API synthesis (OscillatorNode + GainNode) with zero external dependencies. AudioContext is lazily created on first user interaction to comply with browser autoplay policies. All sounds route through a master GainNode for mute control. Mute state persists in `localStorage` under `anagram-trainer-sound-muted`. The `#mute-btn` is absolutely positioned in the header, using emoji icons for speaker state. iOS Safari compatibility is handled via `webkitAudioContext` fallback in `@/src/sound.js`
 - Vitest is the only dev dependency
 
 Created and maintained by Nori.

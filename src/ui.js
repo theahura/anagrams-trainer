@@ -1,4 +1,5 @@
 import { isValidAnswer, calculateScore, getAnswersForRound, generateShareText, matchTypedToTiles, getSubmitFeedbackType, updateStreakStats, processKeyPress } from './game.js';
+import { getAudioContext, initSound } from './sound.js';
 
 const SCRABBLE_POINTS = {
   a:1, b:3, c:3, d:2, e:1, f:4, g:2, h:4, i:1, j:8, k:5, l:1, m:3,
@@ -33,10 +34,51 @@ export function initUI(puzzle, dateStr) {
     transitioning: false,
   };
 
+  // Sound setup (lazy — initialized on first user interaction)
+  let audio = null;
+  function ensureAudio() {
+    if (audio) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    audio = initSound(ctx);
+    const savedMute = localStorage.getItem('anagram-trainer-sound-muted');
+    if (savedMute === '1') audio.setMuted(true);
+    updateMuteButton();
+  }
+  function playSound(name) {
+    if (!audio) return;
+    audio.sounds[name]();
+  }
+
   // Header
   const header = document.createElement('header');
   header.innerHTML = '<h1>Anagram Trainer</h1>';
   container.appendChild(header);
+
+  // Mute toggle button
+  const muteBtn = document.createElement('button');
+  muteBtn.id = 'mute-btn';
+  muteBtn.setAttribute('role', 'switch');
+  muteBtn.setAttribute('aria-label', 'Sound');
+  const savedMuteState = localStorage.getItem('anagram-trainer-sound-muted') === '1';
+  muteBtn.setAttribute('aria-checked', String(!savedMuteState));
+  muteBtn.textContent = savedMuteState ? '\u{1F507}' : '\u{1F50A}';
+  header.appendChild(muteBtn);
+
+  function updateMuteButton() {
+    if (!audio) return;
+    const muted = audio.isMuted();
+    muteBtn.textContent = muted ? '\u{1F507}' : '\u{1F50A}';
+    muteBtn.setAttribute('aria-checked', String(!muted));
+  }
+
+  muteBtn.addEventListener('click', () => {
+    ensureAudio();
+    if (!audio) return;
+    audio.setMuted(!audio.isMuted());
+    try { localStorage.setItem('anagram-trainer-sound-muted', audio.isMuted() ? '1' : '0'); } catch (e) {}
+    updateMuteButton();
+  });
 
   // Game info bar
   const gameInfo = document.createElement('div');
@@ -257,6 +299,7 @@ export function initUI(puzzle, dateStr) {
   }
 
   function handleSubmit() {
+    ensureAudio();
     if (state.transitioning) return;
     if (state.currentRound >= 11) return;
     if (!state.startTime) startTimer();
@@ -268,12 +311,14 @@ export function initUI(puzzle, dateStr) {
       const minLen = round.root.length + 1;
       const maxLen = round.root.length + round.offeredLetters.length;
       setMessage(`Word must be ${minLen}-${maxLen} letters`, 'error');
+      playSound('playWrong');
       triggerShake();
       return;
     }
 
     if (feedback === 'wrong') {
       setMessage('Not a valid answer. Try again!', 'error');
+      playSound('playWrong');
       triggerShake();
       return;
     }
@@ -283,12 +328,14 @@ export function initUI(puzzle, dateStr) {
     state.completedRounds.push({ answer, timeMs, root: round.root, possibleAnswers });
     updateLetterScore();
     setMessage('Correct!', 'success');
+    playSound('playCorrect');
     triggerBounce();
     state.transitioning = true;
     setTimeout(() => advanceRound(), 700);
   }
 
   function handleSkip() {
+    ensureAudio();
     if (state.transitioning) return;
     if (state.currentRound >= 11) return;
     if (!state.startTime) startTimer();
@@ -297,6 +344,7 @@ export function initUI(puzzle, dateStr) {
     const possibleAnswers = getAnswersForRound(round);
     state.completedRounds.push({ answer: '', timeMs, root: round.root, possibleAnswers });
     updateLetterScore();
+    playSound('playSkip');
     if (possibleAnswers.length > 0) {
       setMessage(`Possible: ${possibleAnswers.slice(0, 3).join(', ')}`, '');
       state.transitioning = true;
@@ -385,6 +433,7 @@ export function initUI(puzzle, dateStr) {
     }
     roundsHtml += '</div>';
 
+    if (!savedResults) playSound('playGameComplete');
     scoreScreen.style.display = 'block';
     scoreScreen.innerHTML = `
       <h2>Game Complete!</h2>
@@ -456,6 +505,7 @@ export function initUI(puzzle, dateStr) {
   }
 
   function handleKeyInput(key) {
+    ensureAudio();
     if (state.currentRound >= 11) return;
     if (!state.startTime) startTimer();
     if (key === 'Enter') {
@@ -464,7 +514,9 @@ export function initUI(puzzle, dateStr) {
     }
     const round = puzzle[state.currentRound];
     const maxLen = round.root.length + round.offeredLetters.length;
+    const prevLen = state.inputLetters.length;
     state.inputLetters = processKeyPress(state.inputLetters, key, maxLen);
+    if (state.inputLetters.length !== prevLen) playSound('playKeyClick');
     hiddenInput.value = state.inputLetters.join('');
     renderInput();
     setMessage('');
@@ -472,12 +524,15 @@ export function initUI(puzzle, dateStr) {
 
   // Physical keyboard handling
   hiddenInput.addEventListener('input', (e) => {
+    ensureAudio();
     if (state.currentRound >= 11) return;
     if (!state.startTime) startTimer();
     const round = puzzle[state.currentRound];
     const maxLen = round.root.length + round.offeredLetters.length;
     const val = e.target.value.toLowerCase().replace(/[^a-z]/g, '');
+    const prevLen = state.inputLetters.length;
     state.inputLetters = val.slice(0, maxLen).split('');
+    if (state.inputLetters.length !== prevLen) playSound('playKeyClick');
     hiddenInput.value = state.inputLetters.join('');
     renderInput();
     setMessage('');
