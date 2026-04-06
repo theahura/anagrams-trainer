@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anagram Trainer</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="game-container">
+    <div id="loading">Loading puzzle data...</div>
+  </div>
+
+  <script type="module">
+    import { selectDailyPuzzle } from './src/game.js';
+    import { initUI } from './src/ui.js';
+
+    async function main() {
+      const response = await fetch('./data/puzzles.json');
+      const puzzleData = await response.json();
+
+      // Use UTC date for consistency across timezones
+      const today = new Date();
+      const dateStr = `${today.getUTCFullYear()}-${String(today.getUTCMonth() + 1).padStart(2, '0')}-${String(today.getUTCDate()).padStart(2, '0')}`;
+
+      const puzzle = selectDailyPuzzle(puzzleData, dateStr);
+      initUI(puzzle, dateStr);
+    }
+
+    main();
+  </script>
+</body>
+</html>
