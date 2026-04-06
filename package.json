@@ -1,0 +1,14 @@
+{
+  "name": "anagrams-trainer",
+  "version": "1.0.0",
+  "description": "Daily word game where players add a letter to form new words",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build:words": "node scripts/build-words.js"
+  },
+  "devDependencies": {
+    "vitest": "^3.1.1"
+  }
+}
