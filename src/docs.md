@@ -58,7 +58,7 @@ Path: @/src
 
 - **`game.js`** -- Puzzle selection, answer validation, share text, and countdown utilities
   - `selectDailyPuzzle(puzzleData, dateStr)` selects 11 rounds using date-seeded PRNG, difficulty progression (3+3+3+1+1)
-  - `isValidAnswer(answer, round)` checks expansion dictionary and offered-letter availability, and rejects trivial suffix appends (s, ed, er) via `TRIVIAL_SUFFIXES` constant
+  - `isValidAnswer(answer, round)` checks expansion dictionary and offered-letter availability. All valid dictionary words present in the expansion data are accepted -- there is no runtime filtering beyond dictionary lookup and offered-letter validation
   - `generateShareText(results, dateStr, totalTimeMs)` produces share string with "Reword" header (not "Anagram Trainer")
   - `matchTypedToTiles(typedLetters, rootLetters, offeredLetters)` maps each typed character to a tile position with root-first priority, used by `GameBoard.vue` for real-time feedback
   - `ROUND_TIME_LIMIT_MS` (60000) defines the per-round countdown duration
