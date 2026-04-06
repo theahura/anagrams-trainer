@@ -212,6 +212,16 @@ This simple substring check covers: adding s/es/ed/ing/er to end, and common pre
 - State management via composables (useGameState, useTimer, useSound) — no Pinia needed
 - CSS: keep global style.css, add scoped styles in SFCs where needed
 
+## SVG Favicon
+- **Design**: Green (#538d4e) square tile with white "R" letter — matches the game's accent color and is visible on both light and dark browser chrome
+- **Format**: SVG preferred — scalable, tiny file size, supports embedded dark mode CSS via `@media (prefers-color-scheme: dark)`
+- **Browser support**: Chrome, Firefox, Edge all support SVG favicons. Safari does NOT support SVG favicons (needs PNG fallback or `<link rel="mask-icon">`)
+- **Placement**: `public/favicon.svg` so Vite serves it at `/favicon.svg`
+- **HTML**: `<link rel="icon" type="image/svg+xml" href="/favicon.svg">` in `<head>`
+- **Dimensions**: SVG viewBox="0 0 32 32" — standard favicon size, scales to any resolution
+- **Typography**: Bold, uppercase "R" in Arial/Helvetica, centered in a rounded-corner tile. Matches the game's font: `'Helvetica Neue', Arial, sans-serif`
+- **No PNG fallback for now**: This is a simple game, not a commercial product. Safari will show a generic icon, which is acceptable
+
 ## Bounds Check Bug in handleSubmit/handleSkip
 - `handleSubmit()` at `src/ui.js:253` accesses `puzzle[state.currentRound]` without checking bounds
 - After the last round (round 11, index 10), `advanceRound()` increments `state.currentRound` to 11
