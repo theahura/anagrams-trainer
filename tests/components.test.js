@@ -1,11 +1,12 @@
-import { describe, it, expect } from 'vitest';
-import { mount } from '@vue/test-utils';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { mount, flushPromises } from '@vue/test-utils';
 import ScrabbleTile from '../src/components/ScrabbleTile.vue';
 import TileRack from '../src/components/TileRack.vue';
 import VirtualKeyboard from '../src/components/VirtualKeyboard.vue';
 import ScoreScreen from '../src/components/ScoreScreen.vue';
 import GameBoard from '../src/components/GameBoard.vue';
 import HowToPlay from '../src/components/HowToPlay.vue';
+import App from '../src/components/App.vue';
 
 describe('ScrabbleTile', () => {
   it('renders the letter in uppercase', () => {
@@ -193,6 +194,26 @@ describe('GameBoard', () => {
     await wrapper.find('#skip-btn').trigger('click');
     expect(wrapper.emitted('skip')).toBeTruthy();
   });
+
+  it('applies animationClass to the input area', () => {
+    const wrapper = mount(GameBoard, {
+      props: { round, roundNumber: 1, inputLetters: ['c', 'o', 'a', 't'], message: '', messageType: '', animationClass: 'shake' },
+    });
+    const inputArea = wrapper.find('#input-area');
+    expect(inputArea.classes()).toContain('shake');
+  });
+
+  it('sets --tile-index on input tiles for staggered animation', () => {
+    const wrapper = mount(GameBoard, {
+      props: { round, roundNumber: 1, inputLetters: ['c', 'o', 'a', 't'], message: '', messageType: '' },
+    });
+    const inputArea = wrapper.find('#input-area');
+    const tiles = inputArea.findAll('.tile');
+    for (let i = 0; i < 4; i++) {
+      const style = tiles[i].attributes('style') || '';
+      expect(style).toContain(`--tile-index: ${i}`);
+    }
+  });
 });
 
 describe('HowToPlay', () => {
@@ -213,5 +234,377 @@ describe('HowToPlay', () => {
     const closeBtn = wrapper.find('[data-testid="close-how-to-play"]');
     await closeBtn.trigger('click');
     expect(wrapper.emitted('close')).toBeTruthy();
+  });
+
+  it('mentions the 60-second time limit', () => {
+    const wrapper = mount(HowToPlay);
+    const text = wrapper.text().toLowerCase();
+    expect(text).toMatch(/60 seconds/);
+  });
+
+  it('mentions letter-based scoring', () => {
+    const wrapper = mount(HowToPlay);
+    const text = wrapper.text().toLowerCase();
+    expect(text).toMatch(/letters.*used|total letters/);
+  });
+});
+
+describe('ScoreScreen possible answers cap', () => {
+  it('shows all possible answers when 5 or fewer', () => {
+    const results = [
+      { answer: '', timeMs: 5000, root: 'cat', possibleAnswers: ['coat', 'taco', 'cart'] },
+    ];
+    const wrapper = mount(ScoreScreen, {
+      props: { results, dateStr: '2026-04-05', totalTimeMs: 5000 },
+    });
+    expect(wrapper.text()).toContain('coat');
+    expect(wrapper.text()).toContain('taco');
+    expect(wrapper.text()).toContain('cart');
+    expect(wrapper.text()).not.toContain('more');
+  });
+
+  it('caps possible answers at 5 and shows +N more when exceeded', () => {
+    const results = [
+      { answer: '', timeMs: 5000, root: 'cat', possibleAnswers: ['coat', 'taco', 'cart', 'arcs', 'scat', 'acts', 'cast'] },
+    ];
+    const wrapper = mount(ScoreScreen, {
+      props: { results, dateStr: '2026-04-05', totalTimeMs: 5000 },
+    });
+    // First 5 should be visible
+    expect(wrapper.text()).toContain('coat');
+    expect(wrapper.text()).toContain('taco');
+    expect(wrapper.text()).toContain('cart');
+    expect(wrapper.text()).toContain('arcs');
+    expect(wrapper.text()).toContain('scat');
+    // 6th and 7th should NOT be visible as text
+    expect(wrapper.text()).not.toContain('acts');
+    expect(wrapper.text()).not.toContain('cast');
+    // Should show "+2 more"
+    expect(wrapper.text()).toContain('+2 more');
+  });
+
+  it('shows all 5 answers with no +more when exactly 5', () => {
+    const results = [
+      { answer: '', timeMs: 5000, root: 'cat', possibleAnswers: ['coat', 'taco', 'cart', 'arcs', 'scat'] },
+    ];
+    const wrapper = mount(ScoreScreen, {
+      props: { results, dateStr: '2026-04-05', totalTimeMs: 5000 },
+    });
+    expect(wrapper.text()).toContain('coat');
+    expect(wrapper.text()).toContain('scat');
+    expect(wrapper.text()).not.toContain('more');
+  });
+
+  it('does not show possible answers for solved rounds', () => {
+    const results = [
+      { answer: 'coat', timeMs: 5000, root: 'cat', possibleAnswers: ['coat', 'taco', 'cart'] },
+    ];
+    const wrapper = mount(ScoreScreen, {
+      props: { results, dateStr: '2026-04-05', totalTimeMs: 5000 },
+    });
+    expect(wrapper.find('.possible-answers').exists()).toBe(false);
+  });
+});
+
+// Mock puzzle data matching the format App.vue expects
+const mockPuzzleData = {
+  3: [
+    { root: 'cat', expansions: { o: ['coat', 'taco'], r: ['cart'], s: ['cast', 'acts'] } },
+    { root: 'dog', expansions: { s: ['gods'], n: ['dong'], e: ['doge'] } },
+    { root: 'pen', expansions: { i: ['pine'], a: ['nape', 'pane'], s: ['pens'] } },
+    { root: 'bat', expansions: { e: ['beat', 'beta'], s: ['stab', 'tabs'], h: ['bath'] } },
+  ],
+  4: [
+    { root: 'rind', expansions: { e: ['diner'], k: ['drink'], a: ['nadir', 'drain'] } },
+    { root: 'lamp', expansions: { c: ['clamp'], s: ['psalm'], e: ['ample'] } },
+    { root: 'tone', expansions: { s: ['stone', 'notes', 'onset'], r: ['tenor', 'noter'], d: ['noted'] } },
+    { root: 'mare', expansions: { d: ['dream'], s: ['smear'], k: ['maker'] } },
+  ],
+  5: [
+    { root: 'bread', expansions: { k: ['barked'], e: ['beader'], s: ['breads'] } },
+    { root: 'flame', expansions: { r: ['flamre'], i: ['flamie'], s: ['flames'] } },
+    { root: 'plant', expansions: { e: ['planet', 'platen'], s: ['plants'], i: ['plaint'] } },
+    { root: 'heart', expansions: { d: ['thread', 'dearth', 'hatred'], w: ['wreath', 'thawer'], s: ['hearts'] } },
+  ],
+  6: [
+    { root: 'garden', expansions: { e: ['angered', 'enraged'], i: ['reading', 'gradine'], s: ['gardens'] } },
+    { root: 'listen', expansions: { g: ['singlet', 'tingler'], r: ['linters', 'slinter'], s: ['listens'] } },
+  ],
+  7: [
+    { root: 'strange', expansions: { r: ['granters'], i: ['astringe'], s: ['stranges'] } },
+    { root: 'pointed', expansions: { s: ['deposits', 'topsides'] } },
+  ],
+};
+
+describe('App - Timer pauses during HowToPlay modal', () => {
+  let fetchSpy;
+
+  beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: false });
+    // Mock fetch to return puzzle data
+    fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      json: () => Promise.resolve(mockPuzzleData),
+    });
+    // Clear localStorage
+    localStorage.clear();
+    // Mark how-to-play as seen so it doesn't auto-show
+    localStorage.setItem('reword-seen-how-to-play', '1');
+    // Mock AudioContext to avoid Web Audio errors
+    globalThis.AudioContext = vi.fn().mockImplementation(() => ({
+      state: 'running',
+      resume: vi.fn(),
+      createOscillator: vi.fn().mockReturnValue({
+        connect: vi.fn(), start: vi.fn(), stop: vi.fn(),
+        frequency: { setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() },
+        type: 'sine',
+      }),
+      createGain: vi.fn().mockReturnValue({
+        connect: vi.fn(),
+        gain: { value: 1, setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() },
+      }),
+      createBiquadFilter: vi.fn().mockReturnValue({
+        connect: vi.fn(), type: 'bandpass', frequency: { value: 0 }, Q: { value: 0 },
+      }),
+      createBuffer: vi.fn().mockReturnValue({ getChannelData: () => new Float32Array(100) }),
+      createBufferSource: vi.fn().mockReturnValue({
+        connect: vi.fn(), start: vi.fn(), stop: vi.fn(), buffer: null,
+      }),
+      currentTime: 0,
+      sampleRate: 44100,
+      destination: {},
+    }));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+    delete globalThis.AudioContext;
+  });
+
+  it('does not auto-skip a round while HowToPlay modal is open', async () => {
+    const wrapper = mount(App);
+    await flushPromises();
+    // Timer starts via onRoundEntered after transition — simulate it
+    vi.advanceTimersByTime(0);
+    await flushPromises();
+
+    // Game should be loaded and on round 1
+    expect(wrapper.text()).toContain('Round 1 of 11');
+
+    // Advance timer 30 seconds into the round
+    vi.advanceTimersByTime(30000);
+    await flushPromises();
+
+    // Still on round 1
+    expect(wrapper.text()).toContain('Round 1 of 11');
+
+    // Open HowToPlay modal via the "?" button
+    const helpBtn = wrapper.find('.header-icon');
+    await helpBtn.trigger('click');
+    await flushPromises();
+
+    // Modal should be visible
+    expect(wrapper.findComponent(HowToPlay).exists()).toBe(true);
+
+    // Advance time by 40 seconds (total would be 70s if timer wasn't paused — exceeds 60s limit)
+    vi.advanceTimersByTime(40000);
+    await flushPromises();
+
+    // Should still be on round 1 — timer was paused
+    expect(wrapper.text()).toContain('Round 1 of 11');
+    // Should NOT have advanced to round 2
+    expect(wrapper.text()).not.toContain('Round 2 of 11');
+  });
+
+  it('resumes timer from paused position after closing HowToPlay modal', async () => {
+    const wrapper = mount(App);
+    await flushPromises();
+    vi.advanceTimersByTime(0);
+    await flushPromises();
+
+    // Advance 50 seconds
+    vi.advanceTimersByTime(50000);
+    await flushPromises();
+    expect(wrapper.text()).toContain('Round 1 of 11');
+
+    // Open HowToPlay modal
+    const helpBtn = wrapper.find('.header-icon');
+    await helpBtn.trigger('click');
+    await flushPromises();
+
+    // Advance 20 seconds while modal is open (does nothing to timer)
+    vi.advanceTimersByTime(20000);
+    await flushPromises();
+
+    // Close modal
+    const closeBtn = wrapper.find('[data-testid="close-how-to-play"]');
+    await closeBtn.trigger('click');
+    await flushPromises();
+
+    // Timer should resume from 50s elapsed. We need ~10 more seconds to auto-skip.
+    // Advance 9 seconds — should still be on round 1
+    vi.advanceTimersByTime(9000);
+    await flushPromises();
+    expect(wrapper.text()).toContain('Round 1 of 11');
+
+    // Advance 2 more seconds — now 50+11 = 61s elapsed, should auto-skip
+    vi.advanceTimersByTime(2000);
+    await flushPromises();
+    // Allow transition to complete
+    vi.advanceTimersByTime(1500);
+    await flushPromises();
+    expect(wrapper.text()).not.toContain('Round 1 of 11');
+  });
+});
+
+describe('App - Escape key closes HowToPlay modal', () => {
+  let fetchSpy;
+
+  beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: false });
+    fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      json: () => Promise.resolve(mockPuzzleData),
+    });
+    localStorage.clear();
+    localStorage.setItem('reword-seen-how-to-play', '1');
+    globalThis.AudioContext = vi.fn().mockImplementation(() => ({
+      state: 'running',
+      resume: vi.fn(),
+      createOscillator: vi.fn().mockReturnValue({
+        connect: vi.fn(), start: vi.fn(), stop: vi.fn(),
+        frequency: { setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() },
+        type: 'sine',
+      }),
+      createGain: vi.fn().mockReturnValue({
+        connect: vi.fn(),
+        gain: { value: 1, setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() },
+      }),
+      createBiquadFilter: vi.fn().mockReturnValue({
+        connect: vi.fn(), type: 'bandpass', frequency: { value: 0 }, Q: { value: 0 },
+      }),
+      createBuffer: vi.fn().mockReturnValue({ getChannelData: () => new Float32Array(100) }),
+      createBufferSource: vi.fn().mockReturnValue({
+        connect: vi.fn(), start: vi.fn(), stop: vi.fn(), buffer: null,
+      }),
+      currentTime: 0,
+      sampleRate: 44100,
+      destination: {},
+    }));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+    delete globalThis.AudioContext;
+  });
+
+  it('closes HowToPlay modal when Escape is pressed', async () => {
+    const wrapper = mount(App);
+    await flushPromises();
+    vi.advanceTimersByTime(0);
+    await flushPromises();
+
+    // Open HowToPlay modal
+    const helpBtn = wrapper.find('.header-icon');
+    await helpBtn.trigger('click');
+    await flushPromises();
+    expect(wrapper.findComponent(HowToPlay).exists()).toBe(true);
+
+    // Press Escape
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    await flushPromises();
+
+    // Modal should be closed
+    expect(wrapper.findComponent(HowToPlay).exists()).toBe(false);
+  });
+
+  it('does not crash when Escape is pressed with no modal open', async () => {
+    const wrapper = mount(App);
+    await flushPromises();
+    vi.advanceTimersByTime(0);
+    await flushPromises();
+
+    // Verify no modal
+    expect(wrapper.findComponent(HowToPlay).exists()).toBe(false);
+
+    // Press Escape — should do nothing
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    await flushPromises();
+
+    // Game should still be on round 1
+    expect(wrapper.text()).toContain('Round 1 of 11');
+  });
+});
+
+describe('App - Timer urgency feedback', () => {
+  let fetchSpy;
+
+  beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: false });
+    fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      json: () => Promise.resolve(mockPuzzleData),
+    });
+    localStorage.clear();
+    localStorage.setItem('reword-seen-how-to-play', '1');
+    globalThis.AudioContext = vi.fn().mockImplementation(() => ({
+      state: 'running',
+      resume: vi.fn(),
+      createOscillator: vi.fn().mockReturnValue({
+        connect: vi.fn(), start: vi.fn(), stop: vi.fn(),
+        frequency: { setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() },
+        type: 'sine',
+      }),
+      createGain: vi.fn().mockReturnValue({
+        connect: vi.fn(),
+        gain: { value: 1, setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() },
+      }),
+      createBiquadFilter: vi.fn().mockReturnValue({
+        connect: vi.fn(), type: 'bandpass', frequency: { value: 0 }, Q: { value: 0 },
+      }),
+      createBuffer: vi.fn().mockReturnValue({ getChannelData: () => new Float32Array(100) }),
+      createBufferSource: vi.fn().mockReturnValue({
+        connect: vi.fn(), start: vi.fn(), stop: vi.fn(), buffer: null,
+      }),
+      currentTime: 0,
+      sampleRate: 44100,
+      destination: {},
+    }));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+    delete globalThis.AudioContext;
+  });
+
+  it('adds urgent class to timer display when under 10 seconds remain', async () => {
+    const wrapper = mount(App);
+    await flushPromises();
+    vi.advanceTimersByTime(0);
+    await flushPromises();
+
+    // At start (60s remaining), timer should not be urgent
+    expect(wrapper.find('.timer-display.urgent').exists()).toBe(false);
+
+    // Advance to 51 seconds (9 seconds remaining)
+    vi.advanceTimersByTime(51000);
+    await flushPromises();
+
+    // Timer should now have urgent class
+    expect(wrapper.find('.timer-display.urgent').exists()).toBe(true);
+  });
+
+  it('does not show urgent class when more than 10 seconds remain', async () => {
+    const wrapper = mount(App);
+    await flushPromises();
+    vi.advanceTimersByTime(0);
+    await flushPromises();
+
+    // Advance to 30 seconds (30 seconds remaining)
+    vi.advanceTimersByTime(30000);
+    await flushPromises();
+
+    // Timer should not be urgent
+    expect(wrapper.find('.timer-display.urgent').exists()).toBe(false);
   });
 });

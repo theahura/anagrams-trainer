@@ -13,6 +13,12 @@ import {
   processKeyPress,
   formatCountdown,
   getTimeUntilMidnightUTC,
+  formatRoundTimer,
+  serializeGameState,
+  deserializeGameState,
+  ROUND_TIME_LIMIT_MS,
+  isTimerUrgent,
+  shareResults,
 } from '../src/game.js';
 
 // Minimal puzzle data for testing
@@ -100,17 +106,17 @@ describe('isValidAnswer', () => {
     expect(isValidAnswer('pizza', round)).toBe(false);
   });
 
-  it('rejects trivial suffix appends (root + s)', () => {
+  it('rejects root + s when it is only a direct inflection of the root', () => {
     const round = { root: 'rind', expansions: { s: ['rinds'] }, offeredLetters: ['s', 'g', 'e'] };
     expect(isValidAnswer('rinds', round)).toBe(false);
   });
 
-  it('rejects trivial suffix appends (root + ed)', () => {
+  it('rejects root + ed when it is only a direct inflection of the root', () => {
     const round = { root: 'plant', expansions: { ed: ['planted'] }, offeredLetters: ['e', 'd', 'z'] };
     expect(isValidAnswer('planted', round)).toBe(false);
   });
 
-  it('rejects trivial suffix appends (root + er)', () => {
+  it('rejects root + er when it is only a direct inflection of the root', () => {
     const round = { root: 'fast', expansions: { er: ['faster'] }, offeredLetters: ['e', 'r', 'z'] };
     expect(isValidAnswer('faster', round)).toBe(false);
   });
@@ -674,5 +680,140 @@ describe('getTimeUntilMidnightUTC', () => {
     const ms = getTimeUntilMidnightUTC();
     expect(ms).toBeGreaterThan(0);
     expect(ms).toBeLessThanOrEqual(86400000);
+  });
+});
+
+describe('formatRoundTimer', () => {
+  it('formats 60 seconds as 1:00', () => {
+    expect(formatRoundTimer(60000)).toBe('1:00');
+  });
+
+  it('formats 0 milliseconds as 0:00', () => {
+    expect(formatRoundTimer(0)).toBe('0:00');
+  });
+
+  it('formats 59999ms as 0:59 (floors sub-second remainder)', () => {
+    expect(formatRoundTimer(59999)).toBe('0:59');
+  });
+
+  it('formats 5 seconds as 0:05 (zero-padded seconds)', () => {
+    expect(formatRoundTimer(5000)).toBe('0:05');
+  });
+});
+
+describe('serializeGameState / deserializeGameState round-trip', () => {
+  it('round-trips to recover the same game state', () => {
+    const completedRounds = [
+      { answer: 'grind', timeMs: 5000, root: 'rind', possibleAnswers: ['grind', 'diner'] },
+      { answer: '', timeMs: 60000, root: 'cat', possibleAnswers: ['coat'] },
+    ];
+    const now = 1000000;
+    const serialized = serializeGameState(2, completedRounds, now);
+    const restored = deserializeGameState(serialized, now);
+    expect(restored.currentRound).toBe(2);
+    expect(restored.completedRounds).toEqual(completedRounds);
+    expect(restored.elapsedMs).toBe(0);
+  });
+
+  it('computes elapsed time since serialization', () => {
+    const now = 1000000;
+    const serialized = serializeGameState(3, [], now);
+    const result = deserializeGameState(serialized, now + 30000);
+    expect(result.elapsedMs).toBe(30000);
+  });
+
+  it('caps elapsed time at ROUND_TIME_LIMIT_MS when player was away too long', () => {
+    const now = 1000000;
+    const serialized = serializeGameState(5, [], now);
+    const result = deserializeGameState(serialized, now + ROUND_TIME_LIMIT_MS + 30000);
+    expect(result.elapsedMs).toBe(ROUND_TIME_LIMIT_MS);
+  });
+});
+
+describe('deserializeGameState edge cases', () => {
+  it('returns null for completed games', () => {
+    const saved = { status: 'complete', results: [], totalTimeMs: 5000 };
+    expect(deserializeGameState(saved, Date.now())).toBeNull();
+  });
+
+  it('returns null for null input', () => {
+    expect(deserializeGameState(null, Date.now())).toBeNull();
+  });
+
+  it('returns null for undefined input', () => {
+    expect(deserializeGameState(undefined, Date.now())).toBeNull();
+  });
+
+  it('returns null for legacy saves without status field', () => {
+    const saved = { results: [], totalTimeMs: 5000 };
+    expect(deserializeGameState(saved, Date.now())).toBeNull();
+  });
+});
+
+describe('isTimerUrgent', () => {
+  it('returns false when remaining time is above threshold', () => {
+    expect(isTimerUrgent(15000)).toBe(false);
+    expect(isTimerUrgent(10001)).toBe(false);
+    expect(isTimerUrgent(60000)).toBe(false);
+  });
+
+  it('returns true when remaining time is at or below threshold', () => {
+    expect(isTimerUrgent(10000)).toBe(true);
+    expect(isTimerUrgent(5000)).toBe(true);
+    expect(isTimerUrgent(1)).toBe(true);
+  });
+
+});
+
+describe('shareResults', () => {
+  it('uses Web Share API when navigator.share is available', async () => {
+    const nav = {
+      share: async () => {},
+    };
+    const result = await shareResults('Reword 2026-04-05\n🟩🟩🟩', nav);
+    expect(result.method).toBe('share');
+  });
+
+  it('returns dismissed when user cancels the share sheet', async () => {
+    const nav = {
+      share: async () => {
+        const err = new Error('Share cancelled');
+        err.name = 'AbortError';
+        throw err;
+      },
+    };
+    const result = await shareResults('some text', nav);
+    expect(result.method).toBe('dismissed');
+  });
+
+  it('falls through to clipboard when share throws non-AbortError', async () => {
+    const nav = {
+      share: async () => { throw new Error('failed'); },
+      clipboard: { writeText: async () => {} },
+    };
+    const result = await shareResults('some text', nav);
+    expect(result.method).toBe('clipboard');
+  });
+
+  it('uses clipboard when share is unavailable', async () => {
+    const nav = {
+      clipboard: { writeText: async () => {} },
+    };
+    const result = await shareResults('test text', nav);
+    expect(result.method).toBe('clipboard');
+  });
+
+  it('returns fallback when neither share nor clipboard is available', async () => {
+    const nav = {};
+    const result = await shareResults('test text', nav);
+    expect(result.method).toBe('fallback');
+  });
+
+  it('returns fallback when clipboard.writeText rejects', async () => {
+    const nav = {
+      clipboard: { writeText: async () => { throw new Error('denied'); } },
+    };
+    const result = await shareResults('test text', nav);
+    expect(result.method).toBe('fallback');
   });
 });

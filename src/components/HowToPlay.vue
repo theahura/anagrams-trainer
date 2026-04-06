@@ -19,8 +19,9 @@
       </div>
       <ul>
         <li>11 rounds with increasing difficulty</li>
+        <li>You have 60 seconds per round — if time runs out, the round is skipped</li>
         <li>A new puzzle every day</li>
-        <li>Score is based on total letters used</li>
+        <li>Score is based on total letters used across all words</li>
       </ul>
     </div>
   </div>
