@@ -153,6 +153,20 @@ This simple substring check covers: adding s/es/ed/ing/er to end, and common pre
 - **Pure function for testability**: Extract `createSoundEffects(audioContext)` factory that returns play functions. UI calls play functions at event trigger points.
 - **Integration points in ui.js**: correct answer (line ~285), wrong answer (line ~276), invalid length (line ~270), key press (line ~469/482), skip (line ~300), game complete (line ~337)
 
+## Vue 3 + Vite Migration
+- **Approach**: Add Vue 3 + Vite to existing project (not create-vue scaffold). The project already uses ES modules and vitest.
+- **Packages**: `vue` (runtime), `vite` + `@vitejs/plugin-vue` (dev), `@vue/test-utils` + `happy-dom` (dev, for component testing)
+- **Entry point**: `index.html` stays at root, gets `<div id="app">` mount point + `<script type="module" src="/src/main.js">` entry
+- **main.js**: `createApp(App).mount('#app')` — simple, no router or Pinia needed for this small app
+- **Static assets**: Move `data/puzzles.json` to `public/data/puzzles.json` so Vite serves it as-is; fetch at runtime via `fetch('/data/puzzles.json')`
+- **vite.config.js**: `defineConfig({ plugins: [vue()], test: { environment: 'happy-dom' } })`
+- **Pure logic modules unchanged**: `game.js`, `prng.js`, `words.js`, `sound.js` have no DOM dependency — import directly into Vue composables/components
+- **CSS strategy**: Keep `style.css` as global import in `main.js`. Component-specific styles can go in SFC `<style scoped>` blocks
+- **Component structure**: App.vue (root), GameBoard.vue (main game area), TileRack.vue, ScrabbleTile.vue, VirtualKeyboard.vue, ScoreScreen.vue, GameHeader.vue, GameInfo.vue
+- **State management**: Vue 3 composables (useGameState, useTimer, useSound) — no need for Pinia in a single-page game
+- **Existing tests**: All 96 pure logic tests continue to work unchanged since they import from game.js/prng.js/words.js/sound.js directly
+- **Web Audio in Vue**: Lazy-init AudioContext on first user interaction (same pattern as current). Clean up in onUnmounted.
+
 ## Bounds Check Bug in handleSubmit/handleSkip
 - `handleSubmit()` at `src/ui.js:253` accesses `puzzle[state.currentRound]` without checking bounds
 - After the last round (round 11, index 10), `advanceRound()` increments `state.currentRound` to 11
