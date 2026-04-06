@@ -9,15 +9,17 @@ Path: @/tests
 
 ### How it fits into the larger codebase
 
-- Tests import directly from `@/src/prng.js`, `@/src/game.js`, and `@/src/words.js`
+- Tests import directly from `@/src/prng.js`, `@/src/game.js`, `@/src/words.js`, and `@/scripts/web-scraper.js`
 - `ui.js` is not tested (requires DOM)
 - `build-words.test.js` tests the word processing functions that `@/scripts/build-words.js` depends on, not the build script itself
+- `web-scraper.test.js` tests the HTML parsing and expansion key derivation functions used by the web-sourced build pipeline
 
 ### Core Implementation
 
 - **`prng.test.js`** -- Verifies PRNG determinism (same date -> same sequence), distinctness (different dates -> different sequences), and output range [0, 1). Also tests `seededShuffle` determinism and element preservation, and `seededPick` determinism
 - **`game.test.js`** -- Tests trivial extension detection, daily puzzle selection (11 rounds, correct difficulty progression, date determinism), answer validation (valid words, invalid words, trivial rejections, case insensitivity, rejection of non-offered expansion letters, multi-letter key answer validation), offered letter guarantees (exactly 3, at least 1 valid), `getAnswersForRound` (offered-letter filtering, empty results, multi-word flattening, multi-letter key answer retrieval), and score calculation
 - **`build-words.test.js`** -- Tests letter signature sorting, expansion finding (correct words, correct length, multi-letter expansions for +2 and +3 letters), trivial expansion filtering (substring removal, key cleanup, middle-of-word substring detection), and a regression test verifying that "ski" + "r" produces "risk"
+- **`web-scraper.test.js`** -- Tests the pure functions in `@/scripts/web-scraper.js`: HTML parsing of dictionary links (`parseWordsFromHtml`), expansion key derivation for single and multi-letter additions (`deriveExpansionKey`), and grouping words by expansion key (`groupByExpansionKey`). Does not test the async fetch functions
 
 ### Things to Know
 
