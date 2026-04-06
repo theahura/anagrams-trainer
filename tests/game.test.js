@@ -106,19 +106,32 @@ describe('isValidAnswer', () => {
     expect(isValidAnswer('pizza', round)).toBe(false);
   });
 
-  it('accepts root + s when in expansion dictionary', () => {
+  it('rejects root + s when it is only a direct inflection of the root', () => {
     const round = { root: 'rind', expansions: { s: ['rinds'] }, offeredLetters: ['s', 'g', 'e'] };
-    expect(isValidAnswer('rinds', round)).toBe(true);
+    expect(isValidAnswer('rinds', round)).toBe(false);
   });
 
-  it('accepts root + ed when in expansion dictionary', () => {
+  it('rejects root + ed when it is only a direct inflection of the root', () => {
     const round = { root: 'plant', expansions: { ed: ['planted'] }, offeredLetters: ['e', 'd', 'z'] };
-    expect(isValidAnswer('planted', round)).toBe(true);
+    expect(isValidAnswer('planted', round)).toBe(false);
   });
 
-  it('accepts root + er when in expansion dictionary', () => {
+  it('rejects root + er when it is only a direct inflection of the root', () => {
     const round = { root: 'fast', expansions: { er: ['faster'] }, offeredLetters: ['e', 'r', 'z'] };
-    expect(isValidAnswer('faster', round)).toBe(true);
+    expect(isValidAnswer('faster', round)).toBe(false);
+  });
+
+  it('rejects a direct plural of the root when extra letters only add the inflection', () => {
+    const round = {
+      root: 'aster',
+      expansions: {
+        s: ['asters'],
+        m: ['master'],
+        ms: ['masters'],
+      },
+      offeredLetters: ['m', 's', 'x'],
+    };
+    expect(isValidAnswer('asters', round)).toBe(false);
   });
 
   it('accepts words containing root as substring when rearranged', () => {
@@ -139,6 +152,83 @@ describe('isValidAnswer', () => {
       offeredLetters: ['m', 'x', 'z'],
     };
     expect(isValidAnswer('master', round)).toBe(true);
+  });
+
+  it('accepts a plural when it extends a new base word rather than the root', () => {
+    const round = {
+      root: 'aster',
+      expansions: {
+        m: ['master'],
+        ms: ['masters'],
+      },
+      offeredLetters: ['m', 's', 'x'],
+    };
+    expect(isValidAnswer('masters', round)).toBe(true);
+  });
+
+  it('accepts a past-tense form when it extends a new base word rather than the root', () => {
+    const round = {
+      root: 'aster',
+      expansions: {
+        m: ['master'],
+        dem: ['mastered'],
+      },
+      offeredLetters: ['d', 'e', 'm'],
+    };
+    expect(isValidAnswer('mastered', round)).toBe(true);
+  });
+
+  it('rejects a direct comparative-style extension of the root', () => {
+    const round = {
+      root: 'slant',
+      expansions: {
+        er: ['slanter'],
+        ers: ['antlers'],
+      },
+      offeredLetters: ['e', 'r', 's'],
+    };
+    expect(isValidAnswer('slanter', round)).toBe(false);
+  });
+
+  it('accepts longer words that use the same letters but form a different base', () => {
+    const round = {
+      root: 'slant',
+      expansions: {
+        ers: ['antlers'],
+      },
+      offeredLetters: ['e', 'r', 's'],
+    };
+    expect(isValidAnswer('antlers', round)).toBe(true);
+  });
+
+  it('rejects direct past-tense extensions of the root but allows inflecting a new word', () => {
+    const round = {
+      root: 'lock',
+      expansions: {
+        ed: ['locked'],
+        f: ['flock'],
+        def: ['flocked'],
+      },
+      offeredLetters: ['d', 'e', 'f'],
+    };
+    expect(isValidAnswer('locked', round)).toBe(false);
+    expect(isValidAnswer('flock', round)).toBe(true);
+    expect(isValidAnswer('flocked', round)).toBe(true);
+  });
+
+  it('rejects past-tense extensions for roots ending in e, but still allows a new base word', () => {
+    const round = {
+      root: 'love',
+      expansions: {
+        d: ['loved'],
+        g: ['glove'],
+        dg: ['gloved'],
+      },
+      offeredLetters: ['d', 'g', 'x'],
+    };
+    expect(isValidAnswer('loved', round)).toBe(false);
+    expect(isValidAnswer('glove', round)).toBe(true);
+    expect(isValidAnswer('gloved', round)).toBe(true);
   });
 
   it('is case-insensitive', () => {
@@ -727,4 +817,3 @@ describe('shareResults', () => {
     expect(result.method).toBe('fallback');
   });
 });
-

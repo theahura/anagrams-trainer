@@ -1,14 +1,13 @@
 import { getDailyRng, seededShuffle, seededPick } from './prng.js';
 
+const DIRECT_ROOT_INFLECTION_SUFFIXES = ['ing', 'ers', 'ies', 'ied', 'est', 'es', 'ed', 'er', 's', 'd', 'r'];
+
 export function isValidAnswer(answer, round) {
   const answerLower = answer.toLowerCase();
+  const validAnswers = getAnswersForRound(round).map(word => word.toLowerCase());
+  if (!validAnswers.includes(answerLower)) return false;
 
-  const offered = round.offeredLetters || [];
-  for (const [key, words] of Object.entries(round.expansions)) {
-    if (!isKeySubsetOfOffered(key, offered)) continue;
-    if (words.some(w => w.toLowerCase() === answerLower)) return true;
-  }
-  return false;
+  return !isDirectRootInflection(answerLower, round.root.toLowerCase(), new Set(validAnswers));
 }
 
 function isKeySubsetOfOffered(key, offeredLetters) {
@@ -31,6 +30,19 @@ export function getAnswersForRound(round) {
     }
   }
   return results;
+}
+
+function isDirectRootInflection(answerLower, rootLower, validAnswers) {
+  for (const suffix of DIRECT_ROOT_INFLECTION_SUFFIXES) {
+    if (!answerLower.endsWith(suffix) || answerLower.length <= suffix.length) continue;
+
+    const base = answerLower.slice(0, -suffix.length);
+    if (base.length < rootLower.length) continue;
+    if (validAnswers.has(base)) return false;
+    if (base === rootLower) return true;
+  }
+
+  return false;
 }
 
 export function selectDailyPuzzle(puzzleData, dateStr) {
