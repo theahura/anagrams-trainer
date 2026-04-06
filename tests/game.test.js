@@ -11,6 +11,7 @@ import {
   getSubmitFeedbackType,
   isConsecutiveDay,
   updateStreakStats,
+  processKeyPress,
 } from '../src/game.js';
 
 // Minimal puzzle data for testing
@@ -467,6 +468,39 @@ describe('updateStreakStats', () => {
     const stats = updateStreakStats(existing, '2026-04-05');
     expect(stats.currentStreak).toBe(3);
     expect(stats.maxStreak).toBe(10);
+  });
+});
+
+describe('processKeyPress', () => {
+  it('adds a letter to empty input', () => {
+    expect(processKeyPress([], 'a', 5)).toEqual(['a']);
+  });
+
+  it('appends a letter to existing input', () => {
+    expect(processKeyPress(['a', 'b'], 'c', 5)).toEqual(['a', 'b', 'c']);
+  });
+
+  it('does not exceed maxLen', () => {
+    expect(processKeyPress(['a', 'b', 'c'], 'd', 3)).toEqual(['a', 'b', 'c']);
+  });
+
+  it('removes last letter on Backspace', () => {
+    expect(processKeyPress(['a', 'b'], 'Backspace', 5)).toEqual(['a']);
+  });
+
+  it('returns empty array on Backspace with empty input', () => {
+    expect(processKeyPress([], 'Backspace', 5)).toEqual([]);
+  });
+
+  it('normalizes uppercase letters to lowercase', () => {
+    expect(processKeyPress(['a'], 'B', 5)).toEqual(['a', 'b']);
+  });
+
+  it('ignores non-letter keys', () => {
+    expect(processKeyPress(['a'], '1', 5)).toEqual(['a']);
+    expect(processKeyPress(['a'], 'Shift', 5)).toEqual(['a']);
+    expect(processKeyPress(['a'], ' ', 5)).toEqual(['a']);
+    expect(processKeyPress(['a'], 'Enter', 5)).toEqual(['a']);
   });
 });
 

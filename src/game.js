@@ -164,6 +164,15 @@ export function updateStreakStats(existingStats, todayDateStr) {
   };
 }
 
+export function processKeyPress(currentLetters, key, maxLen) {
+  if (key === 'Backspace') return currentLetters.slice(0, -1);
+  if (key.length === 1 && /^[a-z]$/i.test(key)) {
+    if (currentLetters.length >= maxLen) return currentLetters;
+    return [...currentLetters, key.toLowerCase()];
+  }
+  return currentLetters;
+}
+
 export function calculateScore(completedRounds) {
   return {
     totalLetters: completedRounds.reduce((sum, r) => sum + r.answer.length, 0),
