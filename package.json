@@ -6,7 +6,8 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "build:words": "node scripts/build-words.js"
+    "build:words": "node scripts/build-words.js",
+    "build:words:web": "node scripts/build-words-web.js"
   },
   "devDependencies": {
     "vitest": "^3.1.1"

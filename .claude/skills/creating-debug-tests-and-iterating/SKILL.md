@@ -67,6 +67,6 @@ should ignore other tests entirely until it works.
 
 # Emulators for testing
 
-Web servers or web apps: use playwright (read the /home/amol/code/games/anagrams-trainer/.worktrees/real-bay-20260405-232153/.claude/skills/webapp-testing/SKILL.md)
+Web servers or web apps: use playwright (read the /home/amol/code/games/anagrams-trainer/.worktrees/able-ivy-20260406-013042/.claude/skills/webapp-testing/SKILL.md)
 TUI tools: use tmux with screen capture
 CLI tools: use bash

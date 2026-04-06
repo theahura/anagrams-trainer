@@ -13,7 +13,7 @@ export function buildSignatureIndex(dictionary) {
   return index;
 }
 
-export function findExpansions(root, dictionaryOrIndex) {
+export function findExpansions(root, dictionaryOrIndex, maxExtraLetters = 3) {
   // Accept either an array (original API) or a pre-built index
   const index = dictionaryOrIndex instanceof Map
     ? dictionaryOrIndex
@@ -23,16 +23,33 @@ export function findExpansions(root, dictionaryOrIndex) {
   const rootSig = letterSignature(rootLower);
   const expansions = {};
 
-  for (let c = 97; c <= 122; c++) { // a-z
-    const extraLetter = String.fromCharCode(c);
-    const targetSig = insertSorted(rootSig, extraLetter);
-    const matches = index.get(targetSig);
-    if (matches) {
-      expansions[extraLetter] = [...matches];
+  for (let numExtra = 1; numExtra <= maxExtraLetters; numExtra++) {
+    for (const combo of combinationsWithRepetition(numExtra)) {
+      let targetSig = rootSig;
+      for (const ch of combo) {
+        targetSig = insertSorted(targetSig, ch);
+      }
+      const matches = index.get(targetSig);
+      if (matches) {
+        const key = combo.join('');
+        expansions[key] = [...matches];
+      }
     }
   }
 
   return expansions;
+}
+
+function* combinationsWithRepetition(size, start = 0) {
+  if (size === 0) {
+    yield [];
+    return;
+  }
+  for (let i = start; i < 26; i++) {
+    for (const rest of combinationsWithRepetition(size - 1, i)) {
+      yield [String.fromCharCode(97 + i), ...rest];
+    }
+  }
 }
 
 function insertSorted(sortedStr, char) {
@@ -44,16 +61,3 @@ function insertSorted(sortedStr, char) {
   return sortedStr + char;
 }
 
-export function filterTrivialExpansions(root, expansions) {
-  const rootLower = root.toLowerCase();
-  const filtered = {};
-
-  for (const [letter, words] of Object.entries(expansions)) {
-    const validWords = words.filter(w => !w.toLowerCase().includes(rootLower));
-    if (validWords.length > 0) {
-      filtered[letter] = validWords;
-    }
-  }
-
-  return filtered;
-}
