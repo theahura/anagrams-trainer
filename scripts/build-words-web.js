@@ -1,8 +1,8 @@
 import { writeFileSync, readFileSync, existsSync } from 'fs';
 import { fetchExpansionsFromWeb, fetchWordsFromWeb, groupByExpansionKey } from './web-scraper.js';
 
-const OUTPUT_PATH = new URL('../data/puzzles.json', import.meta.url).pathname;
-const CACHE_PATH = new URL('../data/web-cache.json', import.meta.url).pathname;
+const OUTPUT_PATH = new URL('../games/reword/data/puzzles.json', import.meta.url).pathname;
+const CACHE_PATH = new URL('../games/reword/data/web-cache.json', import.meta.url).pathname;
 const MIN_EXPANSIONS = 3;
 const DELAY_MS = 500;
 const MAX_ROOTS_PER_LENGTH = 500;

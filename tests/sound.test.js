@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { createSoundEffects, initSound } from '../src/sound.js';
+import { createSoundEffects, initSound } from '../games/reword/src/sound.js';
 
 function createMockAudioContext() {
   const mockOscillator = {

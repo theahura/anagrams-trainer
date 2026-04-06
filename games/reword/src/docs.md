@@ -1,20 +1,20 @@
 # Noridoc: src
 
-Path: @/src
+Path: @/games/reword/src
 
 ### Overview
 
 - Contains all runtime game modules: Vue 3 SFC components, pure game logic, PRNG, word processing, and sound synthesis
-- `main.js` is the entry point, mounting the Vue app; pure-logic modules have no framework dependencies
+- `main.js` is the entry point for the published `reword/` page; pure-logic modules have no framework dependencies
 - Also imported by `@/scripts/build-words.js` for the word processing functions (`words.js`)
 
 ### How it fits into the larger codebase
 
-- `@/index.html` loads `src/main.js` which creates the Vue app from `App.vue`
+- `@/reword/index.html` loads `@/games/reword/src/main.js` which creates the Vue app from `App.vue`
 - `@/scripts/build-words.js` imports `words.js` for `buildSignatureIndex` and `findExpansions`
 - `@/scripts/web-scraper.js` imports `letterSignature` from `words.js` for expansion key derivation
 - `@/tests/` tests `prng.js`, `game.js`, `words.js`, `sound.js` directly, and Vue components via `@vue/test-utils`
-- `@/data/puzzles.json` is the data contract: `game.js` expects puzzle data keyed by root word length, each entry having `{ root, expansions }` where expansions maps a variable-length key string (e.g., `"r"`, `"el"`, `"egr"`) to a word array
+- `@/games/reword/data/puzzles.json` is the data contract: `game.js` expects puzzle data keyed by root word length, each entry having `{ root, expansions }` where expansions maps a variable-length key string (e.g., `"r"`, `"el"`, `"egr"`) to a word array
 
 ### Core Implementation
 

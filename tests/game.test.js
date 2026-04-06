@@ -13,7 +13,7 @@ import {
   processKeyPress,
   formatCountdown,
   getTimeUntilMidnightUTC,
-} from '../src/game.js';
+} from '../games/reword/src/game.js';
 
 // Minimal puzzle data for testing
 const testPuzzleData = {

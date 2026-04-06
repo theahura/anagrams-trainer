@@ -1,4 +1,4 @@
-import { letterSignature } from '../src/words.js';
+import { letterSignature } from '../games/reword/src/words.js';
 
 export function parseWordsFromHtml(html) {
   const regex = /<a href="\/dictionary\/([^"]+)">/g;
