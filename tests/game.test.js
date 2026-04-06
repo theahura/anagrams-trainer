@@ -98,12 +98,33 @@ describe('isValidAnswer', () => {
     expect(isValidAnswer('pizza', round)).toBe(false);
   });
 
-  it('accepts a word containing root as substring', () => {
+  it('rejects trivial suffix appends (root + s)', () => {
     const round = { root: 'rind', expansions: { s: ['rinds'] }, offeredLetters: ['s', 'g', 'e'] };
-    expect(isValidAnswer('rinds', round)).toBe(true);
+    expect(isValidAnswer('rinds', round)).toBe(false);
   });
 
-  it('accepts master for root aster with m offered', () => {
+  it('rejects trivial suffix appends (root + ed)', () => {
+    const round = { root: 'plant', expansions: { ed: ['planted'] }, offeredLetters: ['e', 'd', 'z'] };
+    expect(isValidAnswer('planted', round)).toBe(false);
+  });
+
+  it('rejects trivial suffix appends (root + er)', () => {
+    const round = { root: 'fast', expansions: { er: ['faster'] }, offeredLetters: ['e', 'r', 'z'] };
+    expect(isValidAnswer('faster', round)).toBe(false);
+  });
+
+  it('accepts words containing root as substring when rearranged', () => {
+    const round = {
+      root: 'aster',
+      expansions: { m: ['armets', 'master', 'maters', 'matres', 'ramets', 'stream'] },
+      offeredLetters: ['m', 'x', 'z'],
+    };
+    // master contains aster as substring, but other answers like stream are rearranged
+    expect(isValidAnswer('stream', round)).toBe(true);
+    expect(isValidAnswer('armets', round)).toBe(true);
+  });
+
+  it('still accepts master from aster (prepend, not suffix append)', () => {
     const round = {
       root: 'aster',
       expansions: { m: ['armets', 'master', 'maters', 'matres', 'ramets', 'stream'] },

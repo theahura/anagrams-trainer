@@ -1,7 +1,14 @@
 import { getDailyRng, seededShuffle, seededPick } from './prng.js';
 
+const TRIVIAL_SUFFIXES = ['s', 'ed', 'er'];
+
 export function isValidAnswer(answer, round) {
   const answerLower = answer.toLowerCase();
+  const rootLower = round.root.toLowerCase();
+
+  for (const suffix of TRIVIAL_SUFFIXES) {
+    if (answerLower === rootLower + suffix) return false;
+  }
 
   const offered = round.offeredLetters || [];
   for (const [key, words] of Object.entries(round.expansions)) {
