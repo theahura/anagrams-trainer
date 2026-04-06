@@ -13,7 +13,8 @@ The game has been renamed to **Reword** and fully migrated to Vue 3 + Vite with 
 - **Tile Click Sounds**: `playKeyClick` uses filtered white noise burst (bandpass at 1200Hz) instead of square wave oscillator
 - **How-to-Play Modal**: Auto-shows on first visit (localStorage `reword-seen-how-to-play`), re-openable via `?` icon in header
 - **Countdown Timer**: Score screen shows "Next puzzle in: HH:MM:SS" countdown to UTC midnight. Pure functions `formatCountdown()` and `getTimeUntilMidnightUTC()` in game.js
-- 127 tests passing (96 pure logic + 26 Vue component + 5 new countdown/HowToPlay tests)
+- **Favicon**: Green (#538d4e) square tile with white "R" SVG favicon at `public/favicon.svg`, linked in `index.html`
+- 127 tests passing (96 pure logic + 26 Vue component + 5 countdown/HowToPlay tests)
 
 ## Architecture
 - **Vue 3 + Vite**: Entry point `src/main.js` → `App.vue` mounts to `<div id="app">`
@@ -29,3 +30,4 @@ The game has been renamed to **Reword** and fully migrated to Vue 3 + Vite with 
 
 ## Remaining from APPLICATION-SPEC
 - Make it play nice on mobile (partially done: virtual keyboard, touch buttons, responsive CSS already exist)
+- Per-round countdown timer: each stage gives the player max one minute counting down, auto-skip on timeout, show cumulative time only at end
