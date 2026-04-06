@@ -161,9 +161,13 @@ header h1 {
 
 /* Hidden text input for keyboard capture */
 #hidden-input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0.01;
+  font-size: 16px;
 }
 
 /* Message */
@@ -361,6 +365,53 @@ header h1 {
   margin-top: 40vh;
 }
 
+/* Virtual keyboard (touch devices only) */
+#virtual-keyboard {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin: 16px 0 8px;
+  padding: 8px 4px;
+}
+
+.keyboard-row {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+}
+
+.keyboard-key {
+  min-width: 32px;
+  min-height: 44px;
+  padding: 0 8px;
+  background: linear-gradient(145deg, #e8d5a3, #d4c49a);
+  border: 1px solid #b89a5a;
+  border-radius: 4px;
+  color: #333;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.keyboard-key:active {
+  background: linear-gradient(145deg, #c9a96e, #a8884e);
+  color: #fff;
+}
+
+.keyboard-key.key-wide {
+  min-width: 52px;
+  font-size: 18px;
+}
+
+@media (pointer: coarse) {
+  #virtual-keyboard {
+    display: flex;
+  }
+}
+
 /* Answer feedback animations */
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
@@ -420,6 +471,28 @@ header h1 {
   }
 }
 
+/* Touch device improvements */
+@media (pointer: coarse) {
+  #submit-btn {
+    min-height: 48px;
+    width: 100%;
+    font-size: 18px;
+  }
+
+  #skip-btn {
+    min-height: 44px;
+    padding: 10px 24px;
+    font-size: 14px;
+    width: 100%;
+  }
+
+  #share-btn {
+    min-height: 48px;
+    width: 100%;
+    font-size: 18px;
+  }
+}
+
 /* Responsive */
 @media (max-width: 420px) {
   .tile {
@@ -433,5 +506,14 @@ header h1 {
   }
   header h1 {
     font-size: 22px;
+  }
+  .keyboard-key {
+    min-width: 28px;
+    min-height: 40px;
+    padding: 0 5px;
+    font-size: 14px;
+  }
+  .keyboard-key.key-wide {
+    min-width: 44px;
   }
 }

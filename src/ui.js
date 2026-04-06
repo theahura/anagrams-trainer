@@ -1,4 +1,4 @@
-import { isValidAnswer, calculateScore, getAnswersForRound, generateShareText, matchTypedToTiles, getSubmitFeedbackType, updateStreakStats } from './game.js';
+import { isValidAnswer, calculateScore, getAnswersForRound, generateShareText, matchTypedToTiles, getSubmitFeedbackType, updateStreakStats, processKeyPress } from './game.js';
 
 const SCRABBLE_POINTS = {
   a:1, b:3, c:3, d:2, e:1, f:4, g:2, h:4, i:1, j:8, k:5, l:1, m:3,
@@ -30,6 +30,7 @@ export function initUI(puzzle, dateStr) {
     startTime: null,
     roundStartTime: null,
     timerInterval: null,
+    transitioning: false,
   };
 
   // Header
@@ -85,6 +86,8 @@ export function initUI(puzzle, dateStr) {
   hiddenInput.type = 'text';
   hiddenInput.autocomplete = 'off';
   hiddenInput.autocapitalize = 'off';
+  hiddenInput.setAttribute('inputmode', 'text');
+  hiddenInput.setAttribute('enterkeyhint', 'go');
   container.appendChild(hiddenInput);
 
   // Message area
@@ -103,6 +106,39 @@ export function initUI(puzzle, dateStr) {
   skipBtn.id = 'skip-btn';
   skipBtn.textContent = 'Skip';
   container.appendChild(skipBtn);
+
+  // Virtual keyboard for touch devices
+  const keyboard = document.createElement('div');
+  keyboard.id = 'virtual-keyboard';
+  const keyRows = [
+    ['q','w','e','r','t','y','u','i','o','p'],
+    ['a','s','d','f','g','h','j','k','l'],
+    ['Enter','z','x','c','v','b','n','m','Backspace'],
+  ];
+  for (const row of keyRows) {
+    const rowDiv = document.createElement('div');
+    rowDiv.className = 'keyboard-row';
+    for (const key of row) {
+      const btn = document.createElement('button');
+      btn.className = 'keyboard-key';
+      btn.setAttribute('type', 'button');
+      if (key === 'Backspace') {
+        btn.textContent = '\u232B';
+        btn.classList.add('key-wide');
+        btn.dataset.key = 'Backspace';
+      } else if (key === 'Enter') {
+        btn.textContent = '\u23CE';
+        btn.classList.add('key-wide');
+        btn.dataset.key = 'Enter';
+      } else {
+        btn.textContent = key.toUpperCase();
+        btn.dataset.key = key;
+      }
+      rowDiv.appendChild(btn);
+    }
+    keyboard.appendChild(rowDiv);
+  }
+  container.appendChild(keyboard);
 
   // Score screen
   const scoreScreen = document.createElement('div');
@@ -215,6 +251,7 @@ export function initUI(puzzle, dateStr) {
   }
 
   function handleSubmit() {
+    if (state.transitioning) return;
     if (!state.startTime) startTimer();
     const round = puzzle[state.currentRound];
     const answer = state.inputLetters.join('');
@@ -239,10 +276,12 @@ export function initUI(puzzle, dateStr) {
     state.completedRounds.push({ answer, timeMs, root: round.root, possibleAnswers });
     setMessage('Correct!', 'success');
     triggerBounce();
+    state.transitioning = true;
     setTimeout(() => advanceRound(), 700);
   }
 
   function handleSkip() {
+    if (state.transitioning) return;
     if (!state.startTime) startTimer();
     const round = puzzle[state.currentRound];
     const timeMs = Date.now() - state.roundStartTime;
@@ -250,9 +289,11 @@ export function initUI(puzzle, dateStr) {
     state.completedRounds.push({ answer: '', timeMs, root: round.root, possibleAnswers });
     if (possibleAnswers.length > 0) {
       setMessage(`Possible: ${possibleAnswers.slice(0, 3).join(', ')}`, '');
+      state.transitioning = true;
       setTimeout(() => advanceRound(), 1200);
     } else {
       setMessage('Skipped', '');
+      state.transitioning = true;
       advanceRound();
     }
   }
@@ -291,6 +332,7 @@ export function initUI(puzzle, dateStr) {
       renderRound();
       fadeInGameArea();
       startTimer();
+      state.transitioning = false;
     }, 600);
   }
 
@@ -308,7 +350,7 @@ export function initUI(puzzle, dateStr) {
     const secs = Math.floor(totalTimeMs / 1000) % 60;
 
     // Hide game elements
-    rootRack.parentElement.querySelectorAll('.section-label, .tile-rack, #input-area, #submit-btn, #skip-btn, .instructions')
+    rootRack.parentElement.querySelectorAll('.section-label, .tile-rack, #input-area, #submit-btn, #skip-btn, .instructions, #virtual-keyboard')
       .forEach(el => el.style.display = 'none');
 
     // Build per-round HTML
@@ -403,7 +445,21 @@ export function initUI(puzzle, dateStr) {
     } catch (e) { /* localStorage might be unavailable */ }
   }
 
-  // Keyboard handling
+  function handleKeyInput(key) {
+    if (!state.startTime) startTimer();
+    if (key === 'Enter') {
+      handleSubmit();
+      return;
+    }
+    const round = puzzle[state.currentRound];
+    const maxLen = round.root.length + round.offeredLetters.length;
+    state.inputLetters = processKeyPress(state.inputLetters, key, maxLen);
+    hiddenInput.value = state.inputLetters.join('');
+    renderInput();
+    setMessage('');
+  }
+
+  // Physical keyboard handling
   hiddenInput.addEventListener('input', (e) => {
     if (!state.startTime) startTimer();
     const round = puzzle[state.currentRound];
@@ -422,11 +478,21 @@ export function initUI(puzzle, dateStr) {
     }
   });
 
+  // Virtual keyboard handling
+  keyboard.addEventListener('click', (e) => {
+    const btn = e.target.closest('.keyboard-key');
+    if (!btn) return;
+    handleKeyInput(btn.dataset.key);
+  });
+
   submitBtn.addEventListener('click', handleSubmit);
   skipBtn.addEventListener('click', handleSkip);
 
-  // Keep focus on hidden input
-  container.addEventListener('click', () => hiddenInput.focus());
+  // Keep focus on hidden input (desktop only — avoid triggering native keyboard on touch devices)
+  const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
+  if (!isTouchDevice) {
+    container.addEventListener('click', () => hiddenInput.focus());
+  }
 
   // Check if today's puzzle was already completed
   if (dateStr) {

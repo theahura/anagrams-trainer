@@ -116,3 +116,12 @@ This simple substring check covers: adding s/es/ed/ing/er to end, and common pre
 - **Completion definition**: Any puzzle completion maintains the streak (not just "winning"). Matches Wordle behavior where completing the game counts regardless of guesses
 - **Integration points**: Update stats in `showScore()` after saving per-date results; load stats on game init for score screen display
 - **Display**: Horizontal stat boxes on score screen showing Games Played, Current Streak, Max Streak (matching Wordle layout)
+
+## Mobile Touch Input Optimization
+- **Current hidden input issues**: `opacity: 0; pointer-events: none` is unreliable on iOS Safari. After async operations (setTimeout in round transitions), `hiddenInput.focus()` won't open keyboard because iOS requires focus synchronously within user gesture
+- **Better hidden input CSS**: Use `opacity: 0.01` (not 0) and remove `pointer-events: none`. Position off-screen or behind game tiles. `font-size: 16px` minimum prevents iOS auto-zoom on focus
+- **Wordle dual-input pattern**: Desktop uses `keydown` on document (no hidden input needed). Mobile renders on-screen QWERTY keyboard with letter buttons. Avoids all iOS focus/keyboard issues
+- **Mobile detection**: `(pointer: coarse)` CSS media query is best single heuristic — identifies devices where primary input is finger. JS: `window.matchMedia('(pointer: coarse)').matches`
+- **Touch targets**: Apple HIG minimum 44x44pt, Google Material 48x48dp. Virtual keyboard keys should be at least 44px with 8px spacing
+- **Current gaps**: No touch event handlers, buttons not adjusted in mobile breakpoint, skip button too small for touch (6px padding, 12px font), no `inputmode` attribute on hidden input
+- **Approach**: Add on-screen QWERTY keyboard shown when `(pointer: coarse)` matches. Keep hidden input for desktop. Extract `processKeyPress(currentLetters, key, maxLen)` as pure function shared by both input paths. Improve button sizing in mobile breakpoint

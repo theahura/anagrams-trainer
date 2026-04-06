@@ -1,8 +1,8 @@
 # Current Progress
 
-## Status: MVP Complete + Multi-Letter Expansion + Web-Sourced Build + Share Results + Tile Feedback + Answer Animations + Streak Tracking
+## Status: MVP Complete + Multi-Letter Expansion + Web-Sourced Build + Share Results + Tile Feedback + Answer Animations + Streak Tracking + Mobile Touch Input
 
-The full Anagram Trainer game is implemented and tested with multi-letter expansion support, a web-sourced build pipeline, share results functionality, real-time tile visual feedback, and streak tracking.
+The full Anagram Trainer game is implemented and tested with multi-letter expansion support, a web-sourced build pipeline, share results functionality, real-time tile visual feedback, streak tracking, and mobile-optimized touch input.
 
 ## Completed
 - Researched scrabblewordfinder.org API (no usable REST API; wordunscrambler.me has URL-based access but CORS blocks browser calls)
@@ -48,6 +48,13 @@ The full Anagram Trainer game is implemented and tested with multi-letter expans
 - Stats stored in `anagram-trainer-stats` localStorage key, separate from per-date results
 - Uses UTC dates for streak calculation, matching existing puzzle date handling
 - 88 unit tests passing (added 12 tests for streak tracking)
+- Mobile touch input: on-screen QWERTY virtual keyboard shown on touch devices via `@media (pointer: coarse)`
+- `processKeyPress` pure function in game.js for shared input processing (physical keyboard + virtual keyboard)
+- Fixed hidden input CSS for iOS Safari compatibility (opacity 0.01, font-size 16px, off-screen positioning)
+- Added `inputmode="text"` and `enterkeyhint="go"` attributes for better mobile keyboard behavior
+- Touch-friendly button sizing: submit/skip/share buttons get min-height 48px and full-width on touch devices
+- Virtual keyboard keys meet Apple HIG 44px minimum touch targets, with smaller sizing on screens under 420px
+- 95 unit tests passing (added 7 tests for processKeyPress)
 
 ## Architecture
 - Pure static HTML/JS, no backend or framework
@@ -62,4 +69,3 @@ The full Anagram Trainer game is implemented and tested with multi-letter expans
 
 ## Potential Future Improvements
 - Sound effects
-- Mobile-optimized touch input
