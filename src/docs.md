@@ -73,8 +73,6 @@ Path: @/src
   - `initSound(audioCtx)` creates master `GainNode`, returns `{ sounds, setMuted(val), isMuted() }`
   - `createSoundEffects(audioCtx, masterGain)` returns play methods: `playKeyClick` (filtered white noise burst -- bandpass at 1200Hz, Q=2), `playCorrect` (two-note sine chime: C5 then E5), `playWrong` (low sawtooth), `playSkip` (descending triangle wave), `playGameComplete` (ascending four-note arpeggio: C5-E5-G5-C6)
 
-- **`ui.js`** -- Legacy DOM rendering module, no longer imported. Kept in the codebase but unused; all UI logic has been migrated to Vue components
-
 ### Things to Know
 
 - `words.js` functions are shared between the build script and runtime -- `findExpansions` accepts either a raw dictionary array or a pre-built `Map` index to support both use cases
@@ -82,7 +80,7 @@ Path: @/src
 - The UI input max length is `root.length + offeredLetters.length`, allowing players to use all offered letters. Submit validation accepts answers between `root.length + 1` and this max
 - `isKeySubsetOfOffered` in `game.js` checks whether each character of a multi-letter key can be consumed from the offered letters array (removing used letters to handle duplicates). This is the core mechanism enabling multi-letter expansion matching at runtime
 - The `state.transitioning` flag in `App.vue` prevents input during the 700ms (correct) or 1200ms (skip with possible answers) delay between rounds
-- Timer counts down from 60 seconds per round. `startTimer()` resets the display to `1:00`, records `roundStartTime`, and ticks every 100ms. When remaining time hits 0, the interval auto-calls `handleSkip()`. Both `handleSubmit()` and `handleSkip()` clear the interval and cap recorded `timeMs` at `ROUND_TIME_LIMIT_MS`. The timer auto-starts on puzzle load (in `onMounted`) and on each `advanceRound()` call
+- Timer counts down from 60 seconds per round. `startTimer()` resets the display to `1:00`, records `roundStartTime`, and ticks every 100ms. When remaining time hits 0, the interval auto-calls `handleSkip()`. Both `handleSubmit()` and `handleSkip()` call `stopTimer()` and cap recorded `timeMs` at `ROUND_TIME_LIMIT_MS`. The timer auto-starts on puzzle load (in `onMounted`) only if the HowToPlay modal is not showing; closing the modal via `handleCloseHowToPlay` starts the timer if the game is still active. Timer restarts on each `advanceRound()` call
 - `showScore()` computes `totalTimeMs` as the sum of per-round `timeMs` values (not wall-clock time)
 - Streak calculation is pure (in `game.js`) with localStorage access only in `App.vue`, consistent with the pattern of keeping side effects out of game logic
 - Sound synthesis follows the same pure-logic-in-module, side-effects-in-UI pattern: `sound.js` is a pure factory testable with a mock AudioContext, while `App.vue` handles AudioContext creation, localStorage mute persistence, and event hookup

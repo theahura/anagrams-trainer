@@ -261,3 +261,13 @@ This simple substring check covers: adding s/es/ed/ing/er to end, and common pre
 - No running letter count visible during gameplay — only the timer is shown in the game-info bar
 - **Approach**: Add a `<span id="letter-score">` next to timer in game-info bar. Update it after each round completion (in `handleSubmit` after pushing to `completedRounds`, and in `handleSkip`). Show format like "Letters: 0" to match the game aesthetic
 - `calculateScore` already computes `totalLetters` from `completedRounds`, can reuse that
+
+## Vue 3 Animation Wiring Gap
+- **Problem**: CSS animations (`shake`, `bounce`, `fade-out`, `fade-in`) defined in `style.css:506-547` but never applied in Vue components
+- The original `src/ui.js` had `triggerShake()`, `triggerBounce()`, `fadeOutGameArea()`, `fadeInGameArea()` functions — lost during Vue 3 migration
+- `src/ui.js` itself is dead code — nothing imports it
+- **Shake approach (Vue 3)**: Use a `ref` boolean bound to `:class="{ shake: shaking }"` on `#input-area`. Toggle with `void el.offsetWidth` reflow trick to restart animation. Auto-remove after 400ms.
+- **Bounce approach (Vue 3)**: Same pattern with `bouncing` ref. Set `--tile-index` via `:style="{ '--tile-index': i }"` on each `ScrabbleTile` in the `v-for`. Total duration = 600 + 80 * (tileCount - 1) ms.
+- **Round transitions**: Use Vue `<Transition>` with `mode="out-in"` and `:key="state.currentRound"` on GameBoard. Reuse existing `@keyframes fade-in` / `@keyframes fade-out`. Add CSS classes `.round-enter-active` and `.round-leave-active`. Use `@after-enter` hook to start timer after fade completes.
+- **Communication**: GameBoard emits animation events up to App.vue, or App.vue passes animation state down as props and GameBoard applies classes
+- **prefers-reduced-motion**: Already handled in `style.css:550-562` — no extra work needed

@@ -14,20 +14,24 @@
       <HowToPlay v-if="showHowToPlay" @close="handleCloseHowToPlay" />
 
       <template v-if="!gameComplete">
-        <GameBoard
-          :round="currentRound"
-          :round-number="state.currentRound + 1"
-          :input-letters="state.inputLetters"
-          :message="message"
-          :message-type="messageType"
-          @submit="handleSubmit"
-          @skip="handleSkip"
-        >
-          <template #timer>
-            <span id="letter-score">Letters: {{ runningLetterScore }}</span>
-            <span class="timer-display">{{ timerDisplay }}</span>
-          </template>
-        </GameBoard>
+        <Transition name="round" mode="out-in" @after-enter="onRoundEntered">
+          <GameBoard
+            :key="state.currentRound"
+            :round="currentRound"
+            :round-number="state.currentRound + 1"
+            :input-letters="state.inputLetters"
+            :message="message"
+            :message-type="messageType"
+            :animation-class="animationClass"
+            @submit="handleSubmit"
+            @skip="handleSkip"
+          >
+            <template #timer>
+              <span id="letter-score">Letters: {{ runningLetterScore }}</span>
+              <span class="timer-display">{{ timerDisplay }}</span>
+            </template>
+          </GameBoard>
+        </Transition>
 
         <VirtualKeyboard @key-press="handleKeyInput" />
       </template>
@@ -60,6 +64,7 @@ const dateStr = ref('');
 const showHowToPlay = ref(false);
 const message = ref('');
 const messageType = ref('');
+const animationClass = ref('');
 const gameComplete = ref(false);
 const totalTimeMs = ref(0);
 const muted = ref(false);
@@ -133,6 +138,17 @@ function handleCloseHowToPlay() {
   }
 }
 
+let animationTimeout = null;
+
+function triggerAnimation(cls, durationMs) {
+  clearTimeout(animationTimeout);
+  animationClass.value = '';
+  requestAnimationFrame(() => {
+    animationClass.value = cls;
+    animationTimeout = setTimeout(() => { animationClass.value = ''; }, durationMs);
+  });
+}
+
 function handleSubmit() {
   ensureAudio();
   if (state.transitioning || state.currentRound >= 11) return;
@@ -146,6 +162,7 @@ function handleSubmit() {
     message.value = `Word must be ${minLen}-${maxLen} letters`;
     messageType.value = 'error';
     playSound('playWrong');
+    triggerAnimation('shake', 400);
     return;
   }
 
@@ -153,6 +170,7 @@ function handleSubmit() {
     message.value = 'Not a valid answer. Try again!';
     messageType.value = 'error';
     playSound('playWrong');
+    triggerAnimation('shake', 400);
     return;
   }
 
@@ -163,8 +181,10 @@ function handleSubmit() {
   message.value = 'Correct!';
   messageType.value = 'success';
   playSound('playCorrect');
+  const bounceDuration = 600 + 80 * Math.max(0, answer.length - 1);
+  triggerAnimation('bounce', bounceDuration);
   state.transitioning = true;
-  setTimeout(() => advanceRound(), 700);
+  setTimeout(() => advanceRound(), Math.max(700, bounceDuration));
 }
 
 function handleSkip() {
@@ -198,6 +218,10 @@ function advanceRound() {
   state.inputLetters = [];
   message.value = '';
   messageType.value = '';
+  animationClass.value = '';
+}
+
+function onRoundEntered() {
   state.transitioning = false;
   startTimer();
 }

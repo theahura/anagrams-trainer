@@ -193,6 +193,26 @@ describe('GameBoard', () => {
     await wrapper.find('#skip-btn').trigger('click');
     expect(wrapper.emitted('skip')).toBeTruthy();
   });
+
+  it('applies animationClass to the input area', () => {
+    const wrapper = mount(GameBoard, {
+      props: { round, roundNumber: 1, inputLetters: ['c', 'o', 'a', 't'], message: '', messageType: '', animationClass: 'shake' },
+    });
+    const inputArea = wrapper.find('#input-area');
+    expect(inputArea.classes()).toContain('shake');
+  });
+
+  it('sets --tile-index on input tiles for staggered animation', () => {
+    const wrapper = mount(GameBoard, {
+      props: { round, roundNumber: 1, inputLetters: ['c', 'o', 'a', 't'], message: '', messageType: '' },
+    });
+    const inputArea = wrapper.find('#input-area');
+    const tiles = inputArea.findAll('.tile');
+    for (let i = 0; i < 4; i++) {
+      const style = tiles[i].attributes('style') || '';
+      expect(style).toContain(`--tile-index: ${i}`);
+    }
+  });
 });
 
 describe('HowToPlay', () => {
