@@ -5,7 +5,7 @@
     <template v-else>
       <header>
         <h1>Reword</h1>
-        <button class="header-icon" @click="showHowToPlay = true" aria-label="How to play">?</button>
+        <button class="header-icon" @click="openHowToPlay" aria-label="How to play">?</button>
         <button id="mute-btn" role="switch" :aria-checked="String(!muted)" :aria-label="'Sound'" @click="toggleMute">
           {{ muted ? '\u{1F507}' : '\u{1F50A}' }}
         </button>
@@ -78,6 +78,7 @@ const state = reactive({
 });
 
 let timerInterval = null;
+let pausedElapsedMs = 0;
 const timerDisplay = ref(formatRoundTimer(ROUND_TIME_LIMIT_MS));
 
 function stopTimer() {
@@ -126,6 +127,7 @@ const streakStats = ref(null);
 
 function startTimer(alreadyElapsedMs = 0) {
   stopTimer();
+  pausedElapsedMs = 0;
   state.roundStartTime = Date.now() - alreadyElapsedMs;
   timerDisplay.value = formatRoundTimer(Math.max(0, ROUND_TIME_LIMIT_MS - alreadyElapsedMs));
   timerInterval = setInterval(() => {
@@ -139,10 +141,19 @@ function startTimer(alreadyElapsedMs = 0) {
   }, 100);
 }
 
+function openHowToPlay() {
+  showHowToPlay.value = true;
+  if (timerInterval) {
+    pausedElapsedMs = Date.now() - state.roundStartTime;
+    stopTimer();
+  }
+}
+
 function handleCloseHowToPlay() {
   showHowToPlay.value = false;
   if (!gameComplete.value && !timerInterval) {
-    startTimer();
+    startTimer(pausedElapsedMs);
+    pausedElapsedMs = 0;
   }
 }
 
