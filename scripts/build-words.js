@@ -64,17 +64,6 @@ async function main() {
     }
   }
 
-  // Also trim expansions: keep max 3 words per letter to reduce size
-  for (const roots of Object.values(puzzleData)) {
-    for (const entry of roots) {
-      for (const letter of Object.keys(entry.expansions)) {
-        if (entry.expansions[letter].length > 3) {
-          entry.expansions[letter] = entry.expansions[letter].slice(0, 3);
-        }
-      }
-    }
-  }
-
   writeFileSync(OUTPUT_PATH, JSON.stringify(puzzleData));
   console.log(`Wrote puzzle data to ${OUTPUT_PATH}`);
 
