@@ -17,7 +17,7 @@ Path: @/tests
 ### Core Implementation
 
 - **`prng.test.js`** -- Verifies PRNG determinism (same date -> same sequence), distinctness (different dates -> different sequences), and output range [0, 1). Also tests `seededShuffle` determinism and element preservation, and `seededPick` determinism
-- **`game.test.js`** -- Tests daily puzzle selection, answer validation (including trivial suffix rejection for s/ed/er), offered letter guarantees, `getAnswersForRound`, share text generation (verifies "Reword" header), `matchTypedToTiles`, `getSubmitFeedbackType`, `isConsecutiveDay`, `updateStreakStats`, `processKeyPress`, `calculateScore`, `formatCountdown` (HH:MM:SS formatting for various durations), `formatRoundTimer` (M:SS countdown formatting including boundary values and floor behavior), `getTimeUntilMidnightUTC` (returns positive number less than 24 hours), and `serializeGameState`/`deserializeGameState` round-trip and edge cases (round-trip recovery, elapsed time computation, capping at `ROUND_TIME_LIMIT_MS`, null returns for complete/legacy/null/undefined inputs)
+- **`game.test.js`** -- Tests daily puzzle selection, answer validation (including acceptance of root+suffix words when present in expansion dictionary), offered letter guarantees, `getAnswersForRound`, share text generation (verifies "Reword" header), `matchTypedToTiles`, `getSubmitFeedbackType`, `isConsecutiveDay`, `updateStreakStats`, `processKeyPress`, `calculateScore`, `formatCountdown` (HH:MM:SS formatting for various durations), `formatRoundTimer` (M:SS countdown formatting including boundary values and floor behavior), `getTimeUntilMidnightUTC` (returns positive number less than 24 hours), and `serializeGameState`/`deserializeGameState` round-trip and edge cases (round-trip recovery, elapsed time computation, capping at `ROUND_TIME_LIMIT_MS`, null returns for complete/legacy/null/undefined inputs)
 - **`components.test.js`** -- Vue component tests using `@vue/test-utils`:
   - `ScrabbleTile`: renders uppercase letters, no `.points` element, applies tileClass prop
   - `TileRack`: renders each letter, handles empty arrays and tileClass propagation
@@ -33,7 +33,7 @@ Path: @/tests
 ### Things to Know
 
 - Tests use small inline dictionaries and puzzle data fixtures rather than loading `@/data/puzzles.json`
-- The `game.test.js` test data includes crafted edge cases for answer validation, including a regression test ensuring "master" from root "aster" + letter "m" is accepted (not blocked by trivial suffix filter since "master" is not root + "s"/"ed"/"er")
+- The `game.test.js` test data includes crafted edge cases for answer validation, including a regression test ensuring "master" from root "aster" + letter "m" is accepted. Tests verify that root+suffix words (e.g., "rinds", "planted", "faster") are accepted when present in the expansion dictionary
 - Some tests use a constant RNG (`() => 0.5`) to make offered letter tests deterministic without depending on the PRNG implementation
 - Component tests mount individual components in isolation with props, not the full `App.vue` (which requires fetch and localStorage)
 

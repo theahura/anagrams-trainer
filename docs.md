@@ -60,7 +60,7 @@ Path: @/
   ```
 - **Difficulty progression:** 11 rounds per game: 3x3-letter roots, 3x4-letter, 3x5-letter, 1x6-letter, 1x7+-letter root
 - **Multi-letter expansions:** Expansion keys are variable-length strings (e.g., `"r"`, `"el"`, `"egr"`). Players can use 1, 2, or 3 of the offered letters. The `maxExtraLetters` varies by root length: +3 for roots of length 3-5, +2 for length 6, +1 for length 7+
-- **Word acceptance rule:** Valid dictionary words are accepted unless they are trivial suffix appends (s, ed, er). Validation checks dictionary lookup, offered-letter availability (the expansion key's letters must be a subset of the offered letters), and rejects trivial suffixes via `TRIVIAL_SUFFIXES` in `@/src/game.js`
+- **Word acceptance rule:** All valid dictionary words in the expansion data are accepted. `isValidAnswer()` in `@/src/game.js` checks dictionary lookup and offered-letter availability (the expansion key's letters must be a subset of the offered letters). There is no runtime filtering beyond these two checks
 
 ### Things to Know
 

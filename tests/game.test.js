@@ -104,19 +104,19 @@ describe('isValidAnswer', () => {
     expect(isValidAnswer('pizza', round)).toBe(false);
   });
 
-  it('rejects trivial suffix appends (root + s)', () => {
+  it('accepts root + s when in expansion dictionary', () => {
     const round = { root: 'rind', expansions: { s: ['rinds'] }, offeredLetters: ['s', 'g', 'e'] };
-    expect(isValidAnswer('rinds', round)).toBe(false);
+    expect(isValidAnswer('rinds', round)).toBe(true);
   });
 
-  it('rejects trivial suffix appends (root + ed)', () => {
+  it('accepts root + ed when in expansion dictionary', () => {
     const round = { root: 'plant', expansions: { ed: ['planted'] }, offeredLetters: ['e', 'd', 'z'] };
-    expect(isValidAnswer('planted', round)).toBe(false);
+    expect(isValidAnswer('planted', round)).toBe(true);
   });
 
-  it('rejects trivial suffix appends (root + er)', () => {
+  it('accepts root + er when in expansion dictionary', () => {
     const round = { root: 'fast', expansions: { er: ['faster'] }, offeredLetters: ['e', 'r', 'z'] };
-    expect(isValidAnswer('faster', round)).toBe(false);
+    expect(isValidAnswer('faster', round)).toBe(true);
   });
 
   it('accepts words containing root as substring when rearranged', () => {
