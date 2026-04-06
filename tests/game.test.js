@@ -17,6 +17,7 @@ import {
   serializeGameState,
   deserializeGameState,
   ROUND_TIME_LIMIT_MS,
+  isTimerUrgent,
 } from '../src/game.js';
 
 // Minimal puzzle data for testing
@@ -657,3 +658,19 @@ describe('deserializeGameState edge cases', () => {
     expect(deserializeGameState(saved, Date.now())).toBeNull();
   });
 });
+
+describe('isTimerUrgent', () => {
+  it('returns false when remaining time is above threshold', () => {
+    expect(isTimerUrgent(15000)).toBe(false);
+    expect(isTimerUrgent(10001)).toBe(false);
+    expect(isTimerUrgent(60000)).toBe(false);
+  });
+
+  it('returns true when remaining time is at or below threshold', () => {
+    expect(isTimerUrgent(10000)).toBe(true);
+    expect(isTimerUrgent(5000)).toBe(true);
+    expect(isTimerUrgent(1)).toBe(true);
+  });
+
+});
+

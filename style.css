@@ -115,6 +115,16 @@ header h1 {
   font-weight: bold;
 }
 
+.timer-display.urgent {
+  color: #e74c3c;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
 #letter-score {
   font-variant-numeric: tabular-nums;
   font-size: 14px;
@@ -553,7 +563,8 @@ header h1 {
   #input-area.bounce .tile,
   .round-enter-active,
   .round-leave-active,
-  #input-area .tile {
+  #input-area .tile,
+  .timer-display.urgent {
     animation: none;
   }
   .tile.used,

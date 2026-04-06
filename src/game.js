@@ -183,6 +183,12 @@ export function formatCountdown(ms) {
 
 export const ROUND_TIME_LIMIT_MS = 60000;
 
+export const TIMER_URGENT_THRESHOLD_MS = 10000;
+
+export function isTimerUrgent(remainingMs) {
+  return remainingMs <= TIMER_URGENT_THRESHOLD_MS;
+}
+
 export function formatRoundTimer(ms) {
   const totalSeconds = Math.floor(Math.max(0, ms) / 1000);
   const mins = Math.floor(totalSeconds / 60);
