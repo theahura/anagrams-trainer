@@ -61,6 +61,7 @@ Path: @/
 - Answer feedback animations are CSS-only, triggered by JS toggling classes on `#input-area`: shake (0.4s) on wrong/invalid-length answers, bounce (0.6s with staggered `--tile-index` delays per tile) on correct answers. Round transitions use fade-out (0.15s) and fade-in (0.2s) on the tile racks and input area. All animations respect `@media (prefers-reduced-motion: reduce)`
 - Timer starts on first keystroke, not on round render
 - Game results persist in `localStorage` keyed by `anagram-trainer-{YYYY-MM-DD}` (UTC). If a player returns the same UTC day, they see their previous score screen instead of replaying
+- Streak statistics are stored separately in `localStorage` under the `anagram-trainer-stats` key. On fresh game completion, `ui.js` calls `updateStreakStats` (a pure function in `@/src/game.js`) to compute updated `{ currentStreak, maxStreak, lastPlayedDate, gamesPlayed }`. The streak row displays on the score screen for both fresh and saved games. `isConsecutiveDay` determines day adjacency using a strict 86400000ms check on UTC dates
 - Vitest is the only dev dependency
 
 Created and maintained by Nori.

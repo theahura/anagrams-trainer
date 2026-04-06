@@ -1,4 +1,4 @@
-import { isValidAnswer, calculateScore, getAnswersForRound, generateShareText, matchTypedToTiles, getSubmitFeedbackType } from './game.js';
+import { isValidAnswer, calculateScore, getAnswersForRound, generateShareText, matchTypedToTiles, getSubmitFeedbackType, updateStreakStats } from './game.js';
 
 const SCRABBLE_POINTS = {
   a:1, b:3, c:3, d:2, e:1, f:4, g:2, h:4, i:1, j:8, k:5, l:1, m:3,
@@ -375,7 +375,32 @@ export function initUI(puzzle, dateStr) {
           totalTimeMs,
         }));
       } catch (e) { /* localStorage might be unavailable */ }
+
+      // Update streak stats
+      try {
+        const rawStats = localStorage.getItem('anagram-trainer-stats');
+        const existingStats = rawStats ? JSON.parse(rawStats) : null;
+        const updatedStats = updateStreakStats(existingStats, dateStr);
+        localStorage.setItem('anagram-trainer-stats', JSON.stringify(updatedStats));
+      } catch (e) { /* localStorage might be unavailable */ }
     }
+
+    // Display streak stats
+    try {
+      const rawStats = localStorage.getItem('anagram-trainer-stats');
+      if (rawStats) {
+        const stats = JSON.parse(rawStats);
+        const streakHtml = `
+          <div class="stats-row streak-stats">
+            <div class="stat">Played<br><span class="stat-value">${stats.gamesPlayed}</span></div>
+            <div class="stat">Current Streak<br><span class="stat-value">${stats.currentStreak}</span></div>
+            <div class="stat">Max Streak<br><span class="stat-value">${stats.maxStreak}</span></div>
+          </div>
+        `;
+        const shareBtn = scoreScreen.querySelector('#share-btn');
+        shareBtn.insertAdjacentHTML('beforebegin', streakHtml);
+      }
+    } catch (e) { /* localStorage might be unavailable */ }
   }
 
   // Keyboard handling

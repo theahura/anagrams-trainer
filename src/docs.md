@@ -14,7 +14,7 @@ Path: @/src
 - `@/scripts/build-words.js` imports `words.js` for `buildSignatureIndex`, `findExpansions`, and `filterTrivialExpansions`
 - `@/scripts/web-scraper.js` imports `letterSignature` from `words.js` for expansion key derivation
 - `@/scripts/build-words-web.js` imports `filterTrivialExpansions` from `words.js`
-- `@/tests/` tests `prng.js`, `game.js`, and `words.js` directly (ui.js is untested -- it requires DOM)
+- `@/tests/` tests `prng.js`, `game.js` (including streak functions), and `words.js` directly (ui.js is untested -- it requires DOM)
 - `@/data/puzzles.json` is the data contract: `game.js` expects puzzle data keyed by root word length, each entry having `{ root, expansions }` where expansions maps a variable-length key string (e.g., `"r"`, `"el"`, `"egr"`) to a word array
 
 ### Core Implementation
@@ -33,6 +33,8 @@ Path: @/src
   - `generateShareText(results, dateStr, totalTimeMs)` is a pure function (no DOM dependency) that produces a Wordle-style share string: header line with date, emoji grid line (green square for solved, white square for skipped), and a score line with solved count and formatted time
   - `matchTypedToTiles(typedLetters, rootLetters, offeredLetters)` is a pure function that maps each typed character to a specific tile position in either the root or offered rack. It builds a unified pool of all available tiles (root first, then offered), then greedily matches each typed letter against unused pool entries with root-first priority. Returns `{ matched, pool }` where `matched` is an array of per-character assignments (`source: 'root' | 'offered' | 'invalid'`, `index`, `used`) and `pool` tracks which rack tiles have been consumed. Used by `renderInput()` in `ui.js` to drive real-time tile highlighting
   - `getSubmitFeedbackType(answer, round)` is a pure function that returns `'correct'`, `'invalid-length'`, or `'wrong'` by checking length bounds and delegating to `isValidAnswer`. Extracts submit validation logic from `ui.js` into a testable location
+  - `isConsecutiveDay(todayStr, previousStr)` checks if two UTC date strings (YYYY-MM-DD) are exactly one calendar day apart (86400000ms difference). Only returns true when `todayStr` is one day *after* `previousStr` (not reverse)
+  - `updateStreakStats(existingStats, todayDateStr)` is a pure function that computes updated streak statistics. Accepts `null` for first-ever play (returns initial stats with streak 1). Returns unchanged stats on same-day replay. Increments `currentStreak` on consecutive days, resets to 1 on gaps. Tracks `{ currentStreak, maxStreak, lastPlayedDate, gamesPlayed }`
   - `calculateScore(completedRounds)` aggregates total letters, total time, and round count
 
 - **`words.js`** -- Anagram computation (used at both build-time and runtime validation)
@@ -45,7 +47,8 @@ Path: @/src
 - **`ui.js`** -- DOM rendering, interaction, and persistence
   - `initUI(puzzle, dateStr)` builds the entire game UI imperatively inside `#game-container`, managing local state via a closure-scoped `state` object (currentRound, completedRounds, inputLetters, timer state). The `dateStr` parameter is used for localStorage lookup
   - On init, checks `localStorage` for a saved game keyed by `anagram-trainer-{dateStr}`. If found, shows the score screen directly without starting a new game
-  - On game completion, saves results to `localStorage` under the same key, preventing replay of the same day's puzzle
+  - On game completion, saves results to `localStorage` under the same key, preventing replay of the same day's puzzle. Also reads/updates streak stats from `anagram-trainer-stats` localStorage key via `updateStreakStats` from `@/src/game.js`
+  - On score screen display (both fresh and saved games), reads `anagram-trainer-stats` from localStorage and renders a streak stats row (Games Played, Current Streak, Max Streak) inserted above the share button
   - `showScore(savedResults?)` has dual mode: when called without arguments it uses `state.completedRounds` from the just-finished game; when called with `savedResults` it displays a previously saved game. The score screen shows a per-round breakdown (root word, player answer or "SKIPPED", and possible answers for skipped rounds) plus aggregate stats in a horizontal row. It also renders a "Share Results" button that copies a Wordle-style emoji grid to the clipboard via `generateShareText` from `@/src/game.js`. The clipboard write uses `navigator.clipboard.writeText` with a fallback to a temporary textarea and `document.execCommand('copy')`. The button text temporarily changes to "Copied!" for 2 seconds after a successful copy
   - Each completed round stores `{ answer, timeMs, root, possibleAnswers }` where `possibleAnswers` comes from `getAnswersForRound()` in `@/src/game.js`
   - `renderInput()` calls `matchTypedToTiles` on every keystroke to determine which rack tiles are consumed by the current input. It toggles `.used` CSS classes on root and offered rack tiles based on the `pool` state, and marks input tiles whose characters could not be matched to any available tile with the `.invalid` CSS class. The pool index offset for offered tiles is `round.root.length` since root tiles come first in the pool array
@@ -63,6 +66,7 @@ Path: @/src
 - Answer feedback uses CSS-class toggling: `triggerShake()` adds `.shake` to `#input-area` (removes and re-adds with a `void offsetWidth` reflow to allow retriggering), `triggerBounce()` sets `--tile-index` CSS custom properties for staggered delays and adds `.bounce`. Both use `{ once: true }` `animationend` listeners for cleanup
 - When skipping a round, `handleSkip()` now displays up to 3 possible answers in the message area (via `getAnswersForRound`) instead of just "Skipped"
 - Timer displays elapsed time since the first keystroke of the entire game, not per-round time
-- localStorage persistence uses UTC date to match puzzle selection, so the key is always consistent regardless of timezone
+- localStorage persistence uses UTC date to match puzzle selection, so the key is always consistent regardless of timezone. Two separate localStorage keys: `anagram-trainer-{YYYY-MM-DD}` for per-date game results, `anagram-trainer-stats` for aggregate streak/play statistics
+- Streak calculation is pure (in `game.js`) with localStorage access only in `ui.js`, consistent with the pattern of keeping side effects out of game logic
 
 Created and maintained by Nori.
