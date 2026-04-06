@@ -187,16 +187,83 @@ header h1 {
   margin-bottom: 20px;
 }
 
+.stats-row {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 24px;
+}
+
 #score-screen .stat {
   color: #e8d5a3;
-  font-size: 20px;
-  margin: 12px 0;
+  font-size: 16px;
+  margin: 8px 0;
 }
 
 #score-screen .stat-value {
   color: #fff;
   font-weight: bold;
-  font-size: 24px;
+  font-size: 22px;
+}
+
+/* Per-round results */
+.rounds-summary {
+  text-align: left;
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: 16px;
+  border-top: 1px solid rgba(245, 222, 179, 0.2);
+  padding-top: 12px;
+}
+
+.round-result {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  margin: 4px 0;
+  font-size: 14px;
+  flex-wrap: wrap;
+}
+
+.round-result.solved {
+  color: #99ff99;
+}
+
+.round-result.skipped {
+  color: #ff9999;
+}
+
+.round-num {
+  min-width: 20px;
+  font-weight: bold;
+  opacity: 0.6;
+}
+
+.round-root {
+  font-weight: bold;
+  color: #f5deb3;
+  min-width: 70px;
+}
+
+.round-arrow {
+  color: #c9a96e;
+}
+
+.round-answer {
+  font-weight: bold;
+}
+
+.possible-answers {
+  width: 100%;
+  padding-left: 28px;
+  font-size: 12px;
+  color: #c9a96e;
+  font-style: italic;
+}
+
+.possible-answers::before {
+  content: 'Possible: ';
 }
 
 /* Submit button */

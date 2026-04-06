@@ -16,7 +16,7 @@ Path: @/tests
 ### Core Implementation
 
 - **`prng.test.js`** -- Verifies PRNG determinism (same date -> same sequence), distinctness (different dates -> different sequences), and output range [0, 1). Also tests `seededShuffle` determinism and element preservation, and `seededPick` determinism
-- **`game.test.js`** -- Tests trivial extension detection, daily puzzle selection (11 rounds, correct difficulty progression, date determinism), answer validation (valid words, invalid words, trivial rejections, case insensitivity), offered letter guarantees (exactly 3, at least 1 valid), and score calculation
+- **`game.test.js`** -- Tests trivial extension detection, daily puzzle selection (11 rounds, correct difficulty progression, date determinism), answer validation (valid words, invalid words, trivial rejections, case insensitivity, rejection of non-offered expansion letters), offered letter guarantees (exactly 3, at least 1 valid), `getAnswersForRound` (offered-letter filtering, empty results, multi-word flattening), and score calculation
 - **`build-words.test.js`** -- Tests letter signature sorting, expansion finding (correct words, correct length), and trivial expansion filtering (substring removal, key cleanup, middle-of-word substring detection)
 
 ### Things to Know

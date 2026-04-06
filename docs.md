@@ -26,8 +26,10 @@ Path: @/
        -> getDailyRng(dateStr)           [src/prng.js]
        -> picks 11 rounds by difficulty tier
        -> assigns 3 offered letters per round
-    -> initUI(puzzle)                    [src/ui.js]
-       -> renders tiles, handles keyboard input, validates answers, shows score
+    -> initUI(puzzle, dateStr)           [src/ui.js]
+       -> checks localStorage for saved game
+       -> if saved: renders score screen from saved results
+       -> if not: renders tiles, handles keyboard input, validates answers, shows score, saves to localStorage
   ```
 - **Data flow at build time:**
   ```
@@ -45,9 +47,10 @@ Path: @/
 
 - The PRNG uses cyrb128 for hashing the date string into a seed, then sfc32 as the generator -- both are well-known algorithms chosen for JS portability and determinism
 - `puzzles.json` is the only data dependency at runtime; the game works entirely offline once loaded
-- The offered letters mechanic guarantees at least one valid answer letter among the 3 offered, with the remaining slots filled from the alphabet
+- The offered letters mechanic guarantees at least one valid answer letter among the 3 offered, with the remaining slots filled from the alphabet. Answer validation and answer enumeration both restrict to offered letters only
 - When a puzzle pool is smaller than the number of rounds requested, `selectDailyPuzzle` cycles through the pool using modulo indexing
 - Timer starts on first keystroke, not on round render
+- Game results persist in `localStorage` keyed by `anagram-trainer-{YYYY-MM-DD}` (UTC). If a player returns the same UTC day, they see their previous score screen instead of replaying
 - Vitest is the only dev dependency
 
 Created and maintained by Nori.

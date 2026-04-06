@@ -5,6 +5,7 @@ import {
   selectDailyPuzzle,
   getOfferedLetters,
   calculateScore,
+  getAnswersForRound,
 } from '../src/game.js';
 
 // Minimal puzzle data for testing
@@ -126,6 +127,20 @@ describe('isValidAnswer', () => {
     expect(isValidAnswer('DINER', round)).toBe(true);
     expect(isValidAnswer('Diner', round)).toBe(true);
   });
+
+  it('rejects a valid expansion word if its letter is not in offeredLetters', () => {
+    const round = {
+      root: 'rind',
+      expansions: { e: ['diner'], k: ['drink'], a: ['nadir', 'drain'] },
+      offeredLetters: ['e', 'k', 'z'],
+    };
+    // 'nadir' is a valid expansion for letter 'a', but 'a' is not offered
+    expect(isValidAnswer('nadir', round)).toBe(false);
+    expect(isValidAnswer('drain', round)).toBe(false);
+    // But 'diner' (letter 'e') and 'drink' (letter 'k') are offered
+    expect(isValidAnswer('diner', round)).toBe(true);
+    expect(isValidAnswer('drink', round)).toBe(true);
+  });
 });
 
 describe('getOfferedLetters', () => {
@@ -143,6 +158,44 @@ describe('getOfferedLetters', () => {
     const validLetters = Object.keys(puzzleEntry.expansions);
     const hasValid = letters.some(l => validLetters.includes(l));
     expect(hasValid).toBe(true);
+  });
+});
+
+describe('getAnswersForRound', () => {
+  it('returns only answer words for offered letters', () => {
+    const round = {
+      root: 'rind',
+      expansions: { e: ['diner'], k: ['drink'], a: ['nadir', 'drain'] },
+      offeredLetters: ['e', 'k', 'z'],
+    };
+    const answers = getAnswersForRound(round);
+    expect(answers).toContain('diner');
+    expect(answers).toContain('drink');
+    expect(answers).not.toContain('nadir');
+    expect(answers).not.toContain('drain');
+  });
+
+  it('returns empty array when no offered letter has expansions', () => {
+    const round = {
+      root: 'rind',
+      expansions: { e: ['diner'] },
+      offeredLetters: ['x', 'y', 'z'],
+    };
+    const answers = getAnswersForRound(round);
+    expect(answers).toEqual([]);
+  });
+
+  it('flattens multiple words from the same offered letter', () => {
+    const round = {
+      root: 'cat',
+      expansions: { o: ['coat', 'taco'], r: ['cart'] },
+      offeredLetters: ['o', 'r', 'z'],
+    };
+    const answers = getAnswersForRound(round);
+    expect(answers).toContain('coat');
+    expect(answers).toContain('taco');
+    expect(answers).toContain('cart');
+    expect(answers).toHaveLength(3);
   });
 });
 
