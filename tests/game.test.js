@@ -11,6 +11,8 @@ import {
   isConsecutiveDay,
   updateStreakStats,
   processKeyPress,
+  formatCountdown,
+  getTimeUntilMidnightUTC,
 } from '../src/game.js';
 
 // Minimal puzzle data for testing
@@ -268,7 +270,7 @@ describe('generateShareText', () => {
     const results = Array.from({ length: 11 }, () => ({ answer: 'word', timeMs: 1000, root: 'wor' }));
     const text = generateShareText(results, '2026-04-05', 60000);
     const lines = text.split('\n');
-    expect(lines[0]).toBe('Anagram Trainer 2026-04-05');
+    expect(lines[0]).toBe('Reword 2026-04-05');
     expect(lines[1]).toBe('🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩');
     expect(lines[2]).toBe('11/11 | 1:00');
   });
@@ -552,5 +554,35 @@ describe('calculateScore', () => {
     const score = calculateScore(completedRounds);
     expect(score.totalLetters).toBe(5 + 0 + 4);
     expect(score.roundsCompleted).toBe(3);
+  });
+});
+
+describe('formatCountdown', () => {
+  it('formats zero milliseconds as 00:00:00', () => {
+    expect(formatCountdown(0)).toBe('00:00:00');
+  });
+
+  it('formats hours, minutes, and seconds with zero-padding', () => {
+    // 2 hours, 5 minutes, 3 seconds = 7503000ms
+    const ms = (2 * 3600 + 5 * 60 + 3) * 1000;
+    expect(formatCountdown(ms)).toBe('02:05:03');
+  });
+
+  it('formats 23:59:59 correctly', () => {
+    const ms = (23 * 3600 + 59 * 60 + 59) * 1000;
+    expect(formatCountdown(ms)).toBe('23:59:59');
+  });
+
+  it('handles fractional seconds by flooring', () => {
+    const ms = (1 * 3600 + 30 * 60 + 45) * 1000 + 999;
+    expect(formatCountdown(ms)).toBe('01:30:45');
+  });
+});
+
+describe('getTimeUntilMidnightUTC', () => {
+  it('returns a positive number less than 86400000', () => {
+    const ms = getTimeUntilMidnightUTC();
+    expect(ms).toBeGreaterThan(0);
+    expect(ms).toBeLessThanOrEqual(86400000);
   });
 });
