@@ -19,7 +19,9 @@ The game has been renamed to **Reword** and fully migrated to Vue 3 + Vite with 
 - **Answer Feedback Animations**: Shake animation on wrong/invalid answers, bounce animation on correct answers with staggered tile timing via `--tile-index` CSS custom property. Triggered by `animationClass` prop on GameBoard, managed by App.vue.
 - **Round Transition Animations**: Vue `<Transition name="round" mode="out-in">` wraps GameBoard with fade-out/fade-in between rounds. Timer starts via `@after-enter` hook instead of `setTimeout`.
 - **Removed dead `src/ui.js`**: Legacy pre-Vue DOM manipulation file deleted — nothing imported it after Vue 3 migration.
-- 133 tests passing (101 pure logic + 28 Vue component + 5 countdown/HowToPlay tests)
+- **HowToPlay Timer & Scoring Info**: Modal now mentions the 60-second per-round time limit and clarifies letter-based scoring
+- **Score Screen Answer Cap**: Possible answers for skipped rounds capped at 5, with "+N more" indicator when exceeded. Prevents UI overflow for common roots with many valid expansions.
+- 139 tests passing (101 pure logic + 34 Vue component + 5 countdown/HowToPlay tests)
 
 ## Architecture
 - **Vue 3 + Vite**: Entry point `src/main.js` → `App.vue` mounts to `<div id="app">`

@@ -234,4 +234,73 @@ describe('HowToPlay', () => {
     await closeBtn.trigger('click');
     expect(wrapper.emitted('close')).toBeTruthy();
   });
+
+  it('mentions the 60-second time limit', () => {
+    const wrapper = mount(HowToPlay);
+    const text = wrapper.text().toLowerCase();
+    expect(text).toMatch(/60 seconds/);
+  });
+
+  it('mentions letter-based scoring', () => {
+    const wrapper = mount(HowToPlay);
+    const text = wrapper.text().toLowerCase();
+    expect(text).toMatch(/letters.*used|total letters/);
+  });
+});
+
+describe('ScoreScreen possible answers cap', () => {
+  it('shows all possible answers when 5 or fewer', () => {
+    const results = [
+      { answer: '', timeMs: 5000, root: 'cat', possibleAnswers: ['coat', 'taco', 'cart'] },
+    ];
+    const wrapper = mount(ScoreScreen, {
+      props: { results, dateStr: '2026-04-05', totalTimeMs: 5000 },
+    });
+    expect(wrapper.text()).toContain('coat');
+    expect(wrapper.text()).toContain('taco');
+    expect(wrapper.text()).toContain('cart');
+    expect(wrapper.text()).not.toContain('more');
+  });
+
+  it('caps possible answers at 5 and shows +N more when exceeded', () => {
+    const results = [
+      { answer: '', timeMs: 5000, root: 'cat', possibleAnswers: ['coat', 'taco', 'cart', 'arcs', 'scat', 'acts', 'cast'] },
+    ];
+    const wrapper = mount(ScoreScreen, {
+      props: { results, dateStr: '2026-04-05', totalTimeMs: 5000 },
+    });
+    // First 5 should be visible
+    expect(wrapper.text()).toContain('coat');
+    expect(wrapper.text()).toContain('taco');
+    expect(wrapper.text()).toContain('cart');
+    expect(wrapper.text()).toContain('arcs');
+    expect(wrapper.text()).toContain('scat');
+    // 6th and 7th should NOT be visible as text
+    expect(wrapper.text()).not.toContain('acts');
+    expect(wrapper.text()).not.toContain('cast');
+    // Should show "+2 more"
+    expect(wrapper.text()).toContain('+2 more');
+  });
+
+  it('shows all 5 answers with no +more when exactly 5', () => {
+    const results = [
+      { answer: '', timeMs: 5000, root: 'cat', possibleAnswers: ['coat', 'taco', 'cart', 'arcs', 'scat'] },
+    ];
+    const wrapper = mount(ScoreScreen, {
+      props: { results, dateStr: '2026-04-05', totalTimeMs: 5000 },
+    });
+    expect(wrapper.text()).toContain('coat');
+    expect(wrapper.text()).toContain('scat');
+    expect(wrapper.text()).not.toContain('more');
+  });
+
+  it('does not show possible answers for solved rounds', () => {
+    const results = [
+      { answer: 'coat', timeMs: 5000, root: 'cat', possibleAnswers: ['coat', 'taco', 'cart'] },
+    ];
+    const wrapper = mount(ScoreScreen, {
+      props: { results, dateStr: '2026-04-05', totalTimeMs: 5000 },
+    });
+    expect(wrapper.find('.possible-answers').exists()).toBe(false);
+  });
 });

@@ -41,8 +41,11 @@ This simple substring check covers: adding s/es/ed/ing/er to end, and common pre
 - Wordle shows statistics + emoji share grid; reveals answer on failure
 - Spelling Bee shows all valid answers after day ends, differentiating found vs missed
 - Standard pattern for daily word games: per-round results + answer reveal for missed words
-- Current implementation shows only aggregate stats (words solved, letters, time)
-- Should add: per-round breakdown showing root, player answer, and possible answers for skipped/missed rounds
+- ~~Current implementation shows only aggregate stats (words solved, letters, time)~~ DONE — Per-round breakdown added in ScoreScreen.vue
+- ~~Should add: per-round breakdown showing root, player answer, and possible answers for skipped/missed rounds~~ DONE
+- **Gap**: Score screen shows ALL possible answers for skipped rounds (uncapped), while in-game skip message caps at 3. Should cap to prevent overwhelming display
+- **Gap**: HowToPlay modal doesn't mention the 60-second per-round timer or letter scoring mechanic
+- Major daily word games (Wordle, Connections, Spelling Bee) do NOT show per-round timing — only total time. Per-round time display not recommended
 
 ## Replay Prevention
 - Standard approach: localStorage keyed by date string

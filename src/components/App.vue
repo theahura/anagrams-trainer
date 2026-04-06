@@ -360,6 +360,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   stopTimer();
+  clearTimeout(animationTimeout);
   if (keydownHandler) document.removeEventListener('keydown', keydownHandler);
 });
 </script>
