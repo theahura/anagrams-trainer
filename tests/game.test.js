@@ -141,6 +141,37 @@ describe('isValidAnswer', () => {
     expect(isValidAnswer('diner', round)).toBe(true);
     expect(isValidAnswer('drink', round)).toBe(true);
   });
+
+  it('accepts a multi-letter expansion when all needed letters are offered', () => {
+    const round = {
+      root: 'cat',
+      expansions: { o: ['coat', 'taco'], 'el': ['cleat', 'eclat'] },
+      offeredLetters: ['e', 'l', 'o'],
+    };
+    expect(isValidAnswer('cleat', round)).toBe(true);
+    expect(isValidAnswer('eclat', round)).toBe(true);
+  });
+
+  it('accepts a multi-letter expansion even when word contains root as substring', () => {
+    // "grinder" contains "rind" but should be accepted via multi-letter key "egr"
+    const round = {
+      root: 'rind',
+      expansions: { 'egr': ['grinder'] },
+      offeredLetters: ['e', 'g', 'r'],
+    };
+    expect(isValidAnswer('grinder', round)).toBe(true);
+  });
+
+  it('rejects a multi-letter expansion when not all needed letters are offered', () => {
+    const round = {
+      root: 'cat',
+      expansions: { o: ['coat'], 'el': ['cleat'] },
+      offeredLetters: ['e', 'o', 'z'],  // has 'e' but not 'l'
+    };
+    expect(isValidAnswer('cleat', round)).toBe(false);
+    // single-letter 'o' is still valid
+    expect(isValidAnswer('coat', round)).toBe(true);
+  });
 });
 
 describe('getOfferedLetters', () => {
@@ -196,6 +227,29 @@ describe('getAnswersForRound', () => {
     expect(answers).toContain('taco');
     expect(answers).toContain('cart');
     expect(answers).toHaveLength(3);
+  });
+
+  it('includes multi-letter expansion answers when all letters are offered', () => {
+    const round = {
+      root: 'cat',
+      expansions: { o: ['coat'], 'el': ['cleat', 'eclat'] },
+      offeredLetters: ['e', 'l', 'o'],
+    };
+    const answers = getAnswersForRound(round);
+    expect(answers).toContain('coat');
+    expect(answers).toContain('cleat');
+    expect(answers).toContain('eclat');
+  });
+
+  it('excludes multi-letter expansion answers when not all letters are offered', () => {
+    const round = {
+      root: 'cat',
+      expansions: { o: ['coat'], 'el': ['cleat'] },
+      offeredLetters: ['e', 'o', 'z'],  // 'l' not offered
+    };
+    const answers = getAnswersForRound(round);
+    expect(answers).toContain('coat');
+    expect(answers).not.toContain('cleat');
   });
 });
 

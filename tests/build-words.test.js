@@ -6,6 +6,12 @@ const testDictionary = [
   'cats', 'cast', 'scat', 'acts', 'coat', 'taco', 'cart',
   'rind', 'grind', 'diner', 'drink', 'rinds',
   'dog', 'doge', 'dogs', 'gods',
+  // Multi-letter expansion test words
+  'cleat', 'eclat',  // cat + e,l
+  'steam', 'mates', 'meats', 'teams', 'tames',  // at + e,m,s
+  'grinder',  // rind + e,g,r
+  'risk', 'irks', 'kirs', 'kris',  // ski + r (regression test)
+  'ski',
 ];
 
 describe('letterSignature', () => {
@@ -33,11 +39,11 @@ describe('findExpansions', () => {
     expect(expansions['r']).toContain('cart');
   });
 
-  it('only includes words exactly one letter longer than root', () => {
+  it('includes words of length root+1 through root+maxExtra', () => {
     const expansions = findExpansions('cat', testDictionary);
-    for (const letter of Object.keys(expansions)) {
-      for (const word of expansions[letter]) {
-        expect(word.length).toBe(4); // cat is 3 letters, expansion should be 4
+    for (const key of Object.keys(expansions)) {
+      for (const word of expansions[key]) {
+        expect(word.length).toBe(3 + key.length); // cat is 3 letters, word should be root + key length
       }
     }
   });
@@ -75,5 +81,39 @@ describe('filterTrivialExpansions', () => {
     const expansions = { g: ['grind'] };
     const filtered = filterTrivialExpansions('rind', expansions);
     expect(filtered).not.toHaveProperty('g');
+  });
+
+  it('works with multi-letter expansion keys', () => {
+    const expansions = { 'el': ['cleat', 'eclat'], 'eg': ['categ'] };
+    const filtered = filterTrivialExpansions('cat', expansions);
+    // Neither 'cleat' nor 'eclat' contain 'cat' as substring
+    expect(filtered['el']).toContain('cleat');
+    expect(filtered['el']).toContain('eclat');
+  });
+});
+
+describe('findExpansions with multi-letter support', () => {
+  it('finds +2 letter expansions', () => {
+    const expansions = findExpansions('cat', testDictionary);
+    // 'cleat' = cat + e,l (sorted: "el")
+    expect(expansions).toHaveProperty('el');
+    expect(expansions['el']).toContain('cleat');
+    expect(expansions['el']).toContain('eclat');
+  });
+
+  it('finds +3 letter expansions', () => {
+    const expansions = findExpansions('at', testDictionary);
+    // 'steam' = at + e,m,s (sorted: "ems")
+    expect(expansions).toHaveProperty('ems');
+    expect(expansions['ems']).toContain('steam');
+  });
+
+  it('includes all valid words for ski+r without truncation', () => {
+    const expansions = findExpansions('ski', testDictionary);
+    expect(expansions).toHaveProperty('r');
+    expect(expansions['r']).toContain('risk');
+    expect(expansions['r']).toContain('irks');
+    expect(expansions['r']).toContain('kirs');
+    expect(expansions['r']).toContain('kris');
   });
 });

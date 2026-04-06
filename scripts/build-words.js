@@ -22,12 +22,14 @@ function buildPuzzleData(dictionary) {
   const puzzleData = {};
 
   for (const rootLen of [3, 4, 5, 6, 7, 8]) {
-    console.log(`Processing ${rootLen}-letter roots...`);
+    // Limit extra letters: +3 for short roots, +2 for medium, +1 for long
+    const maxExtra = rootLen <= 5 ? 3 : rootLen <= 6 ? 2 : 1;
+    console.log(`Processing ${rootLen}-letter roots (max +${maxExtra} letters)...`);
     const roots = dictionary.filter(w => w.length === rootLen);
     const validRoots = [];
 
     for (const root of roots) {
-      const allExpansions = findExpansions(root, index);
+      const allExpansions = findExpansions(root, index, maxExtra);
       const filtered = filterTrivialExpansions(root, allExpansions);
       const validLetterCount = Object.keys(filtered).length;
 
@@ -56,20 +58,34 @@ async function main() {
   const MAX_ROOTS_PER_LENGTH = 500;
   for (const len of Object.keys(puzzleData)) {
     if (puzzleData[len].length > MAX_ROOTS_PER_LENGTH) {
-      // Keep roots with the most expansion variety (most valid letters)
-      puzzleData[len].sort((a, b) =>
-        Object.keys(b.expansions).length - Object.keys(a.expansions).length
-      );
+      // Keep roots with the most single-letter expansion variety (core gameplay)
+      puzzleData[len].sort((a, b) => {
+        const aSingle = Object.keys(a.expansions).filter(k => k.length === 1).length;
+        const bSingle = Object.keys(b.expansions).filter(k => k.length === 1).length;
+        return bSingle - aSingle || Object.keys(b.expansions).length - Object.keys(a.expansions).length;
+      });
       puzzleData[len] = puzzleData[len].slice(0, MAX_ROOTS_PER_LENGTH);
     }
   }
 
-  // Also trim expansions: keep max 3 words per letter to reduce size
+  // Trim expansion data to control file size
+  const MAX_KEYS_PER_ROOT = 30;
+  const MAX_WORDS_PER_KEY = 5;
   for (const roots of Object.values(puzzleData)) {
     for (const entry of roots) {
-      for (const letter of Object.keys(entry.expansions)) {
-        if (entry.expansions[letter].length > 3) {
-          entry.expansions[letter] = entry.expansions[letter].slice(0, 3);
+      // Cap words per key
+      for (const key of Object.keys(entry.expansions)) {
+        if (entry.expansions[key].length > MAX_WORDS_PER_KEY) {
+          entry.expansions[key] = entry.expansions[key].slice(0, MAX_WORDS_PER_KEY);
+        }
+      }
+      // Cap total keys per root: prioritize single-letter keys, then shorter multi-letter keys
+      const keys = Object.keys(entry.expansions);
+      if (keys.length > MAX_KEYS_PER_ROOT) {
+        keys.sort((a, b) => a.length - b.length || a.localeCompare(b));
+        const keepKeys = new Set(keys.slice(0, MAX_KEYS_PER_ROOT));
+        for (const key of keys) {
+          if (!keepKeys.has(key)) delete entry.expansions[key];
         }
       }
     }
