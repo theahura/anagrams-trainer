@@ -23,8 +23,8 @@ Path: @/tests
   - `TileRack`: renders each letter, handles empty arrays and tileClass propagation
   - `VirtualKeyboard`: emits `key-press` with lowercased letters, Enter, and Backspace
   - `GameBoard`: renders root word and offered letters in tile racks, shows round indicator, emits submit/skip events
-  - `ScoreScreen`: displays solved count, per-round results, and countdown timer
-  - `HowToPlay`: renders modal content and emits close on button click
+  - `ScoreScreen`: displays solved count, per-round results, and countdown timer. Tests the 5-answer cap on possible answers for skipped rounds (shows all when <=5, truncates with "+N more" when >5). Verifies possible answers are not shown for solved rounds
+  - `HowToPlay`: renders modal content and emits close on button click. Tests that the modal mentions the 60-second timer and letter-based scoring rules
 - **`build-words.test.js`** -- Tests letter signature sorting, expansion finding, and a regression test verifying that "ski" + "r" produces "risk"
 - **`web-scraper.test.js`** -- Tests the pure functions in `@/scripts/web-scraper.js`: HTML parsing, expansion key derivation, and grouping words by expansion key
 - **`sound.test.js`** -- Tests the sound module using a mock AudioContext. Verifies all play methods exist, mute/unmute toggling, and that all sound methods can be called without throwing

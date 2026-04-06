@@ -29,17 +29,20 @@ Path: @/src
   - `showScore(savedResults?)` dual mode: fresh game results or saved replay. On fresh completion, persists to `reword-{date}` and updates `reword-stats` via `updateStreakStats`
   - Physical keyboard handled via a document-level `keydown` listener that guards against `gameComplete`, `loading`, and `showHowToPlay` states
   - Audio lazily initialized via `ensureAudio()` on first user interaction
+  - Answer feedback animations: `triggerAnimation(cls, durationMs)` sets `animationClass` ref, passed as a prop to `GameBoard`. Shake (400ms) on invalid/wrong answers, bounce (600 + 80ms per tile) on correct answers. Uses `requestAnimationFrame` to force class reset/reapply for animation restart
+  - Round transitions: `<Transition name="round" mode="out-in">` wraps `GameBoard` keyed by `state.currentRound`. Timer starts via `@after-enter` hook (`onRoundEntered`) instead of immediately on `advanceRound()`
 
 - **`components/GameBoard.vue`** -- Game area: tile racks, input area, submit/skip buttons
   - Uses computed `matchTypedToTiles()` result to derive per-tile CSS classes for real-time feedback (invalid tiles highlighted)
   - Renders empty placeholder tiles up to `minLen` via `displayLen` computed property
   - Exposes a `#timer` slot used by `App.vue` to inject letter score and timer display
+  - Accepts `animationClass` prop applied to `#input-area` for shake/bounce animations. Input tiles use `:style="{ '--tile-index': i }"` for staggered bounce timing
 
 - **`components/ScoreScreen.vue`** -- End-of-game display with countdown
-  - Shows per-round breakdown (root, answer or SKIPPED, possible answers for skipped rounds)
+  - Shows per-round breakdown (root, answer or SKIPPED, possible answers for skipped rounds). Possible answers for skipped rounds are capped at 5 displayed, with a "+N more" indicator when there are additional answers
   - Displays a "Next puzzle in: HH:MM:SS" countdown using `formatCountdown()` and `getTimeUntilMidnightUTC()` from `game.js`, ticked every second via `setInterval`
 
-- **`components/HowToPlay.vue`** -- Tutorial modal with example tiles, closes on overlay click or X button
+- **`components/HowToPlay.vue`** -- Tutorial modal with example tiles, closes on overlay click or X button. Lists key gameplay rules: 11 rounds, 60-second per-round timer with auto-skip, daily puzzle cadence, and letter-based scoring
 
 - **`components/ScrabbleTile.vue`** -- Single tile displaying an uppercase letter. No Scrabble point subscripts
 
@@ -79,8 +82,8 @@ Path: @/src
 - `getOfferedLetters` extracts individual characters from multi-char expansion keys (e.g., `"el"` yields `"e"` and `"l"`) using `join('').split('')`, then deduplicates. It prioritizes including a single-letter expansion key in the offered set to ensure at least one straightforward answer exists
 - The UI input max length is `root.length + offeredLetters.length`, allowing players to use all offered letters. Submit validation accepts answers between `root.length + 1` and this max
 - `isKeySubsetOfOffered` in `game.js` checks whether each character of a multi-letter key can be consumed from the offered letters array (removing used letters to handle duplicates). This is the core mechanism enabling multi-letter expansion matching at runtime
-- The `state.transitioning` flag in `App.vue` prevents input during the 700ms (correct) or 1200ms (skip with possible answers) delay between rounds
-- Timer counts down from 60 seconds per round. `startTimer()` resets the display to `1:00`, records `roundStartTime`, and ticks every 100ms. When remaining time hits 0, the interval auto-calls `handleSkip()`. Both `handleSubmit()` and `handleSkip()` call `stopTimer()` and cap recorded `timeMs` at `ROUND_TIME_LIMIT_MS`. The timer auto-starts on puzzle load (in `onMounted`) only if the HowToPlay modal is not showing; closing the modal via `handleCloseHowToPlay` starts the timer if the game is still active. Timer restarts on each `advanceRound()` call
+- The `state.transitioning` flag in `App.vue` prevents input during the delay between rounds. It is set `true` on submit/skip, and cleared in `onRoundEntered()` (after the Vue transition completes), which also restarts the timer. The advance delay is `max(700ms, bounceDuration)` for correct answers and 1200ms for skips with possible answers
+- Timer counts down from 60 seconds per round. `startTimer()` resets the display to `1:00`, records `roundStartTime`, and ticks every 100ms. When remaining time hits 0, the interval auto-calls `handleSkip()`. Both `handleSubmit()` and `handleSkip()` call `stopTimer()` and cap recorded `timeMs` at `ROUND_TIME_LIMIT_MS`. The timer auto-starts on puzzle load (in `onMounted`) only if the HowToPlay modal is not showing; closing the modal via `handleCloseHowToPlay` starts the timer if the game is still active. Timer restarts in `onRoundEntered()` after the round transition animation completes
 - `showScore()` computes `totalTimeMs` as the sum of per-round `timeMs` values (not wall-clock time)
 - Streak calculation is pure (in `game.js`) with localStorage access only in `App.vue`, consistent with the pattern of keeping side effects out of game logic
 - Sound synthesis follows the same pure-logic-in-module, side-effects-in-UI pattern: `sound.js` is a pure factory testable with a mock AudioContext, while `App.vue` handles AudioContext creation, localStorage mute persistence, and event hookup
