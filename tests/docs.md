@@ -4,7 +4,7 @@ Path: @/tests
 
 ### Overview
 
-- Vitest test suites covering the pure-logic runtime modules and Vue components
+- Vitest test suites covering pure-logic runtime modules, Vue components, and monorepo structure invariants
 - Tests run via `npm test` (vitest run) or `npm run test:watch` (vitest watch mode)
 
 ### How it fits into the larger codebase
@@ -28,6 +28,7 @@ Path: @/tests
 - **`build-words.test.js`** -- Tests letter signature sorting, expansion finding, and a regression test verifying that "ski" + "r" produces "risk"
 - **`web-scraper.test.js`** -- Tests the pure functions in `@/scripts/web-scraper.js`: HTML parsing, expansion key derivation, and grouping words by expansion key
 - **`sound.test.js`** -- Tests the sound module using a mock AudioContext. Verifies all play methods exist, mute/unmute toggling, and that all sound methods can be called without throwing
+- **`repo-structure.test.js`** -- Filesystem-level tests that verify the monorepo layout: root package name, games index page linking to Reword, Reword entry page referencing assets in `@/games/reword/`, and favicon existence with its HTML link tag in `@/reword/index.html`
 
 ### Things to Know
 

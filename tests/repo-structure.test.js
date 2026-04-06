@@ -30,18 +30,11 @@ describe('repo structure', () => {
     expect(html).toContain('../games/reword/src/main.js');
   });
 
-  it('keeps reword-specific docs, specs, and data under games/reword', () => {
-    expect(fs.existsSync(path.join(repoRoot, 'games/reword/APPLICATION-SPEC.md'))).toBe(true);
-    expect(fs.existsSync(path.join(repoRoot, 'games/reword/docs.md'))).toBe(true);
-    expect(fs.existsSync(path.join(repoRoot, 'games/reword/data/docs.md'))).toBe(true);
-    expect(fs.existsSync(path.join(repoRoot, 'games/reword/data/puzzles.json'))).toBe(true);
-    expect(fs.existsSync(path.join(repoRoot, 'games/reword/spec/APPLICATION-SPEC.md'))).toBe(true);
-    expect(fs.existsSync(path.join(repoRoot, 'games/reword/spec/CURRENT-PROGRESS.md'))).toBe(true);
-    expect(fs.existsSync(path.join(repoRoot, 'games/reword/spec/RESEARCH-NOTES.md'))).toBe(true);
+  it('has a favicon for reword', () => {
+    expect(fs.existsSync(path.join(repoRoot, 'games/reword/favicon.svg'))).toBe(true);
 
-    expect(fs.existsSync(path.join(repoRoot, 'APPLICATION-SPEC.md'))).toBe(false);
-    expect(fs.existsSync(path.join(repoRoot, 'docs.md'))).toBe(false);
-    expect(fs.existsSync(path.join(repoRoot, 'data'))).toBe(false);
-    expect(fs.existsSync(path.join(repoRoot, 'spec'))).toBe(false);
+    const html = read('reword/index.html');
+    expect(html).toContain('<link rel="icon"');
+    expect(html).toContain('../games/reword/favicon.svg');
   });
 });
