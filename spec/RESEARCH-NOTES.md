@@ -81,6 +81,15 @@ This simple substring check covers: adding s/es/ed/ing/er to end, and common pre
 - **Integration point:** `hiddenInput` `input` event listener in ui.js — after updating `state.inputLetters`, run matcher and toggle `.used` classes on rack tiles
 - **Pure function for testability:** Extract `matchTypedToTiles(typedLetters, rootLetters, offeredLetters)` as a pure, exportable function in game.js for unit testing
 
+## Answer Feedback Animations & Round Transitions
+- **Wordle shake pattern**: horizontal `translateX` shake on the input row for wrong answers, ~0.4s, CSS-only with JS class toggle
+- **Wordle bounce pattern**: staggered `translateY` bounce on individual tiles for correct answers, ~0.6s per tile with 100ms stagger
+- **Round transitions**: fade-out (150ms) → fade-in (200ms) using opacity + transform for GPU acceleration
+- **Performance**: Only animate `transform` and `opacity` for 60fps on mobile. Max 2 concurrent animations.
+- **Accessibility**: Always include `@media (prefers-reduced-motion: reduce)` to disable animations
+- **JS role**: Add/remove CSS classes + listen for `animationend` events to chain sequences. No JS-driven animation.
+- **Existing codebase**: Already has `pop-in` keyframe on input tiles (0.15s), `.used` transitions (0.2s). Gap: no shake, no bounce, no round transition animation.
+
 ## Bug: 3-Word-Per-Letter Cap Drops Valid Words
 - `build-words.js` line 72-75 caps at 3 words per expansion letter
 - For "ski" + "r", the dictionary has: irks, kirs, kris, risk — but "risk" is 4th and gets truncated

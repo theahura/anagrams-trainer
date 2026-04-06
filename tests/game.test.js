@@ -8,6 +8,7 @@ import {
   getAnswersForRound,
   generateShareText,
   matchTypedToTiles,
+  getSubmitFeedbackType,
 } from '../src/game.js';
 
 // Minimal puzzle data for testing
@@ -353,6 +354,42 @@ describe('matchTypedToTiles', () => {
     expect(usedRoot).toHaveLength(3);
     expect(usedOffered).toHaveLength(1);
     expect(usedOffered[0].letter).toBe('o');
+  });
+});
+
+describe('getSubmitFeedbackType', () => {
+  const round = {
+    root: 'rind',
+    expansions: { e: ['diner'], k: ['drink'] },
+    offeredLetters: ['e', 'k', 'z'],
+  };
+
+  it('returns correct for a valid answer', () => {
+    expect(getSubmitFeedbackType('diner', round)).toBe('correct');
+    expect(getSubmitFeedbackType('drink', round)).toBe('correct');
+  });
+
+  it('returns invalid-length when answer is too short', () => {
+    expect(getSubmitFeedbackType('din', round)).toBe('invalid-length');
+    expect(getSubmitFeedbackType('di', round)).toBe('invalid-length');
+  });
+
+  it('returns invalid-length when answer is too long', () => {
+    expect(getSubmitFeedbackType('dinering', round)).toBe('invalid-length');
+  });
+
+  it('returns wrong for an incorrect word of valid length', () => {
+    expect(getSubmitFeedbackType('pizza', round)).toBe('wrong');
+    expect(getSubmitFeedbackType('rinds', round)).toBe('wrong');
+  });
+
+  it('returns wrong for a valid expansion word whose letter is not offered', () => {
+    const roundWithExtra = {
+      root: 'rind',
+      expansions: { e: ['diner'], k: ['drink'], a: ['nadir'] },
+      offeredLetters: ['e', 'k', 'z'],
+    };
+    expect(getSubmitFeedbackType('nadir', roundWithExtra)).toBe('wrong');
   });
 });
 

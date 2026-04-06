@@ -1,6 +1,6 @@
 # Current Progress
 
-## Status: MVP Complete + Multi-Letter Expansion + Web-Sourced Build + Share Results + Tile Feedback
+## Status: MVP Complete + Multi-Letter Expansion + Web-Sourced Build + Share Results + Tile Feedback + Answer Animations
 
 The full Anagram Trainer game is implemented and tested with multi-letter expansion support, a web-sourced build pipeline, share results functionality, and real-time tile visual feedback.
 
@@ -36,6 +36,12 @@ The full Anagram Trainer game is implemented and tested with multi-letter expans
 - Invalid (unmatched) typed letters get red feedback in the input area
 - CSS transitions for smooth tile state changes (`.used`, `.invalid` classes)
 - 71 unit tests passing (PRNG, game logic, word processing, multi-letter expansions, web scraper, share text, tile matching)
+- Answer feedback animations: shake on wrong/invalid answers, bounce on correct answers
+- `getSubmitFeedbackType` pure function in game.js for testable submit validation
+- Smooth round transitions: fade-out/fade-in between rounds using CSS animations
+- Skip reveals possible answers (up to 3) before transitioning
+- Accessibility: `@media (prefers-reduced-motion: reduce)` disables all animations
+- 76 unit tests passing (added 5 tests for getSubmitFeedbackType)
 
 ## Architecture
 - Pure static HTML/JS, no backend or framework
