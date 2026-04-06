@@ -215,6 +215,26 @@ export function deserializeGameState(saved, now) {
   };
 }
 
+export async function shareResults(text, nav) {
+  if (nav.share) {
+    try {
+      await nav.share({ text });
+      return { method: 'share' };
+    } catch (e) {
+      if (e.name === 'AbortError') return { method: 'dismissed' };
+    }
+  }
+  if (nav.clipboard) {
+    try {
+      await nav.clipboard.writeText(text);
+      return { method: 'clipboard' };
+    } catch (e) {
+      // fall through
+    }
+  }
+  return { method: 'fallback' };
+}
+
 export function getTimeUntilMidnightUTC() {
   const now = new Date();
   const tomorrow = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));

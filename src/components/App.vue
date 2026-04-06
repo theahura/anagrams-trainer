@@ -51,7 +51,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
-import { selectDailyPuzzle, isValidAnswer, calculateScore, getAnswersForRound, generateShareText, getSubmitFeedbackType, updateStreakStats, processKeyPress, ROUND_TIME_LIMIT_MS, formatRoundTimer, serializeGameState, deserializeGameState, isTimerUrgent } from '../game.js';
+import { selectDailyPuzzle, isValidAnswer, calculateScore, getAnswersForRound, generateShareText, getSubmitFeedbackType, updateStreakStats, processKeyPress, ROUND_TIME_LIMIT_MS, formatRoundTimer, serializeGameState, deserializeGameState, isTimerUrgent, shareResults } from '../game.js';
 import { getAudioContext, initSound } from '../sound.js';
 import GameBoard from './GameBoard.vue';
 import VirtualKeyboard from './VirtualKeyboard.vue';
@@ -303,14 +303,25 @@ function handleKeyInput(key) {
 }
 
 const shareButtonText = ref('Share Results');
+let sharing = false;
 
 async function handleShare() {
+  if (sharing) return;
+  sharing = true;
   const results = state.completedRounds;
   const shareText = generateShareText(results, dateStr.value, totalTimeMs.value);
-  try {
-    if (navigator.clipboard) {
-      await navigator.clipboard.writeText(shareText);
-    } else {
+  const { method } = await shareResults(shareText, navigator);
+
+  if (method === 'share') {
+    shareButtonText.value = 'Shared!';
+  } else if (method === 'clipboard') {
+    shareButtonText.value = 'Copied!';
+  } else if (method === 'dismissed') {
+    sharing = false;
+    return;
+  } else {
+    // Fallback: legacy execCommand
+    try {
       const ta = document.createElement('textarea');
       ta.value = shareText;
       document.body.appendChild(ta);
@@ -318,12 +329,12 @@ async function handleShare() {
       ta.select();
       document.execCommand('copy');
       ta.remove();
+      shareButtonText.value = 'Copied!';
+    } catch (e) {
+      shareButtonText.value = 'Could not copy';
     }
-    shareButtonText.value = 'Copied!';
-  } catch (e) {
-    shareButtonText.value = 'Could not copy';
   }
-  setTimeout(() => { shareButtonText.value = 'Share Results'; }, 2000);
+  setTimeout(() => { shareButtonText.value = 'Share Results'; sharing = false; }, 2000);
 }
 
 let keydownHandler = null;
