@@ -538,20 +538,21 @@ header h1 {
   to { opacity: 1; transform: scale(1); }
 }
 
-.fade-out {
-  animation: fade-out 0.15s ease-in forwards;
+/* Vue <Transition name="round"> classes */
+.round-enter-active {
+  animation: fade-in 0.2s ease-out;
 }
 
-.fade-in {
-  animation: fade-in 0.2s ease-out forwards;
+.round-leave-active {
+  animation: fade-out 0.15s ease-in;
 }
 
 /* Accessibility: respect reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
   #input-area.shake,
   #input-area.bounce .tile,
-  .fade-out,
-  .fade-in,
+  .round-enter-active,
+  .round-leave-active,
   #input-area .tile {
     animation: none;
   }

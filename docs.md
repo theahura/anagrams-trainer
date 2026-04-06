@@ -11,8 +11,8 @@ Path: @/
 
 ### How it fits into the larger codebase
 
-- `index.html` mounts the Vue app via `@/src/main.js`, which creates the root `App.vue` component. Links the SVG favicon from `@/public/favicon.svg`
-- `style.css` defines the dark theme, tile styles (sharp square tiles, no point subscripts), animations, virtual keyboard layout for touch devices, and score screen styling including countdown timer
+- `index.html` mounts the Vue app via `@/src/main.js`, which creates the root `App.vue` component. Links the SVG favicon from `@/public/favicon.svg`. Uses `viewport-fit=cover` to support safe-area insets on notched devices
+- `style.css` defines the dark theme, tile styles (sharp square tiles, no point subscripts), animations, virtual keyboard layout for touch devices, and score screen styling including countdown timer. Uses a flex-column viewport layout (`100svh`) with `overflow: hidden` on body and safe-area inset padding on `#game-container`. Includes a narrow-screen breakpoint (340px) for very small devices
 - `@/scripts/` contains two alternative build pipelines (`npm run build:words` for TWL06-based, `npm run build:words:web` for web-sourced via wordunscrambler.me) that both produce `@/data/puzzles.json` in the same format
 - `@/src/` contains all runtime logic: Vue components in `@/src/components/`, plus pure-logic modules (game.js, prng.js, words.js, sound.js)
 - `@/tests/` contains Vitest test suites covering the pure-logic modules and Vue components
@@ -73,7 +73,7 @@ Path: @/
 - The score screen shows a "Next puzzle in: HH:MM:SS" countdown to UTC midnight, using `formatCountdown()` and `getTimeUntilMidnightUTC()` pure functions from `@/src/game.js`, ticked every second in `ScoreScreen.vue`
 - Each round has a 60-second countdown timer that auto-skips when it expires. The timer auto-starts on puzzle load and resets on each round advance. `totalTimeMs` shown on the score screen is the sum of per-round times, not wall-clock time
 - Sound effects use Web Audio API synthesis with zero external dependencies. `playKeyClick` uses a filtered white noise burst (bandpass filter at 1200Hz). AudioContext is lazily created on first user interaction. iOS Safari compatibility via `webkitAudioContext` fallback
-- `src/ui.js` still exists in the codebase but is unused -- all UI logic was migrated to Vue components
+- The layout uses a flex-column structure from `body` through `#app`, `#game-container`, and `.game-board`, so the game board fills remaining space between the header and virtual keyboard. `touch-action: manipulation` and `-webkit-tap-highlight-color: transparent` are set on the game container for mobile touch UX
 - Vite is the build tool; Vue 3 and Vitest are the primary dev dependencies
 
 Created and maintained by Nori.
