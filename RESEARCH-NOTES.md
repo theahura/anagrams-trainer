@@ -45,3 +45,12 @@ The keyboard handler correctly blocks input when the modal is open (`if (showHow
 2. When modal closes mid-game: call `startTimer(pausedElapsedMs)` to resume with accumulated time
 3. First-visit case (timer not yet started) already works correctly — `handleCloseHowToPlay` starts fresh timer when `!timerInterval`
 4. Add a `let pausedElapsedMs = 0` variable alongside `timerInterval` to hold the paused elapsed time
+
+## Web Share API for Mobile Share Flow
+- **Problem**: The "Share Results" button only copies text to clipboard (`navigator.clipboard.writeText()`). On mobile devices, the native share sheet (Web Share API) is the expected UX — Wordle and all major daily word games use it.
+- **Web Share API**: `navigator.share({ text })` opens the native OS share dialog. Supported on 94%+ of browsers globally. Excellent mobile support (iOS Safari 12.2+, Chrome Android, Samsung Internet 8.2+). Firefox Desktop does NOT support it — clipboard fallback essential.
+- **Requirements**: HTTPS (localhost counts for dev), user gesture (satisfied — triggered by button click), at least one of `text`/`url`/`title`.
+- **AbortError handling**: When user dismisses the share sheet, the Promise rejects with `AbortError`. This is normal user behavior — must NOT show an error message. Just return silently.
+- **Button text**: With Web Share, native UI gives feedback → show "Shared!". With clipboard fallback → show "Copied!" (current). These should differ.
+- **Three-tier approach**: (1) `navigator.share({ text })` if available, (2) `navigator.clipboard.writeText()`, (3) `document.execCommand('copy')` legacy fallback.
+- **Current code**: `handleShare()` in App.vue lines 307-327. Already correctly structured for async with try/catch.

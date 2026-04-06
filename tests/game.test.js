@@ -18,6 +18,7 @@ import {
   deserializeGameState,
   ROUND_TIME_LIMIT_MS,
   isTimerUrgent,
+  shareResults,
 } from '../src/game.js';
 
 // Minimal puzzle data for testing
@@ -672,5 +673,58 @@ describe('isTimerUrgent', () => {
     expect(isTimerUrgent(1)).toBe(true);
   });
 
+});
+
+describe('shareResults', () => {
+  it('uses Web Share API when navigator.share is available', async () => {
+    const nav = {
+      share: async () => {},
+    };
+    const result = await shareResults('Reword 2026-04-05\n🟩🟩🟩', nav);
+    expect(result.method).toBe('share');
+  });
+
+  it('returns dismissed when user cancels the share sheet', async () => {
+    const nav = {
+      share: async () => {
+        const err = new Error('Share cancelled');
+        err.name = 'AbortError';
+        throw err;
+      },
+    };
+    const result = await shareResults('some text', nav);
+    expect(result.method).toBe('dismissed');
+  });
+
+  it('falls through to clipboard when share throws non-AbortError', async () => {
+    const nav = {
+      share: async () => { throw new Error('failed'); },
+      clipboard: { writeText: async () => {} },
+    };
+    const result = await shareResults('some text', nav);
+    expect(result.method).toBe('clipboard');
+  });
+
+  it('uses clipboard when share is unavailable', async () => {
+    const nav = {
+      clipboard: { writeText: async () => {} },
+    };
+    const result = await shareResults('test text', nav);
+    expect(result.method).toBe('clipboard');
+  });
+
+  it('returns fallback when neither share nor clipboard is available', async () => {
+    const nav = {};
+    const result = await shareResults('test text', nav);
+    expect(result.method).toBe('fallback');
+  });
+
+  it('returns fallback when clipboard.writeText rejects', async () => {
+    const nav = {
+      clipboard: { writeText: async () => { throw new Error('denied'); } },
+    };
+    const result = await shareResults('test text', nav);
+    expect(result.method).toBe('fallback');
+  });
 });
 

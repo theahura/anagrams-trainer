@@ -46,3 +46,18 @@
 - `docs.md`, `src/docs.md`, `tests/docs.md` — Updated to reflect changes
 
 **Tests:** 155 passing (7 new)
+
+## Web Share API for Mobile Sharing
+
+**Problem:** The "Share Results" button on the score screen only copies text to clipboard. On mobile devices, the native share sheet (Web Share API) provides a much better UX — Wordle and other daily word games use it to let players share directly to Messages, WhatsApp, Twitter, etc.
+
+**Fix:** Added `shareResults(text, nav)` async pure function to game.js implementing a three-tier share approach: (1) Web Share API via `navigator.share()`, (2) Clipboard API via `navigator.clipboard.writeText()`, (3) returns `'fallback'` for legacy `execCommand` handling. Uses dependency injection (accepts `nav` parameter) for testability. Handles `AbortError` (user dismissed share sheet) gracefully by returning `'dismissed'`. Updated `handleShare()` in App.vue to use the new function, showing "Shared!" for native share, "Copied!" for clipboard, and silently returning on dismiss.
+
+**Files changed:**
+- `src/game.js` — Added `shareResults(text, nav)` async function
+- `src/components/App.vue` — Updated `handleShare()` to use `shareResults()`, differentiated button text
+- `tests/game.test.js` — 5 new tests for `shareResults` behavior
+- `RESEARCH-NOTES.md` — Added Web Share API research section
+- `docs.md`, `src/docs.md`, `tests/docs.md` — Updated to reflect changes
+
+**Tests:** 160 passing (6 new)
