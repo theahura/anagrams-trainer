@@ -685,6 +685,23 @@ header h1 {
   padding-top: 16px;
 }
 
+.lifetime-stats {
+  border-top: 1px solid #3a3a3c;
+  padding-top: 16px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.stats-section-title {
+  width: 100%;
+  text-align: center;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #818384;
+  margin-bottom: 8px;
+}
+
 /* Responsive */
 @media (max-width: 420px) {
   .tile {

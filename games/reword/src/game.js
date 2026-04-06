@@ -180,6 +180,41 @@ export function calculateScore(completedRounds) {
   };
 }
 
+export function updateLifetimeStats(existingStats, completedRounds, totalTimeMs) {
+  const solvedRounds = completedRounds.filter(r => r.answer.length > 0);
+  const gameLetters = solvedRounds.reduce((sum, r) => sum + r.answer.length, 0);
+  const gameWords = solvedRounds.length;
+  const gameSkips = completedRounds.filter(r => r.answer.length === 0).length;
+  const gameLongestWord = solvedRounds.reduce(
+    (longest, r) => r.answer.length > longest.length ? r.answer : longest, ''
+  );
+
+  if (!existingStats) {
+    return {
+      totalLetters: gameLetters,
+      totalWords: gameWords,
+      fastestTimeMs: totalTimeMs,
+      totalTimeMs,
+      gamesPlayed: 1,
+      bestLetterScore: gameLetters,
+      longestWord: gameLongestWord,
+      totalSkips: gameSkips,
+    };
+  }
+
+  return {
+    totalLetters: existingStats.totalLetters + gameLetters,
+    totalWords: existingStats.totalWords + gameWords,
+    fastestTimeMs: Math.min(existingStats.fastestTimeMs, totalTimeMs),
+    totalTimeMs: existingStats.totalTimeMs + totalTimeMs,
+    gamesPlayed: existingStats.gamesPlayed + 1,
+    bestLetterScore: Math.max(existingStats.bestLetterScore, gameLetters),
+    longestWord: gameLongestWord.length > existingStats.longestWord.length
+      ? gameLongestWord : existingStats.longestWord,
+    totalSkips: existingStats.totalSkips + gameSkips,
+  };
+}
+
 export function formatCountdown(ms) {
   const totalSeconds = Math.floor(ms / 1000);
   const hours = Math.floor(totalSeconds / 3600);

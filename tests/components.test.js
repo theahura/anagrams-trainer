@@ -126,6 +126,35 @@ describe('ScoreScreen', () => {
     // Should show "Next puzzle in:" label
     expect(wrapper.text()).toContain('Next puzzle in');
   });
+
+  it('renders lifetime stats section when lifetimeStats prop is provided', () => {
+    const lifetimeStats = {
+      totalLetters: 150,
+      totalWords: 30,
+      fastestTimeMs: 45000,
+      totalTimeMs: 300000,
+      gamesPlayed: 5,
+      bestLetterScore: 40,
+      longestWord: 'strange',
+      totalSkips: 8,
+    };
+    const wrapper = mount(ScoreScreen, {
+      props: { results, dateStr: '2026-04-05', totalTimeMs: 12000, lifetimeStats },
+    });
+    expect(wrapper.text()).toContain('Lifetime Stats');
+    expect(wrapper.text()).toContain('150');
+    expect(wrapper.text()).toContain('30');
+    expect(wrapper.text()).toContain('0:45');
+    expect(wrapper.text()).toContain('1:00');
+    expect(wrapper.text()).toContain('STRANGE');
+  });
+
+  it('does not render lifetime stats section when lifetimeStats prop is null', () => {
+    const wrapper = mount(ScoreScreen, {
+      props: { results, dateStr: '2026-04-05', totalTimeMs: 12000, lifetimeStats: null },
+    });
+    expect(wrapper.text()).not.toContain('Lifetime Stats');
+  });
 });
 
 describe('GameBoard', () => {
