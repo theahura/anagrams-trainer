@@ -14,6 +14,9 @@ import {
   formatCountdown,
   getTimeUntilMidnightUTC,
   formatRoundTimer,
+  serializeGameState,
+  deserializeGameState,
+  ROUND_TIME_LIMIT_MS,
 } from '../src/game.js';
 
 // Minimal puzzle data for testing
@@ -603,5 +606,54 @@ describe('formatRoundTimer', () => {
 
   it('formats 5 seconds as 0:05 (zero-padded seconds)', () => {
     expect(formatRoundTimer(5000)).toBe('0:05');
+  });
+});
+
+describe('serializeGameState / deserializeGameState round-trip', () => {
+  it('round-trips to recover the same game state', () => {
+    const completedRounds = [
+      { answer: 'grind', timeMs: 5000, root: 'rind', possibleAnswers: ['grind', 'diner'] },
+      { answer: '', timeMs: 60000, root: 'cat', possibleAnswers: ['coat'] },
+    ];
+    const now = 1000000;
+    const serialized = serializeGameState(2, completedRounds, now);
+    const restored = deserializeGameState(serialized, now);
+    expect(restored.currentRound).toBe(2);
+    expect(restored.completedRounds).toEqual(completedRounds);
+    expect(restored.elapsedMs).toBe(0);
+  });
+
+  it('computes elapsed time since serialization', () => {
+    const now = 1000000;
+    const serialized = serializeGameState(3, [], now);
+    const result = deserializeGameState(serialized, now + 30000);
+    expect(result.elapsedMs).toBe(30000);
+  });
+
+  it('caps elapsed time at ROUND_TIME_LIMIT_MS when player was away too long', () => {
+    const now = 1000000;
+    const serialized = serializeGameState(5, [], now);
+    const result = deserializeGameState(serialized, now + ROUND_TIME_LIMIT_MS + 30000);
+    expect(result.elapsedMs).toBe(ROUND_TIME_LIMIT_MS);
+  });
+});
+
+describe('deserializeGameState edge cases', () => {
+  it('returns null for completed games', () => {
+    const saved = { status: 'complete', results: [], totalTimeMs: 5000 };
+    expect(deserializeGameState(saved, Date.now())).toBeNull();
+  });
+
+  it('returns null for null input', () => {
+    expect(deserializeGameState(null, Date.now())).toBeNull();
+  });
+
+  it('returns null for undefined input', () => {
+    expect(deserializeGameState(undefined, Date.now())).toBeNull();
+  });
+
+  it('returns null for legacy saves without status field', () => {
+    const saved = { results: [], totalTimeMs: 5000 };
+    expect(deserializeGameState(saved, Date.now())).toBeNull();
   });
 });

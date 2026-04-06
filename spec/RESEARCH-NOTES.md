@@ -274,3 +274,13 @@ This simple substring check covers: adding s/es/ed/ing/er to end, and common pre
 - **Round transitions**: Use Vue `<Transition>` with `mode="out-in"` and `:key="state.currentRound"` on GameBoard. Reuse existing `@keyframes fade-in` / `@keyframes fade-out`. Add CSS classes `.round-enter-active` and `.round-leave-active`. Use `@after-enter` hook to start timer after fade completes.
 - **Communication**: GameBoard emits animation events up to App.vue, or App.vue passes animation state down as props and GameBoard applies classes
 - **prefers-reduced-motion**: Already handled in `style.css:550-562` — no extra work needed
+
+## Mid-Game State Persistence
+- **Problem**: If a player refreshes or closes the tab mid-game, all progress is lost. Only completed games are saved (line 241 of App.vue). This means losing 8+ rounds of progress to an accidental refresh.
+- **Wordle pattern**: Saves state after every guess to `nyt-wordle-state` with `{ boardState, evaluations, rowIndex, gameStatus: "IN_PROGRESS" | "WIN" | "FAIL" }`. On reload, restores board to saved position.
+- **Data structure**: Save to same `reword-{YYYY-MM-DD}` key with `{ status: "in-progress", currentRound, completedRounds, roundStartTimestamp }`. On completion, overwrite with `{ status: "complete", results, totalTimeMs }`.
+- **Timer on restore**: Use wall-clock `roundStartTimestamp`. On restore, compute elapsed = `Date.now() - roundStartTimestamp`. If elapsed > 60s, auto-skip that round. Otherwise resume countdown from remaining time.
+- **Save timing**: After each round completion (in `handleSubmit` and `handleSkip` after pushing to `completedRounds`). NOT on `beforeunload` — unreliable on mobile (iOS Safari doesn't guarantee it fires).
+- **Restore flow**: On mount, check saved game. If `status === "complete"` → show score (existing behavior). If `status === "in-progress"` → restore `state.currentRound` and `state.completedRounds`, start timer. If elapsed > 60s since `roundStartTimestamp`, auto-skip current round.
+- **Pure functions for testability**: `serializeGameState(currentRound, completedRounds)` and `deserializeGameState(saved, now)` in game.js. Deserialization returns `{ currentRound, completedRounds, elapsedMs }` so App.vue can decide how to resume.
+- **Edge case**: Player closes tab during round transition (state.transitioning = true). On restore, the round has already been pushed to completedRounds, so just restore at currentRound + 1.

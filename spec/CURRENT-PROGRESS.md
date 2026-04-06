@@ -1,6 +1,6 @@
 # Current Progress
 
-## Status: Vue 3 Migration + Modern Redesign + Per-Round Countdown Timer + Mobile Optimization + Answer Animations
+## Status: Vue 3 Migration + Modern Redesign + Per-Round Countdown Timer + Mobile Optimization + Answer Animations + Mid-Game Persistence
 
 The game has been renamed to **Reword** and fully migrated to Vue 3 + Vite with a modern dark theme, tile click sounds, how-to-play modal, countdown timer, and mobile-optimized layout.
 
@@ -21,7 +21,8 @@ The game has been renamed to **Reword** and fully migrated to Vue 3 + Vite with 
 - **Removed dead `src/ui.js`**: Legacy pre-Vue DOM manipulation file deleted — nothing imported it after Vue 3 migration.
 - **HowToPlay Timer & Scoring Info**: Modal now mentions the 60-second per-round time limit and clarifies letter-based scoring
 - **Score Screen Answer Cap**: Possible answers for skipped rounds capped at 5, with "+N more" indicator when exceeded. Prevents UI overflow for common roots with many valid expansions.
-- 139 tests passing (101 pure logic + 34 Vue component + 5 countdown/HowToPlay tests)
+- **Mid-Game State Persistence**: Game progress saved to localStorage after each round. On page refresh, players resume at the exact round they left off. Uses wall-clock timestamps for timer restoration — if the round timer expired while away, auto-skips. Pure functions `serializeGameState()` and `deserializeGameState()` in game.js. Save format uses `status: "in-progress"` or `status: "complete"` to distinguish. Backwards compatible with legacy saves.
+- 146 tests passing (108 pure logic + 34 Vue component + 4 countdown/HowToPlay tests)
 
 ## Architecture
 - **Vue 3 + Vite**: Entry point `src/main.js` → `App.vue` mounts to `<div id="app">`

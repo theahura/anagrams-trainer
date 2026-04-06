@@ -27,8 +27,9 @@ Path: @/
        -> fetch /data/puzzles.json
        -> selectDailyPuzzle(data, dateStr)  [src/game.js]
        -> checks localStorage for saved game (reword-{date}, falls back to anagram-trainer-{date})
-       -> if saved: renders ScoreScreen with previous results
-       -> if not: renders GameBoard with VirtualKeyboard, handles input, validates, plays sounds, saves on completion
+       -> if saved & complete: renders ScoreScreen with previous results
+       -> if saved & in-progress: restores round state, auto-skips expired round if needed, resumes game
+       -> if not saved: renders GameBoard with VirtualKeyboard, handles input, validates, plays sounds, saves after each round
   ```
   ```
   Component hierarchy:
@@ -67,7 +68,8 @@ Path: @/
 - `puzzles.json` is the only data dependency at runtime; the game works entirely offline once loaded
 - **State management:** All game state lives in `App.vue` as Vue reactive state (`reactive()` for round/input state, `ref()` for UI flags). Pure logic modules (game.js, prng.js, words.js, sound.js) have no state of their own
 - **localStorage migration:** Keys migrated from `anagram-trainer-*` to `reword-*`. All reads include backwards-compatible fallback to the old key names (e.g., `localStorage.getItem('reword-' + date) || localStorage.getItem('anagram-trainer-' + date)`)
-- **localStorage keys:** `reword-{YYYY-MM-DD}` for per-date game results, `reword-stats` for streak statistics, `reword-sound-muted` for mute state, `reword-seen-how-to-play` for first-visit flag
+- **localStorage keys:** `reword-{YYYY-MM-DD}` for per-date game state (in-progress or complete -- see below), `reword-stats` for streak statistics, `reword-sound-muted` for mute state, `reword-seen-how-to-play` for first-visit flag
+- **Mid-game persistence:** Game state is saved to `reword-{date}` after each round completion. The save has a `status` field: `"in-progress"` (with `currentRound`, `completedRounds`, `roundStartTimestamp`) or `"complete"` (with `results`, `totalTimeMs`). On reload, in-progress saves are restored via `deserializeGameState()` in `@/src/game.js`, which computes elapsed time from the wall-clock timestamp. If the current round's timer expired while away, it is auto-skipped. Legacy saves without a `status` field are treated as complete
 - Real-time tile feedback: as the player types, `matchTypedToTiles` in `@/src/game.js` greedily maps each character to root tiles first, then offered tiles. `GameBoard.vue` uses computed properties to derive tile classes (invalid when no matching tile available)
 - Mobile touch input: `VirtualKeyboard.vue` renders an on-screen QWERTY keyboard shown only on touch devices via `@media (pointer: coarse)` in `@/style.css`. Both physical keyboard (document keydown listener in `App.vue`) and virtual keyboard paths converge through `handleKeyInput` in `App.vue`
 - The score screen shows a "Next puzzle in: HH:MM:SS" countdown to UTC midnight, using `formatCountdown()` and `getTimeUntilMidnightUTC()` pure functions from `@/src/game.js`, ticked every second in `ScoreScreen.vue`
