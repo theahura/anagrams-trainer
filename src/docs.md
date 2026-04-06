@@ -4,7 +4,7 @@ Path: @/src
 
 ### Overview
 
-- Contains all runtime game modules: PRNG, game logic, word processing utilities, and DOM rendering
+- Contains all runtime game modules: PRNG, game logic, word processing utilities, sound synthesis, and DOM rendering
 - ES modules with no external dependencies -- imported directly by `@/index.html` via `<script type="module">`
 - Also imported by `@/scripts/build-words.js` for the word processing functions (`words.js`)
 
@@ -13,7 +13,7 @@ Path: @/src
 - `@/index.html` imports `game.js` and `ui.js` as entry points
 - `@/scripts/build-words.js` imports `words.js` for `buildSignatureIndex` and `findExpansions`
 - `@/scripts/web-scraper.js` imports `letterSignature` from `words.js` for expansion key derivation
-- `@/tests/` tests `prng.js`, `game.js` (including streak functions), and `words.js` directly (ui.js is untested -- it requires DOM)
+- `@/tests/` tests `prng.js`, `game.js` (including streak functions), `words.js`, and `sound.js` directly (ui.js is untested -- it requires DOM)
 - `@/data/puzzles.json` is the data contract: `game.js` expects puzzle data keyed by root word length, each entry having `{ root, expansions }` where expansions maps a variable-length key string (e.g., `"r"`, `"el"`, `"egr"`) to a word array
 
 ### Core Implementation
@@ -41,6 +41,11 @@ Path: @/src
   - `buildSignatureIndex(dictionary)` creates a `Map<signature, words[]>` for O(1) anagram lookup
   - `findExpansions(root, dictionaryOrIndex, maxExtraLetters=3)` uses a `combinationsWithRepetition` generator to enumerate all possible letter additions of size 1 through `maxExtraLetters`. For each combination, it computes the target signature via repeated `insertSorted` calls and looks up matching words in the index. Keys in the returned object are the concatenated letter combinations (e.g., `"r"`, `"el"`, `"egr"`)
   - `combinationsWithRepetition(size, start)` is a recursive generator that yields all sorted combinations of `size` lowercase letters (with repetition allowed), ensuring no duplicate keys
+- **`sound.js`** -- Web Audio API sound synthesis with zero external dependencies
+  - `getAudioContext()` lazily creates an `AudioContext` (with `webkitAudioContext` fallback for iOS Safari), resumes if suspended, and returns `null` if the API is unavailable
+  - `initSound(audioCtx)` creates a master `GainNode` connected to the audio destination, instantiates sounds via `createSoundEffects`, and returns `{ sounds, setMuted(val), isMuted() }`. Muting sets the master gain value to 0
+  - `createSoundEffects(audioCtx, masterGain)` is a pure factory (no DOM dependencies) that returns play methods for 5 game events: `playKeyClick` (short square wave), `playCorrect` (two-note sine chime: C5 then E5), `playWrong` (low sawtooth), `playSkip` (descending triangle wave), `playGameComplete` (ascending four-note arpeggio: C5-E5-G5-C6). All sounds route through the master gain node for global mute control
+
 - **`ui.js`** -- DOM rendering, interaction, and persistence
   - `initUI(puzzle, dateStr)` builds the entire game UI imperatively inside `#game-container`, managing local state via a closure-scoped `state` object (currentRound, completedRounds, inputLetters, timer state). The `dateStr` parameter is used for localStorage lookup
   - All input handlers (`handleSubmit`, `handleSkip`, `handleKeyInput`, and the `input` event listener) include a `state.currentRound >= 11` bounds guard that returns early, preventing access to `puzzle[11]` (undefined) if input arrives after the last round completes but before the score screen renders
@@ -53,6 +58,7 @@ Path: @/src
   - `renderInput()` calls `matchTypedToTiles` on every keystroke to determine which rack tiles are consumed by the current input. It toggles `.used` CSS classes on root and offered rack tiles based on the `pool` state, and marks input tiles whose characters could not be matched to any available tile with the `.invalid` CSS class. The pool index offset for offered tiles is `round.root.length` since root tiles come first in the pool array
   - Keyboard input has two paths that converge through `handleKeyInput(key)`: (1) a hidden `<input>` element for physical keyboards, and (2) an on-screen QWERTY virtual keyboard for touch devices. Both paths use `processKeyPress` from `@/src/game.js` for letter processing. The virtual keyboard is a 3-row QWERTY layout built imperatively in DOM with Enter and Backspace as wide keys, shown only on touch devices via CSS `@media (pointer: coarse)`. Click events on the virtual keyboard are delegated from the parent `#virtual-keyboard` element using `data-key` attributes
   - The hidden input uses `opacity: 0.01` and off-screen positioning (`left: -9999px`) instead of `opacity: 0; pointer-events: none` for iOS Safari compatibility. It also sets `inputmode="text"` and `enterkeyhint="go"` attributes. Focus is maintained on desktop via a container click handler that excludes clicks on the virtual keyboard
+  - Sound integration: `ensureAudio()` lazily initializes the audio system on first user interaction (click or keypress) to comply with browser autoplay policies. A mute toggle button (`#mute-btn`) in the header persists mute state to `localStorage` under the `anagram-trainer-sound-muted` key. `playSound(name)` is a no-op if audio is not yet initialized. Sound triggers: `playKeyClick` on letter input, `playCorrect` on valid answer, `playWrong` on invalid answer or invalid length, `playSkip` on skip, `playGameComplete` on game completion (only for fresh games, not saved replays)
   - `createTile(letter, opts)` renders a single Scrabble tile with point subscript from `SCRABBLE_POINTS` lookup table
 
 ### Things to Know
@@ -69,5 +75,6 @@ Path: @/src
 - Timer displays elapsed time since the first keystroke of the entire game, not per-round time
 - localStorage persistence uses UTC date to match puzzle selection, so the key is always consistent regardless of timezone. Two separate localStorage keys: `anagram-trainer-{YYYY-MM-DD}` for per-date game results, `anagram-trainer-stats` for aggregate streak/play statistics
 - Streak calculation is pure (in `game.js`) with localStorage access only in `ui.js`, consistent with the pattern of keeping side effects out of game logic
+- Sound synthesis follows the same pure-logic-in-module, side-effects-in-UI pattern: `sound.js` is a pure factory testable with a mock AudioContext, while `ui.js` handles AudioContext creation, localStorage mute persistence, and DOM event hookup. The `ensureAudio()` call is placed inside click and keypress handlers to satisfy browser autoplay restrictions that require user gesture context
 
 Created and maintained by Nori.

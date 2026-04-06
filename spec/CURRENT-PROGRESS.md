@@ -1,8 +1,8 @@
 # Current Progress
 
-## Status: MVP Complete + Multi-Letter Expansion + Web-Sourced Build + Share Results + Tile Feedback + Answer Animations + Streak Tracking + Mobile Touch Input + Bounds Safety + Running Letter Score + Trivial Filter Removal
+## Status: MVP Complete + Multi-Letter Expansion + Web-Sourced Build + Share Results + Tile Feedback + Answer Animations + Streak Tracking + Mobile Touch Input + Bounds Safety + Running Letter Score + Trivial Filter Removal + Sound Effects
 
-The full Anagram Trainer game is implemented and tested with multi-letter expansion support, a web-sourced build pipeline, share results functionality, real-time tile visual feedback, streak tracking, and mobile-optimized touch input.
+The full Anagram Trainer game is implemented and tested with multi-letter expansion support, a web-sourced build pipeline, share results functionality, real-time tile visual feedback, streak tracking, mobile-optimized touch input, and synthesized sound effects.
 
 ## Completed
 - Researched scrabblewordfinder.org API (no usable REST API; wordunscrambler.me has URL-based access but CORS blocks browser calls)
@@ -62,6 +62,15 @@ The full Anagram Trainer game is implemented and tested with multi-letter expans
 - Words containing root as substring now accepted (fixes "aster" → "master" bug)
 - Rebuilt puzzles.json with all valid dictionary words included
 - Net test count: 89 tests (removed 10 trivial filter tests, added 2 regression tests for substring acceptance)
+- Sound effects: synthesized via Web Audio API (OscillatorNode + GainNode), no external audio files
+- `src/sound.js` module with `createSoundEffects` factory pattern for 5 sound types (key click, correct, wrong, skip, game complete)
+- `initSound(audioCtx)` creates master GainNode for global mute control
+- `getAudioContext()` with lazy creation and `webkitAudioContext` fallback for iOS Safari
+- Mute toggle button in header with localStorage persistence (`anagram-trainer-sound-muted` key)
+- AudioContext lazily initialized on first user interaction to comply with browser autoplay policy
+- Sound triggers at 6 integration points in ui.js: key press, correct answer, wrong answer, invalid length, skip, game complete
+- Game complete sound only plays for fresh games, not saved/replayed results
+- 94 unit tests passing (added 5 tests for sound module)
 
 ## Architecture
 - Pure static HTML/JS, no backend or framework
@@ -70,9 +79,10 @@ The full Anagram Trainer game is implemented and tested with multi-letter expans
 - `scripts/build-words.js` regenerates puzzle data from TWL06 dictionary using combinations-with-repetition
 - `scripts/build-words-web.js` alternative build using wordunscrambler.me as word source (with caching)
 - `scripts/web-scraper.js` module for HTML parsing and expansion key derivation
+- `src/sound.js` Web Audio API sound synthesis module (pure factory, no DOM dependency)
 - UTC date ensures all players worldwide get the same daily puzzle
 - localStorage keyed by `anagram-trainer-YYYY-MM-DD` for game state persistence
 - localStorage keyed by `anagram-trainer-stats` for aggregate streak statistics
 
 ## Potential Future Improvements
-- Sound effects
+- (none remaining from original spec)

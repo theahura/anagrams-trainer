@@ -136,6 +136,23 @@ This simple substring check covers: adding s/es/ed/ing/er to end, and common pre
 - Impact: `filterTrivialExpansions` in words.js, `isTrivialExtension` in game.js, plus tests and puzzles.json rebuild
 - Words like "rinds", "asters", "cats" will now be accepted — these are valid dictionary words and the user wants all valid words to work
 
+## Sound Effects via Web Audio API
+- **Approach**: Use Web Audio API `OscillatorNode` + `GainNode` to synthesize sounds — no external audio files needed
+- **AudioContext**: Lazy singleton pattern. Must be created/resumed during a user gesture (click/touchend) due to browser autoplay policy
+- **Safari limit**: Max 4 AudioContext instances per page — always reuse one global instance
+- **iOS gotchas**: Physical mute switch silences Web Audio completely (no workaround). Must use `touchend` + `click` listeners to unlock. Use `webkitAudioContext` fallback for older iOS
+- **Sound recipes**:
+  - Key click: Square wave ~800Hz, 30-50ms, exponential decay
+  - Correct chime: Sine wave, two notes (C5→E5, ~523Hz→659Hz), 100-200ms each
+  - Wrong/invalid buzz: Sawtooth wave ~150Hz, 200ms
+  - Skip: Short descending tone, triangle wave
+  - Game complete: Multi-note ascending arpeggio
+- **Master gain for mute**: Route all sounds through a master GainNode. Toggle gain to 0/1 for mute. Persist mute state in localStorage
+- **Mute toggle UI**: Button with `role="switch"` ARIA attribute for accessibility. Persist in localStorage key `anagram-trainer-sound-muted`
+- **Non-blocking**: Web Audio runs on a separate audio thread. OscillatorNode is single-use (create per sound, GC'd after stop)
+- **Pure function for testability**: Extract `createSoundEffects(audioContext)` factory that returns play functions. UI calls play functions at event trigger points.
+- **Integration points in ui.js**: correct answer (line ~285), wrong answer (line ~276), invalid length (line ~270), key press (line ~469/482), skip (line ~300), game complete (line ~337)
+
 ## Bounds Check Bug in handleSubmit/handleSkip
 - `handleSubmit()` at `src/ui.js:253` accesses `puzzle[state.currentRound]` without checking bounds
 - After the last round (round 11, index 10), `advanceRound()` increments `state.currentRound` to 11
