@@ -5,6 +5,7 @@ import TileRack from '../src/components/TileRack.vue';
 import VirtualKeyboard from '../src/components/VirtualKeyboard.vue';
 import ScoreScreen from '../src/components/ScoreScreen.vue';
 import GameBoard from '../src/components/GameBoard.vue';
+import HowToPlay from '../src/components/HowToPlay.vue';
 
 describe('ScrabbleTile', () => {
   it('renders the letter in uppercase', () => {
@@ -12,15 +13,14 @@ describe('ScrabbleTile', () => {
     expect(wrapper.text()).toContain('A');
   });
 
-  it('displays the correct Scrabble point value', () => {
+  it('does not display Scrabble point values', () => {
     const wrapper = mount(ScrabbleTile, { props: { letter: 'q' } });
-    expect(wrapper.find('.points').text()).toBe('10');
+    expect(wrapper.find('.points').exists()).toBe(false);
   });
 
   it('renders an empty tile when letter is empty string', () => {
     const wrapper = mount(ScrabbleTile, { props: { letter: '', tileClass: 'empty' } });
     expect(wrapper.find('.tile').classes()).toContain('empty');
-    expect(wrapper.find('.points').exists()).toBe(false);
   });
 
   it('applies the tileClass prop', () => {
@@ -92,8 +92,7 @@ describe('ScoreScreen', () => {
     const wrapper = mount(ScoreScreen, {
       props: { results, dateStr: '2026-04-05', totalTimeMs: 12000 },
     });
-    // 2 out of 3 solved
-    expect(wrapper.text()).toContain('2 / 3');
+    expect(wrapper.text()).toContain('2 / 11');
   });
 
   it('displays total letters', () => {
@@ -119,6 +118,14 @@ describe('ScoreScreen', () => {
     expect(wrapper.text()).toContain('DOG');
     expect(wrapper.text()).toContain('RIND');
   });
+
+  it('displays a countdown timer for next puzzle', () => {
+    const wrapper = mount(ScoreScreen, {
+      props: { results, dateStr: '2026-04-05', totalTimeMs: 12000 },
+    });
+    // Should show "Next puzzle in:" label
+    expect(wrapper.text()).toContain('Next puzzle in');
+  });
 });
 
 describe('GameBoard', () => {
@@ -132,7 +139,6 @@ describe('GameBoard', () => {
     const wrapper = mount(GameBoard, {
       props: { round, roundNumber: 1, inputLetters: [], message: '', messageType: '' },
     });
-    // Should show C, A, T tiles
     expect(wrapper.text()).toContain('C');
     expect(wrapper.text()).toContain('A');
     expect(wrapper.text()).toContain('T');
@@ -153,7 +159,6 @@ describe('GameBoard', () => {
     });
     const inputArea = wrapper.find('#input-area');
     const tiles = inputArea.findAll('.tile');
-    // Should have at least 2 tiles with letters + empty placeholders
     expect(tiles.length).toBeGreaterThanOrEqual(2);
   });
 
@@ -187,5 +192,26 @@ describe('GameBoard', () => {
     });
     await wrapper.find('#skip-btn').trigger('click');
     expect(wrapper.emitted('skip')).toBeTruthy();
+  });
+});
+
+describe('HowToPlay', () => {
+  it('renders game rules', () => {
+    const wrapper = mount(HowToPlay);
+    expect(wrapper.text()).toContain('How to Play');
+  });
+
+  it('describes the core mechanic of adding letters', () => {
+    const wrapper = mount(HowToPlay);
+    const text = wrapper.text().toLowerCase();
+    // Should mention adding a letter and rearranging
+    expect(text).toMatch(/add.*letter|letter.*add/);
+  });
+
+  it('emits close when close button is clicked', async () => {
+    const wrapper = mount(HowToPlay);
+    const closeBtn = wrapper.find('[data-testid="close-how-to-play"]');
+    await closeBtn.trigger('click');
+    expect(wrapper.emitted('close')).toBeTruthy();
   });
 });

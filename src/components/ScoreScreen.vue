@@ -1,0 +1,73 @@
+<template>
+  <div id="score-screen">
+    <h2>Game Complete!</h2>
+    <div class="stats-row">
+      <div class="stat">Words Solved<br><span class="stat-value">{{ solved }} / 11</span></div>
+      <div class="stat">Total Letters<br><span class="stat-value">{{ totalLetters }}</span></div>
+      <div class="stat">Total Time<br><span class="stat-value">{{ formattedTime }}</span></div>
+    </div>
+    <div v-if="streakStats" class="stats-row streak-stats">
+      <div class="stat">Played<br><span class="stat-value">{{ streakStats.gamesPlayed }}</span></div>
+      <div class="stat">Current Streak<br><span class="stat-value">{{ streakStats.currentStreak }}</span></div>
+      <div class="stat">Max Streak<br><span class="stat-value">{{ streakStats.maxStreak }}</span></div>
+    </div>
+    <div class="countdown-section">
+      <span class="countdown-label">Next puzzle in</span>
+      <span class="countdown-timer">{{ countdown }}</span>
+    </div>
+    <button id="share-btn" @click="$emit('share')">{{ shareButtonText }}</button>
+    <div class="rounds-summary">
+      <div
+        v-for="(r, i) in results"
+        :key="i"
+        class="round-result"
+        :class="r.answer.length > 0 ? 'solved' : 'skipped'"
+      >
+        <span class="round-num">{{ i + 1 }}</span>
+        <span class="round-root">{{ r.root.toUpperCase() }}</span>
+        <span class="round-arrow">&rarr;</span>
+        <span class="round-answer">{{ r.answer.length > 0 ? r.answer.toUpperCase() : 'SKIPPED' }}</span>
+        <span
+          v-if="!r.answer.length && r.possibleAnswers && r.possibleAnswers.length"
+          class="possible-answers"
+        >{{ r.possibleAnswers.join(', ') }}</span>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue';
+import { calculateScore, formatCountdown, getTimeUntilMidnightUTC } from '../game.js';
+
+const props = defineProps({
+  results: { type: Array, required: true },
+  dateStr: { type: String, required: true },
+  totalTimeMs: { type: Number, required: true },
+  shareButtonText: { type: String, default: 'Share Results' },
+  streakStats: { type: Object, default: null },
+});
+
+defineEmits(['share']);
+
+const solved = props.results.filter(r => r.answer.length > 0).length;
+const score = calculateScore(props.results.filter(r => r.answer.length > 0));
+const totalLetters = score.totalLetters;
+
+const mins = Math.floor(props.totalTimeMs / 1000 / 60);
+const secs = Math.floor(props.totalTimeMs / 1000) % 60;
+const formattedTime = `${mins}:${secs.toString().padStart(2, '0')}`;
+
+const countdown = ref(formatCountdown(getTimeUntilMidnightUTC()));
+let countdownInterval = null;
+
+onMounted(() => {
+  countdownInterval = setInterval(() => {
+    countdown.value = formatCountdown(getTimeUntilMidnightUTC());
+  }, 1000);
+});
+
+onUnmounted(() => {
+  if (countdownInterval) clearInterval(countdownInterval);
+});
+</script>

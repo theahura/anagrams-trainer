@@ -17,7 +17,31 @@ export function createSoundEffects(audioCtx, masterGain) {
 
   return {
     playKeyClick() {
-      playTone('square', 800, 0.04);
+      // Short noise burst for realistic tile click feel
+      const duration = 0.03;
+      const bufferSize = Math.ceil(audioCtx.sampleRate * duration);
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * 0.5;
+      }
+      const source = audioCtx.createBufferSource();
+      source.buffer = buffer;
+
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = 1200;
+      filter.Q.value = 2;
+
+      const gain = audioCtx.createGain();
+      gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+
+      source.connect(filter);
+      filter.connect(gain);
+      gain.connect(masterGain);
+      source.start(audioCtx.currentTime);
+      source.stop(audioCtx.currentTime + duration);
     },
 
     playCorrect() {
