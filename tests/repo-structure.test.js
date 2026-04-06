@@ -29,4 +29,12 @@ describe('repo structure', () => {
     expect(html).toContain('../games/reword/style.css');
     expect(html).toContain('../games/reword/src/main.js');
   });
+
+  it('has a favicon for reword', () => {
+    expect(fs.existsSync(path.join(repoRoot, 'games/reword/favicon.svg'))).toBe(true);
+
+    const html = read('reword/index.html');
+    expect(html).toContain('<link rel="icon"');
+    expect(html).toContain('../games/reword/favicon.svg');
+  });
 });
