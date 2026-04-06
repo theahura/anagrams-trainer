@@ -101,6 +101,14 @@ export function getOfferedLetters(puzzleEntry, rng) {
   return seededShuffle([...letters], rng);
 }
 
+export function generateShareText(results, dateStr, totalTimeMs) {
+  const emojis = results.map(r => r.answer.length > 0 ? '🟩' : '⬜').join('');
+  const solved = results.filter(r => r.answer.length > 0).length;
+  const mins = Math.floor(totalTimeMs / 1000 / 60);
+  const secs = Math.floor(totalTimeMs / 1000) % 60;
+  return `Anagram Trainer ${dateStr}\n${emojis}\n${solved}/11 | ${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
 export function calculateScore(completedRounds) {
   return {
     totalLetters: completedRounds.reduce((sum, r) => sum + r.answer.length, 0),

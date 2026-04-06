@@ -1,8 +1,8 @@
 # Current Progress
 
-## Status: MVP Complete + Multi-Letter Expansion + Web-Sourced Build
+## Status: MVP Complete + Multi-Letter Expansion + Web-Sourced Build + Share Results
 
-The full Anagram Trainer game is implemented and tested with multi-letter expansion support and a web-sourced build pipeline.
+The full Anagram Trainer game is implemented and tested with multi-letter expansion support, a web-sourced build pipeline, and share results functionality.
 
 ## Completed
 - Researched scrabblewordfinder.org API (no usable REST API; wordunscrambler.me has URL-based access but CORS blocks browser calls)
@@ -27,7 +27,11 @@ The full Anagram Trainer game is implemented and tested with multi-letter expans
 - Web-sourced build pipeline: `npm run build:words:web` fetches word data from wordunscrambler.me
 - Web scraper module with HTML parsing, expansion key derivation, and word grouping
 - Scrape results cached in `data/web-cache.json` for performance
-- 59 unit tests passing (PRNG, game logic, word processing, multi-letter expansions, web scraper)
+- Share results: Wordle-style emoji grid (🟩 solved, ⬜ skipped) with clipboard copy button
+- `generateShareText` pure function in game.js for testable share text generation
+- Clipboard copy uses navigator.clipboard API with textarea/execCommand fallback
+- Share button on score screen with "Copied!" feedback, works for fresh and replayed games
+- 63 unit tests passing (PRNG, game logic, word processing, multi-letter expansions, web scraper, share text)
 
 ## Architecture
 - Pure static HTML/JS, no backend or framework
@@ -40,7 +44,6 @@ The full Anagram Trainer game is implemented and tested with multi-letter expans
 - localStorage keyed by `anagram-trainer-YYYY-MM-DD` for game state persistence
 
 ## Potential Future Improvements
-- Share results (Wordle-style emoji grid)
 - Keyboard visual feedback (highlight valid/invalid letters)
 - Streak tracking with localStorage
 - Sound effects

@@ -1,4 +1,4 @@
-import { isValidAnswer, calculateScore, getAnswersForRound } from './game.js';
+import { isValidAnswer, calculateScore, getAnswersForRound, generateShareText } from './game.js';
 
 const SCRABBLE_POINTS = {
   a:1, b:3, c:3, d:2, e:1, f:4, g:2, h:4, i:1, j:8, k:5, l:1, m:3,
@@ -265,8 +265,31 @@ export function initUI(puzzle, dateStr) {
         <div class="stat">Total Letters<br><span class="stat-value">${score.totalLetters}</span></div>
         <div class="stat">Total Time<br><span class="stat-value">${mins}:${secs.toString().padStart(2, '0')}</span></div>
       </div>
+      <button id="share-btn">Share Results</button>
       ${roundsHtml}
     `;
+
+    document.getElementById('share-btn').addEventListener('click', async () => {
+      const shareText = generateShareText(results, dateStr, totalTimeMs);
+      const btn = document.getElementById('share-btn');
+      try {
+        if (navigator.clipboard) {
+          await navigator.clipboard.writeText(shareText);
+        } else {
+          const ta = document.createElement('textarea');
+          ta.value = shareText;
+          document.body.appendChild(ta);
+          ta.focus({ preventScroll: true });
+          ta.select();
+          document.execCommand('copy');
+          ta.remove();
+        }
+        btn.textContent = 'Copied!';
+      } catch (e) {
+        btn.textContent = 'Could not copy';
+      }
+      setTimeout(() => { btn.textContent = 'Share Results'; }, 2000);
+    });
 
     // Save to localStorage if this is a fresh game (not loaded from saved)
     if (!savedResults && dateStr) {

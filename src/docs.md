@@ -24,12 +24,13 @@ Path: @/src
   - `seededShuffle(array, rng)` -- Fisher-Yates shuffle using the PRNG
   - `seededPick(array, rng)` -- picks a single random element
 
-- **`game.js`** -- Puzzle selection and answer validation
+- **`game.js`** -- Puzzle selection, answer validation, and share text generation
   - `selectDailyPuzzle(puzzleData, dateStr)` selects 11 rounds from the puzzle data pools using the date-seeded PRNG, following a fixed difficulty progression (3+3+3+1+1). Each round gets `offeredLetters` assigned via `getOfferedLetters`
   - `getOfferedLetters(puzzleEntry, rng)` extracts individual letters from all expansion keys (which may be multi-char), guarantees 1 valid single-letter expansion key among 3 total offered letters (falling back to any valid letter if no single-letter keys exist); the other 2 come from a shuffled pool of the full alphabet merged with valid letters
   - `isValidAnswer(answer, round)` iterates all expansion keys and uses `isKeySubsetOfOffered(key, offeredLetters)` to check if the key's letters are available in the offered set. The trivial extension check only applies to single-letter keys. The `isKeySubsetOfOffered` helper consumes letters from a copy of the offered array, supporting duplicate letter usage
   - `getAnswersForRound(round)` returns all valid answer words for a round, filtered by `isKeySubsetOfOffered` against offered letters. Trivial extension filtering only applies to single-letter keys. Used by the score screen to display possible answers for skipped rounds
   - `isTrivialExtension(root, answer)` returns true if the answer contains the root as a substring (case-insensitive)
+  - `generateShareText(results, dateStr, totalTimeMs)` is a pure function (no DOM dependency) that produces a Wordle-style share string: header line with date, emoji grid line (green square for solved, white square for skipped), and a score line with solved count and formatted time
   - `calculateScore(completedRounds)` aggregates total letters, total time, and round count
 
 - **`words.js`** -- Anagram computation (used at both build-time and runtime validation)
@@ -43,7 +44,7 @@ Path: @/src
   - `initUI(puzzle, dateStr)` builds the entire game UI imperatively inside `#game-container`, managing local state via a closure-scoped `state` object (currentRound, completedRounds, inputLetters, timer state). The `dateStr` parameter is used for localStorage lookup
   - On init, checks `localStorage` for a saved game keyed by `anagram-trainer-{dateStr}`. If found, shows the score screen directly without starting a new game
   - On game completion, saves results to `localStorage` under the same key, preventing replay of the same day's puzzle
-  - `showScore(savedResults?)` has dual mode: when called without arguments it uses `state.completedRounds` from the just-finished game; when called with `savedResults` it displays a previously saved game. The score screen shows a per-round breakdown (root word, player answer or "SKIPPED", and possible answers for skipped rounds) plus aggregate stats in a horizontal row
+  - `showScore(savedResults?)` has dual mode: when called without arguments it uses `state.completedRounds` from the just-finished game; when called with `savedResults` it displays a previously saved game. The score screen shows a per-round breakdown (root word, player answer or "SKIPPED", and possible answers for skipped rounds) plus aggregate stats in a horizontal row. It also renders a "Share Results" button that copies a Wordle-style emoji grid to the clipboard via `generateShareText` from `@/src/game.js`. The clipboard write uses `navigator.clipboard.writeText` with a fallback to a temporary textarea and `document.execCommand('copy')`. The button text temporarily changes to "Copied!" for 2 seconds after a successful copy
   - Each completed round stores `{ answer, timeMs, root, possibleAnswers }` where `possibleAnswers` comes from `getAnswersForRound()` in `@/src/game.js`
   - Keyboard input captured via a hidden `<input>` element that stays focused; `input` event updates tile display, `Enter` triggers submit
   - `createTile(letter, opts)` renders a single Scrabble tile with point subscript from `SCRABBLE_POINTS` lookup table
