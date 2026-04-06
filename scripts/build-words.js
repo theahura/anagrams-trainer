@@ -52,44 +52,6 @@ async function main() {
     console.log(`${len}-letter roots: ${roots.length}`);
   }
 
-  // Trim to max 500 roots per length to keep file size manageable
-  // 500 roots per level = enough for years of daily play
-  const MAX_ROOTS_PER_LENGTH = 500;
-  for (const len of Object.keys(puzzleData)) {
-    if (puzzleData[len].length > MAX_ROOTS_PER_LENGTH) {
-      // Keep roots with the most single-letter expansion variety (core gameplay)
-      puzzleData[len].sort((a, b) => {
-        const aSingle = Object.keys(a.expansions).filter(k => k.length === 1).length;
-        const bSingle = Object.keys(b.expansions).filter(k => k.length === 1).length;
-        return bSingle - aSingle || Object.keys(b.expansions).length - Object.keys(a.expansions).length;
-      });
-      puzzleData[len] = puzzleData[len].slice(0, MAX_ROOTS_PER_LENGTH);
-    }
-  }
-
-  // Trim expansion data to control file size
-  const MAX_KEYS_PER_ROOT = 30;
-  const MAX_WORDS_PER_KEY = 5;
-  for (const roots of Object.values(puzzleData)) {
-    for (const entry of roots) {
-      // Cap words per key
-      for (const key of Object.keys(entry.expansions)) {
-        if (entry.expansions[key].length > MAX_WORDS_PER_KEY) {
-          entry.expansions[key] = entry.expansions[key].slice(0, MAX_WORDS_PER_KEY);
-        }
-      }
-      // Cap total keys per root: prioritize single-letter keys, then shorter multi-letter keys
-      const keys = Object.keys(entry.expansions);
-      if (keys.length > MAX_KEYS_PER_ROOT) {
-        keys.sort((a, b) => a.length - b.length || a.localeCompare(b));
-        const keepKeys = new Set(keys.slice(0, MAX_KEYS_PER_ROOT));
-        for (const key of keys) {
-          if (!keepKeys.has(key)) delete entry.expansions[key];
-        }
-      }
-    }
-  }
-
   writeFileSync(OUTPUT_PATH, JSON.stringify(puzzleData));
   console.log(`Wrote puzzle data to ${OUTPUT_PATH}`);
 
