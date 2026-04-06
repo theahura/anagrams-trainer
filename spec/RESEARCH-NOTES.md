@@ -63,6 +63,15 @@ This simple substring check covers: adding s/es/ed/ing/er to end, and common pre
 - Data format: key expansions by sorted added letters string, e.g., `"eg"` for adding e+g, `"egr"` for adding e+g+r
 - Size estimate: with capping, ~2-3x increase over current single-letter data. ~300-450KB gzipped — acceptable
 
+## Share Results (Wordle-Style Emoji Grid)
+- Standard pattern: title line + emoji row + score summary, no answer spoilers
+- Wordle uses `🟩` (correct), `🟨` (present), `⬜` (absent) — for our binary solved/skipped, use `🟩`/`⬜`
+- Format: `Anagram Trainer YYYY-MM-DD\n🟩🟩⬜🟩...\n9/11 | 2:34`
+- Clipboard: `navigator.clipboard.writeText()` (modern, async, needs user gesture + HTTPS)
+- Fallback: temporary `<textarea>` + `document.execCommand('copy')` (deprecated but still works everywhere)
+- Button goes in `showScore()` in `src/ui.js` after the stats row
+- Results data already available: `r.answer.length > 0` determines solved vs skipped
+
 ## Bug: 3-Word-Per-Letter Cap Drops Valid Words
 - `build-words.js` line 72-75 caps at 3 words per expansion letter
 - For "ski" + "r", the dictionary has: irks, kirs, kris, risk — but "risk" is 4th and gets truncated

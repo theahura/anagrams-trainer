@@ -29,7 +29,7 @@ Path: @/
     -> initUI(puzzle, dateStr)           [src/ui.js]
        -> checks localStorage for saved game
        -> if saved: renders score screen from saved results
-       -> if not: renders tiles, handles keyboard input, validates answers, shows score, saves to localStorage
+       -> if not: renders tiles, handles keyboard input, validates answers, shows score with share button, saves to localStorage
   ```
 - **Data flow at build time (two alternatives, same output):**
   ```

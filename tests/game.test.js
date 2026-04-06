@@ -6,6 +6,7 @@ import {
   getOfferedLetters,
   calculateScore,
   getAnswersForRound,
+  generateShareText,
 } from '../src/game.js';
 
 // Minimal puzzle data for testing
@@ -251,6 +252,46 @@ describe('getAnswersForRound', () => {
     expect(answers).toContain('coat');
     expect(answers).not.toContain('cleat');
   });
+});
+
+describe('generateShareText', () => {
+  it('shows all green squares when all rounds are solved', () => {
+    const results = Array.from({ length: 11 }, () => ({ answer: 'word', timeMs: 1000, root: 'wor' }));
+    const text = generateShareText(results, '2026-04-05', 60000);
+    const lines = text.split('\n');
+    expect(lines[0]).toBe('Anagram Trainer 2026-04-05');
+    expect(lines[1]).toBe('🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩');
+    expect(lines[2]).toBe('11/11 | 1:00');
+  });
+
+  it('shows white squares for skipped rounds', () => {
+    const results = [
+      { answer: 'word', timeMs: 1000, root: 'wor' },
+      { answer: '', timeMs: 1000, root: 'abc' },
+      { answer: 'test', timeMs: 1000, root: 'tes' },
+      { answer: '', timeMs: 1000, root: 'def' },
+      { answer: 'five', timeMs: 1000, root: 'fiv' },
+      { answer: 'six', timeMs: 1000, root: 'si' },
+      { answer: '', timeMs: 1000, root: 'ghi' },
+      { answer: 'eight', timeMs: 1000, root: 'eigh' },
+      { answer: 'nine', timeMs: 1000, root: 'nin' },
+      { answer: 'ten', timeMs: 1000, root: 'te' },
+      { answer: 'eleven', timeMs: 1000, root: 'eleve' },
+    ];
+    const text = generateShareText(results, '2026-04-05', 30000);
+    const lines = text.split('\n');
+    expect(lines[1]).toBe('🟩⬜🟩⬜🟩🟩⬜🟩🟩🟩🟩');
+    expect(lines[2]).toBe('8/11 | 0:30');
+  });
+
+  it('shows all white squares when no rounds solved', () => {
+    const results = Array.from({ length: 11 }, () => ({ answer: '', timeMs: 1000, root: 'abc' }));
+    const text = generateShareText(results, '2026-04-05', 120000);
+    const lines = text.split('\n');
+    expect(lines[1]).toBe('⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜');
+    expect(lines[2]).toBe('0/11 | 2:00');
+  });
+
 });
 
 describe('calculateScore', () => {

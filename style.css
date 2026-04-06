@@ -205,6 +205,30 @@ header h1 {
   font-size: 22px;
 }
 
+/* Share button */
+#share-btn {
+  display: block;
+  margin: 0 auto 16px;
+  padding: 10px 32px;
+  background: linear-gradient(145deg, #c9a96e, #a8884e);
+  border: 2px solid #8a6a2e;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+#share-btn:hover {
+  background: linear-gradient(145deg, #d9b97e, #b8985e);
+}
+
+#share-btn:active {
+  transform: scale(0.98);
+}
+
 /* Per-round results */
 .rounds-summary {
   text-align: left;
