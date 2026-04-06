@@ -1,4 +1,4 @@
-import { isValidAnswer, calculateScore } from './game.js';
+import { isValidAnswer, calculateScore, getAnswersForRound } from './game.js';
 
 const SCRABBLE_POINTS = {
   a:1, b:3, c:3, d:2, e:1, f:4, g:2, h:4, i:1, j:8, k:5, l:1, m:3,
@@ -19,7 +19,7 @@ function createTile(letter, opts = {}) {
   return tile;
 }
 
-export function initUI(puzzle) {
+export function initUI(puzzle, dateStr) {
   const container = document.getElementById('game-container');
   container.innerHTML = '';
 
@@ -188,14 +188,17 @@ export function initUI(puzzle) {
     }
 
     const timeMs = Date.now() - state.roundStartTime;
-    state.completedRounds.push({ answer, timeMs });
+    const possibleAnswers = getAnswersForRound(round);
+    state.completedRounds.push({ answer, timeMs, root: round.root, possibleAnswers });
     setMessage('Correct!', 'success');
     advanceRound();
   }
 
   function handleSkip() {
+    const round = puzzle[state.currentRound];
     const timeMs = Date.now() - state.roundStartTime;
-    state.completedRounds.push({ answer: '', timeMs });
+    const possibleAnswers = getAnswersForRound(round);
+    state.completedRounds.push({ answer: '', timeMs, root: round.root, possibleAnswers });
     setMessage('Skipped', '');
     advanceRound();
   }
@@ -212,10 +215,14 @@ export function initUI(puzzle) {
     }, 600);
   }
 
-  function showScore() {
+  function showScore(savedResults) {
     clearInterval(state.timerInterval);
-    const totalTimeMs = Date.now() - state.startTime;
-    const completed = state.completedRounds.filter(r => r.answer.length > 0);
+
+    const results = savedResults || state.completedRounds;
+    const totalTimeMs = savedResults
+      ? results.reduce((sum, r) => sum + r.timeMs, 0)
+      : Date.now() - state.startTime;
+    const completed = results.filter(r => r.answer.length > 0);
     const score = calculateScore(completed);
 
     const mins = Math.floor(totalTimeMs / 1000 / 60);
@@ -225,13 +232,48 @@ export function initUI(puzzle) {
     rootRack.parentElement.querySelectorAll('.section-label, .tile-rack, #input-area, #submit-btn, #skip-btn, .instructions')
       .forEach(el => el.style.display = 'none');
 
+    // Build per-round HTML
+    let roundsHtml = '<div class="rounds-summary">';
+    for (let i = 0; i < results.length; i++) {
+      const r = results[i];
+      const solved = r.answer.length > 0;
+      const statusClass = solved ? 'solved' : 'skipped';
+      const answerDisplay = solved ? r.answer.toUpperCase() : 'SKIPPED';
+      const possibleDisplay = !solved && r.possibleAnswers && r.possibleAnswers.length > 0
+        ? `<span class="possible-answers">${r.possibleAnswers.join(', ')}</span>`
+        : '';
+
+      roundsHtml += `
+        <div class="round-result ${statusClass}">
+          <span class="round-num">${i + 1}</span>
+          <span class="round-root">${r.root.toUpperCase()}</span>
+          <span class="round-arrow">&rarr;</span>
+          <span class="round-answer">${answerDisplay}</span>
+          ${possibleDisplay}
+        </div>`;
+    }
+    roundsHtml += '</div>';
+
     scoreScreen.style.display = 'block';
     scoreScreen.innerHTML = `
       <h2>Game Complete!</h2>
-      <div class="stat">Words Solved<br><span class="stat-value">${score.roundsCompleted} / 11</span></div>
-      <div class="stat">Total Letters<br><span class="stat-value">${score.totalLetters}</span></div>
-      <div class="stat">Total Time<br><span class="stat-value">${mins}:${secs.toString().padStart(2, '0')}</span></div>
+      <div class="stats-row">
+        <div class="stat">Words Solved<br><span class="stat-value">${score.roundsCompleted} / 11</span></div>
+        <div class="stat">Total Letters<br><span class="stat-value">${score.totalLetters}</span></div>
+        <div class="stat">Total Time<br><span class="stat-value">${mins}:${secs.toString().padStart(2, '0')}</span></div>
+      </div>
+      ${roundsHtml}
     `;
+
+    // Save to localStorage if this is a fresh game (not loaded from saved)
+    if (!savedResults && dateStr) {
+      try {
+        localStorage.setItem('anagram-trainer-' + dateStr, JSON.stringify({
+          results: state.completedRounds,
+          totalTimeMs,
+        }));
+      } catch (e) { /* localStorage might be unavailable */ }
+    }
   }
 
   // Keyboard handling
@@ -258,6 +300,18 @@ export function initUI(puzzle) {
 
   // Keep focus on hidden input
   container.addEventListener('click', () => hiddenInput.focus());
+
+  // Check if today's puzzle was already completed
+  if (dateStr) {
+    try {
+      const saved = localStorage.getItem('anagram-trainer-' + dateStr);
+      if (saved) {
+        const { results } = JSON.parse(saved);
+        showScore(results);
+        return;
+      }
+    } catch (e) { /* localStorage might be unavailable */ }
+  }
 
   // Start
   renderRound();

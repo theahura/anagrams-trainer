@@ -31,6 +31,24 @@ This simple substring check covers: adding s/es/ed/ing/er to end, and common pre
 - Use `YYYY-MM-DD` format for consistent cross-locale date strings
 - ~25 lines of code, zero dependencies
 
+## Validation Gap: Offered Letters Not Enforced
+- `isValidAnswer()` checks if answer is in ANY expansion, not just expansions for the 3 offered letters
+- The spec says "Player must create a new word by adding exactly ONE of the offered letters"
+- This means a player could type a valid anagram using a non-offered letter and it would be accepted
+- Fix: `isValidAnswer` should also take `offeredLetters` and only check expansions for those letters
+
+## Score Screen & Answer Reveal Patterns
+- Wordle shows statistics + emoji share grid; reveals answer on failure
+- Spelling Bee shows all valid answers after day ends, differentiating found vs missed
+- Standard pattern for daily word games: per-round results + answer reveal for missed words
+- Current implementation shows only aggregate stats (words solved, letters, time)
+- Should add: per-round breakdown showing root, player answer, and possible answers for skipped/missed rounds
+
+## Replay Prevention
+- Standard approach: localStorage keyed by date string
+- Store completion state + results; on page load, if today's puzzle is completed, show score screen
+- Current implementation has no replay prevention
+
 ## Scrabble Tile Styling
 - Cream/beige tile (#F5DEB3 or similar), raised border with box-shadow
 - Letter centered, point value in bottom-right corner

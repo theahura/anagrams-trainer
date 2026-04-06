@@ -1,6 +1,6 @@
 # Current Progress
 
-## Status: MVP Complete
+## Status: MVP Complete + Quality Improvements
 
 The full Anagram Trainer game is implemented and tested.
 
@@ -13,15 +13,20 @@ The full Anagram Trainer game is implemented and tested.
 - Scrabble-tile UI with CSS styling (cream tiles, point values, green board background)
 - Keyboard input rendered as live Scrabble tiles
 - Timer, round tracking, skip functionality, score screen
-- 31 unit tests passing (PRNG, game logic, word processing)
+- 35 unit tests passing (PRNG, game logic, word processing)
 - E2E testing with Playwright verified full game flow
 - Documentation (docs.md files for all directories)
+- Fixed validation bug: `isValidAnswer` now restricts answers to only those using offered letters (previously accepted any valid expansion letter)
+- Added `getAnswersForRound` helper for retrieving valid answers filtered by offered letters
+- Enhanced score screen: per-round breakdown showing root word, player answer, and possible answers for skipped rounds
+- localStorage persistence: completed puzzle results saved by date, prevents replay of same day's puzzle
 
 ## Architecture
 - Pure static HTML/JS, no backend or framework
 - `data/puzzles.json` (~155KB gzipped) contains pre-computed puzzle data
 - `scripts/build-words.js` regenerates puzzle data from TWL06 dictionary
 - UTC date ensures all players worldwide get the same daily puzzle
+- localStorage keyed by `anagram-trainer-YYYY-MM-DD` for game state persistence
 
 ## Potential Future Improvements
 - Share results (Wordle-style emoji grid)

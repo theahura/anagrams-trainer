@@ -8,10 +8,25 @@ export function isValidAnswer(answer, round) {
   const answerLower = answer.toLowerCase();
   if (isTrivialExtension(round.root, answerLower)) return false;
 
-  for (const words of Object.values(round.expansions)) {
-    if (words.some(w => w.toLowerCase() === answerLower)) return true;
+  const lettersToCheck = round.offeredLetters || Object.keys(round.expansions);
+  for (const letter of lettersToCheck) {
+    const words = round.expansions[letter];
+    if (words && words.some(w => w.toLowerCase() === answerLower)) return true;
   }
   return false;
+}
+
+export function getAnswersForRound(round) {
+  const results = [];
+  for (const letter of round.offeredLetters) {
+    const words = round.expansions[letter];
+    if (words) {
+      for (const w of words) {
+        if (!isTrivialExtension(round.root, w)) results.push(w);
+      }
+    }
+  }
+  return results;
 }
 
 export function selectDailyPuzzle(puzzleData, dateStr) {
