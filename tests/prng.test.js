@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getDailyRng, seededShuffle, seededPick } from '../src/prng.js';
+import { getDailyRng, seededShuffle, seededPick } from '../games/reword/src/prng.js';
 
 describe('getDailyRng', () => {
   it('produces the same sequence for the same date', () => {

@@ -1,8 +1,8 @@
 import { writeFileSync } from 'fs';
-import { buildSignatureIndex, findExpansions } from '../src/words.js';
+import { buildSignatureIndex, findExpansions } from '../games/reword/src/words.js';
 
 const WORD_LIST_URL = 'https://raw.githubusercontent.com/cviebrock/wordlists/master/TWL06.txt';
-const OUTPUT_PATH = new URL('../data/puzzles.json', import.meta.url).pathname;
+const OUTPUT_PATH = new URL('../games/reword/data/puzzles.json', import.meta.url).pathname;
 const MIN_EXPANSIONS = 3;
 
 async function downloadWordList() {

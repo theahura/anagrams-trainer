@@ -9,8 +9,8 @@ Path: @/tests
 
 ### How it fits into the larger codebase
 
-- Tests import directly from `@/src/prng.js`, `@/src/game.js`, `@/src/words.js`, `@/src/sound.js`, and `@/scripts/web-scraper.js`
-- Vue component tests use `@vue/test-utils` to mount components from `@/src/components/`
+- Tests import directly from `@/games/reword/src/prng.js`, `@/games/reword/src/game.js`, `@/games/reword/src/words.js`, `@/games/reword/src/sound.js`, and `@/scripts/web-scraper.js`
+- Vue component tests use `@vue/test-utils` to mount components from `@/games/reword/src/components/`
 - `build-words.test.js` tests the word processing functions that `@/scripts/build-words.js` depends on, not the build script itself
 - `web-scraper.test.js` tests the HTML parsing and expansion key derivation functions used by the web-sourced build pipeline
 
@@ -31,7 +31,7 @@ Path: @/tests
 
 ### Things to Know
 
-- Tests use small inline dictionaries and puzzle data fixtures rather than loading `@/data/puzzles.json`
+- Tests use small inline dictionaries and puzzle data fixtures rather than loading `@/games/reword/data/puzzles.json`
 - The `game.test.js` test data includes crafted edge cases for answer validation, including a regression test ensuring "master" from root "aster" + letter "m" is accepted (not blocked by trivial suffix filter since "master" is not root + "s"/"ed"/"er")
 - Some tests use a constant RNG (`() => 0.5`) to make offered letter tests deterministic without depending on the PRNG implementation
 - Component tests mount individual components in isolation with props, not the full `App.vue` (which requires fetch and localStorage)

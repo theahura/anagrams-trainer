@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { mount } from '@vue/test-utils';
-import ScrabbleTile from '../src/components/ScrabbleTile.vue';
-import TileRack from '../src/components/TileRack.vue';
-import VirtualKeyboard from '../src/components/VirtualKeyboard.vue';
-import ScoreScreen from '../src/components/ScoreScreen.vue';
-import GameBoard from '../src/components/GameBoard.vue';
-import HowToPlay from '../src/components/HowToPlay.vue';
+import ScrabbleTile from '../games/reword/src/components/ScrabbleTile.vue';
+import TileRack from '../games/reword/src/components/TileRack.vue';
+import VirtualKeyboard from '../games/reword/src/components/VirtualKeyboard.vue';
+import ScoreScreen from '../games/reword/src/components/ScoreScreen.vue';
+import GameBoard from '../games/reword/src/components/GameBoard.vue';
+import HowToPlay from '../games/reword/src/components/HowToPlay.vue';
 
 describe('ScrabbleTile', () => {
   it('renders the letter in uppercase', () => {

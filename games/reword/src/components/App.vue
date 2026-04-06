@@ -297,7 +297,7 @@ onMounted(async () => {
   } catch (e) {}
 
   // Load puzzle
-  const response = await fetch('/data/puzzles.json');
+  const response = await fetch(new URL('../../data/puzzles.json', import.meta.url));
   const puzzleData = await response.json();
 
   const today = new Date();

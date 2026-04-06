@@ -14,7 +14,7 @@ with sync_playwright() as p:
     # Read what the puzzle data says for today's root words
     puzzle_json = page.evaluate("""
         async () => {
-            const resp = await fetch('./data/puzzles.json');
+            const resp = await fetch('./games/reword/data/puzzles.json');
             return await resp.json();
         }
     """)
@@ -22,8 +22,8 @@ with sync_playwright() as p:
     # Get today's puzzle via the game module
     puzzle_info = page.evaluate("""
         async () => {
-            const { selectDailyPuzzle } = await import('./src/game.js');
-            const resp = await fetch('./data/puzzles.json');
+            const { selectDailyPuzzle } = await import('./games/reword/src/game.js');
+            const resp = await fetch('./games/reword/data/puzzles.json');
             const data = await resp.json();
             const today = new Date();
             const dateStr = `${today.getUTCFullYear()}-${String(today.getUTCMonth()+1).padStart(2,'0')}-${String(today.getUTCDate()).padStart(2,'0')}`;

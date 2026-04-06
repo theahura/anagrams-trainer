@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { letterSignature, findExpansions } from '../src/words.js';
+import { letterSignature, findExpansions } from '../games/reword/src/words.js';
 
 const testDictionary = [
   'at', 'bat', 'cat', 'sat', 'tab', 'act',
