@@ -23,10 +23,11 @@ Path: @/src
 
 - **`components/App.vue`** -- Root component, owns all game state
   - All game state lives in a `reactive()` object: `{ currentRound, completedRounds, inputLetters, roundStartTime, transitioning }`. UI flags (`loading`, `gameComplete`, `muted`, `showHowToPlay`, etc.) are individual `ref()` values
-  - On mount: checks `reword-seen-how-to-play` localStorage to auto-show `HowToPlay` on first visit, fetches `puzzles.json`, derives UTC date string, selects daily puzzle, and checks for saved game (with fallback read from old `anagram-trainer-*` keys)
+  - On mount: checks `reword-seen-how-to-play` localStorage to auto-show `HowToPlay` on first visit, fetches `puzzles.json`, derives UTC date string, selects daily puzzle, and checks for saved game (with fallback read from old `anagram-trainer-*` keys). Restore logic handles two save formats: `status: 'in-progress'` (resumes mid-game via `deserializeGameState`, auto-skips if the current round's timer has expired) and `status: 'complete'` or legacy saves without status (shows score screen)
   - `handleKeyInput(key)` dispatches to `processKeyPress` from `game.js` for letter processing, and to `handleSubmit` for Enter
   - `handleSubmit()` and `handleSkip()` use `state.transitioning` flag and `state.currentRound >= 11` guard to prevent double-submission
-  - `showScore(savedResults?)` dual mode: fresh game results or saved replay. On fresh completion, persists to `reword-{date}` and updates `reword-stats` via `updateStreakStats`
+  - `saveInProgressState()` serializes and writes game state to localStorage after each round completion (called in both `handleSubmit` and `handleSkip`). This enables mid-game persistence so a page refresh doesn't lose progress
+  - `showScore(savedResults?)` dual mode: fresh game results or saved replay. On fresh completion, persists to `reword-{date}` with `status: 'complete'` and updates `reword-stats` via `updateStreakStats`
   - Physical keyboard handled via a document-level `keydown` listener that guards against `gameComplete`, `loading`, and `showHowToPlay` states
   - Audio lazily initialized via `ensureAudio()` on first user interaction
   - Answer feedback animations: `triggerAnimation(cls, durationMs)` sets `animationClass` ref, passed as a prop to `GameBoard`. Shake (400ms) on invalid/wrong answers, bounce (600 + 80ms per tile) on correct answers. Uses `requestAnimationFrame` to force class reset/reapply for animation restart
@@ -61,6 +62,8 @@ Path: @/src
   - `generateShareText(results, dateStr, totalTimeMs)` produces share string with "Reword" header (not "Anagram Trainer")
   - `matchTypedToTiles(typedLetters, rootLetters, offeredLetters)` maps each typed character to a tile position with root-first priority, used by `GameBoard.vue` for real-time feedback
   - `ROUND_TIME_LIMIT_MS` (60000) defines the per-round countdown duration
+  - `serializeGameState(currentRound, completedRounds)` creates a serializable in-progress save object with `status: 'in-progress'` and a `roundStartTimestamp` (wall-clock `Date.now()`)
+  - `deserializeGameState(saved, now)` restores in-progress state: returns `{ currentRound, completedRounds, elapsedMs }` or `null` if the save is not in-progress (complete, legacy, or missing). Elapsed time is capped at `ROUND_TIME_LIMIT_MS` so the caller can decide whether to auto-skip the expired round
   - `formatRoundTimer(ms)` converts remaining milliseconds to `M:SS` display string (floors to whole seconds)
   - `formatCountdown(ms)` converts milliseconds to `HH:MM:SS` string (used by `ScoreScreen` for next-puzzle countdown)
   - `getTimeUntilMidnightUTC()` returns milliseconds until next UTC midnight
@@ -85,6 +88,7 @@ Path: @/src
 - The `state.transitioning` flag in `App.vue` prevents input during the delay between rounds. It is set `true` on submit/skip, and cleared in `onRoundEntered()` (after the Vue transition completes), which also restarts the timer. The advance delay is `max(700ms, bounceDuration)` for correct answers and 1200ms for skips with possible answers
 - Timer counts down from 60 seconds per round. `startTimer()` resets the display to `1:00`, records `roundStartTime`, and ticks every 100ms. When remaining time hits 0, the interval auto-calls `handleSkip()`. Both `handleSubmit()` and `handleSkip()` call `stopTimer()` and cap recorded `timeMs` at `ROUND_TIME_LIMIT_MS`. The timer auto-starts on puzzle load (in `onMounted`) only if the HowToPlay modal is not showing; closing the modal via `handleCloseHowToPlay` starts the timer if the game is still active. Timer restarts in `onRoundEntered()` after the round transition animation completes
 - `showScore()` computes `totalTimeMs` as the sum of per-round `timeMs` values (not wall-clock time)
+- **localStorage save format** for `reword-{date}` has two shapes: in-progress (`{ status: 'in-progress', currentRound, completedRounds, roundStartTimestamp }`) and complete (`{ status: 'complete', results, totalTimeMs }`). Legacy saves without a `status` field are treated as complete for backwards compatibility. Timer restoration on reload uses the wall-clock `roundStartTimestamp` -- time continues to pass while the tab is closed
 - Streak calculation is pure (in `game.js`) with localStorage access only in `App.vue`, consistent with the pattern of keeping side effects out of game logic
 - Sound synthesis follows the same pure-logic-in-module, side-effects-in-UI pattern: `sound.js` is a pure factory testable with a mock AudioContext, while `App.vue` handles AudioContext creation, localStorage mute persistence, and event hookup
 

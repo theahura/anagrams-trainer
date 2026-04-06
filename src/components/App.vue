@@ -51,7 +51,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
-import { selectDailyPuzzle, isValidAnswer, calculateScore, getAnswersForRound, generateShareText, getSubmitFeedbackType, updateStreakStats, processKeyPress, ROUND_TIME_LIMIT_MS, formatRoundTimer } from '../game.js';
+import { selectDailyPuzzle, isValidAnswer, calculateScore, getAnswersForRound, generateShareText, getSubmitFeedbackType, updateStreakStats, processKeyPress, ROUND_TIME_LIMIT_MS, formatRoundTimer, serializeGameState, deserializeGameState } from '../game.js';
 import { getAudioContext, initSound } from '../sound.js';
 import GameBoard from './GameBoard.vue';
 import VirtualKeyboard from './VirtualKeyboard.vue';
@@ -112,14 +112,22 @@ function toggleMute() {
   try { localStorage.setItem('reword-sound-muted', muted.value ? '1' : '0'); } catch (e) {}
 }
 
+function saveInProgressState() {
+  if (!dateStr.value) return;
+  try {
+    const data = serializeGameState(state.currentRound + 1, state.completedRounds, Date.now());
+    localStorage.setItem('reword-' + dateStr.value, JSON.stringify(data));
+  } catch (e) {}
+}
+
 const currentRound = computed(() => puzzle.value ? puzzle.value[state.currentRound] : null);
 const runningLetterScore = computed(() => state.completedRounds.reduce((sum, r) => sum + r.answer.length, 0));
 const streakStats = ref(null);
 
-function startTimer() {
+function startTimer(alreadyElapsedMs = 0) {
   stopTimer();
-  state.roundStartTime = Date.now();
-  timerDisplay.value = formatRoundTimer(ROUND_TIME_LIMIT_MS);
+  state.roundStartTime = Date.now() - alreadyElapsedMs;
+  timerDisplay.value = formatRoundTimer(Math.max(0, ROUND_TIME_LIMIT_MS - alreadyElapsedMs));
   timerInterval = setInterval(() => {
     const elapsed = Date.now() - state.roundStartTime;
     const remaining = Math.max(0, ROUND_TIME_LIMIT_MS - elapsed);
@@ -178,6 +186,7 @@ function handleSubmit() {
   const timeMs = Math.min(Date.now() - state.roundStartTime, ROUND_TIME_LIMIT_MS);
   const possibleAnswers = getAnswersForRound(round);
   state.completedRounds.push({ answer, timeMs, root: round.root, possibleAnswers });
+  saveInProgressState();
   message.value = 'Correct!';
   messageType.value = 'success';
   playSound('playCorrect');
@@ -195,6 +204,7 @@ function handleSkip() {
   const timeMs = Math.min(Date.now() - state.roundStartTime, ROUND_TIME_LIMIT_MS);
   const possibleAnswers = getAnswersForRound(round);
   state.completedRounds.push({ answer: '', timeMs, root: round.root, possibleAnswers });
+  saveInProgressState();
   playSound('playSkip');
   if (possibleAnswers.length > 0) {
     message.value = `Possible: ${possibleAnswers.slice(0, 3).join(', ')}`;
@@ -239,6 +249,7 @@ function showScore(savedResults) {
   if (!savedResults && dateStr.value) {
     try {
       localStorage.setItem('reword-' + dateStr.value, JSON.stringify({
+        status: 'complete',
         results: state.completedRounds,
         totalTimeMs: totalTimeMs.value,
       }));
@@ -342,19 +353,40 @@ onMounted(async () => {
   loading.value = false;
 
   // Check for saved game
+  let restoredElapsedMs = 0;
   try {
     const saved = localStorage.getItem('reword-' + dateStr.value) || localStorage.getItem('anagram-trainer-' + dateStr.value);
     if (saved) {
-      const { results } = JSON.parse(saved);
-      state.completedRounds = results;
-      state.currentRound = 11;
-      showScore(results);
-      return;
+      const parsed = JSON.parse(saved);
+      const inProgress = deserializeGameState(parsed, Date.now());
+      if (inProgress) {
+        state.completedRounds = inProgress.completedRounds;
+        state.currentRound = inProgress.currentRound;
+        if (inProgress.elapsedMs >= ROUND_TIME_LIMIT_MS) {
+          // Round expired while away — auto-skip
+          const round = puzzle.value[state.currentRound];
+          const possibleAnswers = getAnswersForRound(round);
+          state.completedRounds.push({ answer: '', timeMs: ROUND_TIME_LIMIT_MS, root: round.root, possibleAnswers });
+          state.currentRound++;
+          saveInProgressState();
+          if (state.currentRound >= 11) {
+            showScore();
+            return;
+          }
+        } else {
+          restoredElapsedMs = inProgress.elapsedMs;
+        }
+      } else if (parsed.results) {
+        state.completedRounds = parsed.results;
+        state.currentRound = 11;
+        showScore(parsed.results);
+        return;
+      }
     }
   } catch (e) {}
 
   if (!showHowToPlay.value) {
-    startTimer();
+    startTimer(restoredElapsedMs);
   }
 });
 

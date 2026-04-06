@@ -197,6 +197,25 @@ export function formatRoundTimer(ms) {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
+export function serializeGameState(currentRound, completedRounds, now) {
+  return {
+    status: 'in-progress',
+    currentRound,
+    completedRounds,
+    roundStartTimestamp: now,
+  };
+}
+
+export function deserializeGameState(saved, now) {
+  if (!saved || saved.status !== 'in-progress') return null;
+  const elapsedMs = Math.max(0, Math.min(now - saved.roundStartTimestamp, ROUND_TIME_LIMIT_MS));
+  return {
+    currentRound: saved.currentRound,
+    completedRounds: saved.completedRounds,
+    elapsedMs,
+  };
+}
+
 export function getTimeUntilMidnightUTC() {
   const now = new Date();
   const tomorrow = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
