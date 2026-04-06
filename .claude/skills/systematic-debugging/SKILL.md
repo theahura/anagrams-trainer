@@ -193,7 +193,7 @@ You MUST complete each phase before proceeding to the next.
    - Automated test if possible
    - One-off test script if no framework
    - MUST have before fixing
-   - See /home/amol/code/games/anagrams-trainer/.worktrees/pure-yak-20260406-051857/.claude/skills/test-driven-development for writing proper failing tests
+   - See /home/amol/code/games/anagrams-trainer/.worktrees/cool-van-20260406-061015/.claude/skills/test-driven-development for writing proper failing tests
 
 2. **Implement Single Fix**
 
