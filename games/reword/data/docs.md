@@ -1,6 +1,6 @@
-# Noridoc: data
+# Noridoc: games/reword/data
 
-Path: @/data
+Path: @/games/reword/data
 
 ### Overview
 
@@ -9,7 +9,7 @@ Path: @/data
 
 ### How it fits into the larger codebase
 
-- `@/src/components/App.vue` fetches `puzzles.json` on mount and passes it to `selectDailyPuzzle()` in `@/src/game.js`
+- `@/games/reword/src/components/App.vue` fetches `puzzles.json` on mount and passes it to `selectDailyPuzzle()` in `@/games/reword/src/game.js`
 - `@/scripts/build-words.js` or `@/scripts/build-words-web.js` writes this file as its output
 - This is the only data artifact -- the game has no backend or API calls at runtime
 
@@ -36,7 +36,7 @@ Path: @/data
 ### Things to Know
 
 - This file must be regenerated via `npm run build:words` or `npm run build:words:web` if the dictionary source or filtering logic changes
-- The web-sourced build also produces `data/web-cache.json` (gitignored), which caches raw fetch results from wordunscrambler.me to avoid re-scraping
+- The web-sourced build also produces `@/games/reword/data/web-cache.json` (gitignored), which caches raw fetch results from wordunscrambler.me to avoid re-scraping
 - No substring or trivial-extension filtering is applied -- all valid dictionary anagrams are included. Word acceptance is based purely on dictionary lookup and offered-letter availability at runtime
 - The file is approximately 1.7MB due to multi-letter expansion entries (up from ~155KB when only single-letter expansions were stored)
 
