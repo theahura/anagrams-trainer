@@ -71,6 +71,10 @@ The full Anagram Trainer game is implemented and tested with multi-letter expans
 - Sound triggers at 6 integration points in ui.js: key press, correct answer, wrong answer, invalid length, skip, game complete
 - Game complete sound only plays for fresh games, not saved/replayed results
 - 94 unit tests passing (added 5 tests for sound module)
+- Trivial suffix rejection: answers that are root + "s", "ed", or "er" are rejected (e.g., "pits" from "pit")
+- Check runs before expansion lookup in `isValidAnswer`, so trivial suffixes are blocked even if they appear in the dictionary
+- "master" from "aster" still accepted (prepend, not suffix append)
+- 96 unit tests passing (added 3 suffix rejection tests, updated 1 existing test)
 
 ## Architecture
 - Pure static HTML/JS, no backend or framework
