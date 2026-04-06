@@ -55,3 +55,16 @@ This simple substring check covers: adding s/es/ed/ing/er to end, and common pre
 - Standard Scrabble point values per letter
 - Multiple CodePen examples available for reference
 - Key CSS: border-radius, box-shadow, gradient background for 3D effect
+
+## Multi-Letter Expansion Algorithm
+- The existing signature-based approach extends naturally to multi-letter additions
+- For +1 letter: 26 lookups. For +2: 351 (combinations with repetition). For +3: 3,276. Total: 3,653 lookups per root — trivially fast
+- Key insight: adding N letters = merging two sorted strings (root signature + sorted added letters)
+- Data format: key expansions by sorted added letters string, e.g., `"eg"` for adding e+g, `"egr"` for adding e+g+r
+- Size estimate: with capping, ~2-3x increase over current single-letter data. ~300-450KB gzipped — acceptable
+
+## Bug: 3-Word-Per-Letter Cap Drops Valid Words
+- `build-words.js` line 72-75 caps at 3 words per expansion letter
+- For "ski" + "r", the dictionary has: irks, kirs, kris, risk — but "risk" is 4th and gets truncated
+- Fix: remove the cap entirely, or increase it significantly
+- This is the root cause of "ski → risk doesn't work"

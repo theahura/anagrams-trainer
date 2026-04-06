@@ -60,7 +60,7 @@ export function initUI(puzzle, dateStr) {
   // Offered letters section
   const offeredLabel = document.createElement('div');
   offeredLabel.className = 'section-label';
-  offeredLabel.textContent = 'Add One Letter';
+  offeredLabel.textContent = 'Add Letters';
   container.appendChild(offeredLabel);
 
   const offeredRack = document.createElement('div');
@@ -71,7 +71,7 @@ export function initUI(puzzle, dateStr) {
   // Instructions
   const instructions = document.createElement('div');
   instructions.className = 'instructions';
-  instructions.textContent = 'Type a new word using all root letters + one offered letter';
+  instructions.textContent = 'Type a new word using all root letters + one or more offered letters';
   container.appendChild(instructions);
 
   // Input area
@@ -139,9 +139,10 @@ export function initUI(puzzle, dateStr) {
   function renderInput() {
     inputArea.innerHTML = '';
     const round = puzzle[state.currentRound];
-    const maxLen = round.root.length + 1;
+    const minLen = round.root.length + 1;
+    const displayLen = Math.max(minLen, state.inputLetters.length);
 
-    for (let i = 0; i < maxLen; i++) {
+    for (let i = 0; i < displayLen; i++) {
       if (i < state.inputLetters.length) {
         inputArea.appendChild(createTile(state.inputLetters[i]));
       } else {
@@ -176,9 +177,11 @@ export function initUI(puzzle, dateStr) {
   function handleSubmit() {
     const round = puzzle[state.currentRound];
     const answer = state.inputLetters.join('');
+    const minLen = round.root.length + 1;
+    const maxLen = round.root.length + round.offeredLetters.length;
 
-    if (answer.length !== round.root.length + 1) {
-      setMessage(`Word must be ${round.root.length + 1} letters`, 'error');
+    if (answer.length < minLen || answer.length > maxLen) {
+      setMessage(`Word must be ${minLen}-${maxLen} letters`, 'error');
       return;
     }
 
@@ -280,7 +283,7 @@ export function initUI(puzzle, dateStr) {
   hiddenInput.addEventListener('input', (e) => {
     if (!state.startTime) startTimer();
     const round = puzzle[state.currentRound];
-    const maxLen = round.root.length + 1;
+    const maxLen = round.root.length + round.offeredLetters.length;
     const val = e.target.value.toLowerCase().replace(/[^a-z]/g, '');
     state.inputLetters = val.slice(0, maxLen).split('');
     hiddenInput.value = state.inputLetters.join('');

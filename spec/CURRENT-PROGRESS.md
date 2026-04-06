@@ -1,30 +1,35 @@
 # Current Progress
 
-## Status: MVP Complete + Quality Improvements
+## Status: MVP Complete + Multi-Letter Expansion Support
 
-The full Anagram Trainer game is implemented and tested.
+The full Anagram Trainer game is implemented and tested with multi-letter expansion support.
 
 ## Completed
 - Researched scrabblewordfinder.org API (no usable REST API; wordunscrambler.me has URL-based access but CORS blocks browser calls)
 - Built word processing pipeline using TWL06 Scrabble dictionary (~178K words)
-- Pre-computed puzzle data: 500 curated root words per length (3-8 letters), each with 3+ valid non-trivial expansions
+- Pre-computed puzzle data: 500 curated root words per length (3-8 letters), with multi-letter expansions
 - Implemented date-seeded PRNG (cyrb128 + sfc32) for daily puzzle consistency
-- Game logic: word selection with difficulty progression, answer validation, trivial extension filtering (substring check), scoring
+- Game logic: word selection with difficulty progression, answer validation, trivial extension filtering, scoring
 - Scrabble-tile UI with CSS styling (cream tiles, point values, green board background)
 - Keyboard input rendered as live Scrabble tiles
 - Timer, round tracking, skip functionality, score screen
-- 35 unit tests passing (PRNG, game logic, word processing)
+- 44 unit tests passing (PRNG, game logic, word processing, multi-letter expansions)
 - E2E testing with Playwright verified full game flow
 - Documentation (docs.md files for all directories)
-- Fixed validation bug: `isValidAnswer` now restricts answers to only those using offered letters (previously accepted any valid expansion letter)
+- Fixed validation bug: `isValidAnswer` now restricts answers to only those using offered letters
 - Added `getAnswersForRound` helper for retrieving valid answers filtered by offered letters
 - Enhanced score screen: per-round breakdown showing root word, player answer, and possible answers for skipped rounds
 - localStorage persistence: completed puzzle results saved by date, prevents replay of same day's puzzle
+- Multi-letter expansion support: players can use 1, 2, or 3 offered letters to form longer words
+- Fixed word truncation bug: removed 3-word-per-letter cap that dropped valid answers (e.g., "risk" for ski+r)
+- Trivial extension filter is now key-length-aware: only applies to single-letter additions
+- Build script uses tiered maxExtraLetters by root length (3 for short, 2 for medium, 1 for long)
 
 ## Architecture
 - Pure static HTML/JS, no backend or framework
-- `data/puzzles.json` (~155KB gzipped) contains pre-computed puzzle data
-- `scripts/build-words.js` regenerates puzzle data from TWL06 dictionary
+- `data/puzzles.json` (~1.7MB) contains pre-computed puzzle data with multi-letter expansion keys
+- Expansion keys are variable-length sorted letter strings (e.g., "r", "el", "egr")
+- `scripts/build-words.js` regenerates puzzle data from TWL06 dictionary using combinations-with-repetition
 - UTC date ensures all players worldwide get the same daily puzzle
 - localStorage keyed by `anagram-trainer-YYYY-MM-DD` for game state persistence
 

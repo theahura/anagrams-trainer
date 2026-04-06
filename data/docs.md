@@ -20,23 +20,23 @@ Path: @/data
   {
     "3": [
       {
-        "root": "cat",
+        "root": "ski",
         "expansions": {
-          "o": ["coat", "taco"],
-          "r": ["cart"],
-          "s": ["cast", "acts"]
+          "r": ["irks", "risk"],
+          "el": ["likes", "skill"],
+          "egr": ["grisker"]
         }
       }
     ]
   }
   ```
-- Each `expansions` object maps an added letter to an array of valid anagram words (already filtered for trivial extensions)
-- Capped at 500 entries per word length, 3 words per expansion letter
+- Each `expansions` object maps an added-letters key (variable length: `"r"`, `"el"`, `"egr"`) to an array of valid anagram words. Single-letter keys are filtered for trivial extensions; multi-letter keys are not
+- Capped at 500 entries per word length, 30 keys per root, 5 words per key
 
 ### Things to Know
 
 - This file must be regenerated via `npm run build:words` if the dictionary source or filtering logic changes
-- Trivial extensions (words containing the root as a substring) are excluded at build time, so the runtime can trust that all words in `expansions` are non-trivial -- though `isValidAnswer` in `@/src/game.js` also performs a runtime check as a second layer
-- The file is approximately 155KB gzipped
+- Trivial extensions (words containing the root as a substring) are excluded at build time for single-letter keys only. Multi-letter keys are not filtered for trivial extensions. `isValidAnswer` in `@/src/game.js` also performs a runtime trivial check (single-letter keys only) as a second layer
+- The file is approximately 1.7MB due to multi-letter expansion entries (up from ~155KB when only single-letter expansions were stored)
 
 Created and maintained by Nori.
