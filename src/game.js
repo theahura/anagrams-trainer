@@ -1,29 +1,40 @@
 import { getDailyRng, seededShuffle, seededPick } from './prng.js';
 
-export function isTrivialExtension(root, answer) {
-  return answer.toLowerCase().includes(root.toLowerCase());
-}
+const TRIVIAL_SUFFIXES = ['s', 'ed', 'er'];
 
 export function isValidAnswer(answer, round) {
   const answerLower = answer.toLowerCase();
-  if (isTrivialExtension(round.root, answerLower)) return false;
+  const rootLower = round.root.toLowerCase();
 
-  const lettersToCheck = round.offeredLetters || Object.keys(round.expansions);
-  for (const letter of lettersToCheck) {
-    const words = round.expansions[letter];
-    if (words && words.some(w => w.toLowerCase() === answerLower)) return true;
+  for (const suffix of TRIVIAL_SUFFIXES) {
+    if (answerLower === rootLower + suffix) return false;
+  }
+
+  const offered = round.offeredLetters || [];
+  for (const [key, words] of Object.entries(round.expansions)) {
+    if (!isKeySubsetOfOffered(key, offered)) continue;
+    if (words.some(w => w.toLowerCase() === answerLower)) return true;
   }
   return false;
 }
 
+function isKeySubsetOfOffered(key, offeredLetters) {
+  const available = [...offeredLetters];
+  for (const ch of key) {
+    const idx = available.indexOf(ch);
+    if (idx === -1) return false;
+    available.splice(idx, 1);
+  }
+  return true;
+}
+
 export function getAnswersForRound(round) {
   const results = [];
-  for (const letter of round.offeredLetters) {
-    const words = round.expansions[letter];
-    if (words) {
-      for (const w of words) {
-        if (!isTrivialExtension(round.root, w)) results.push(w);
-      }
+  const offered = round.offeredLetters || [];
+  for (const [key, words] of Object.entries(round.expansions)) {
+    if (!isKeySubsetOfOffered(key, offered)) continue;
+    for (const w of words) {
+      results.push(w);
     }
   }
   return results;
@@ -62,11 +73,17 @@ export function selectDailyPuzzle(puzzleData, dateStr) {
 }
 
 export function getOfferedLetters(puzzleEntry, rng) {
-  const validLetters = Object.keys(puzzleEntry.expansions);
+  // Extract unique individual letters from expansion keys (which may be multi-char like "el")
+  const validLetters = [...new Set(Object.keys(puzzleEntry.expansions).join('').split(''))];
   const letters = new Set();
 
-  // Always include at least one valid letter
-  letters.add(seededPick(validLetters, rng));
+  // Always include at least one valid single-letter expansion if available
+  const singleLetterKeys = Object.keys(puzzleEntry.expansions).filter(k => k.length === 1);
+  if (singleLetterKeys.length > 0) {
+    letters.add(seededPick(singleLetterKeys, rng));
+  } else {
+    letters.add(seededPick(validLetters, rng));
+  }
 
   // Build pool of remaining candidates: other valid letters + alphabet
   const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
@@ -81,6 +98,78 @@ export function getOfferedLetters(puzzleEntry, rng) {
   }
 
   return seededShuffle([...letters], rng);
+}
+
+export function generateShareText(results, dateStr, totalTimeMs) {
+  const emojis = results.map(r => r.answer.length > 0 ? '🟩' : '⬜').join('');
+  const solved = results.filter(r => r.answer.length > 0).length;
+  const mins = Math.floor(totalTimeMs / 1000 / 60);
+  const secs = Math.floor(totalTimeMs / 1000) % 60;
+  return `Anagram Trainer ${dateStr}\n${emojis}\n${solved}/${results.length} | ${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+export function matchTypedToTiles(typedLetters, rootLetters, offeredLetters) {
+  const pool = [
+    ...rootLetters.map((ch, i) => ({ letter: ch.toLowerCase(), source: 'root', index: i, used: false })),
+    ...offeredLetters.map((ch, i) => ({ letter: ch.toLowerCase(), source: 'offered', index: i, used: false })),
+  ];
+
+  const matched = [];
+  for (const typed of typedLetters) {
+    const ch = typed.toLowerCase();
+    const candidate =
+      pool.find(t => !t.used && t.letter === ch && t.source === 'root') ||
+      pool.find(t => !t.used && t.letter === ch && t.source === 'offered');
+    if (candidate) {
+      candidate.used = true;
+      matched.push({ letter: ch, source: candidate.source, index: candidate.index, used: true });
+    } else {
+      matched.push({ letter: ch, source: 'invalid', index: -1, used: true });
+    }
+  }
+
+  return { matched, pool };
+}
+
+export function getSubmitFeedbackType(answer, round) {
+  const minLen = round.root.length + 1;
+  const maxLen = round.root.length + (round.offeredLetters ? round.offeredLetters.length : 0);
+  if (answer.length < minLen || answer.length > maxLen) return 'invalid-length';
+  if (isValidAnswer(answer, round)) return 'correct';
+  return 'wrong';
+}
+
+export function isConsecutiveDay(todayStr, previousStr) {
+  const today = new Date(todayStr + 'T00:00:00Z');
+  const previous = new Date(previousStr + 'T00:00:00Z');
+  return today.getTime() - previous.getTime() === 86400000;
+}
+
+export function updateStreakStats(existingStats, todayDateStr) {
+  if (!existingStats) {
+    return { currentStreak: 1, maxStreak: 1, lastPlayedDate: todayDateStr, gamesPlayed: 1 };
+  }
+  if (existingStats.lastPlayedDate === todayDateStr) {
+    return existingStats;
+  }
+  const consecutive = isConsecutiveDay(todayDateStr, existingStats.lastPlayedDate);
+  const currentStreak = consecutive ? existingStats.currentStreak + 1 : 1;
+  const maxStreak = Math.max(currentStreak, existingStats.maxStreak);
+  return {
+    currentStreak,
+    maxStreak,
+    lastPlayedDate: todayDateStr,
+    gamesPlayed: existingStats.gamesPlayed + 1,
+  };
+}
+
+export function processKeyPress(currentLetters, key, maxLen) {
+  if (key === 'Backspace') return currentLetters.slice(0, -1);
+  if (key.length === 1 && /^[a-z]$/i.test(key)) {
+    if (currentLetters.length >= maxLen) return currentLetters;
+    return [...currentLetters, key.toLowerCase()];
+  }
+  return currentLetters;
 }
 
 export function calculateScore(completedRounds) {

@@ -23,6 +23,7 @@ body {
 header {
   text-align: center;
   margin-bottom: 24px;
+  position: relative;
 }
 
 header h1 {
@@ -30,6 +31,24 @@ header h1 {
   font-size: 28px;
   text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
   letter-spacing: 2px;
+  display: inline;
+}
+
+#mute-btn {
+  position: absolute;
+  right: 0;
+  top: 0;
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+#mute-btn:hover {
+  opacity: 1;
 }
 
 .game-info {
@@ -45,6 +64,11 @@ header h1 {
   font-variant-numeric: tabular-nums;
   font-size: 18px;
   font-weight: bold;
+}
+
+#letter-score {
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
 }
 
 /* Scrabble Tile */
@@ -100,6 +124,26 @@ header h1 {
   transform: scale(1.05);
 }
 
+.tile.used {
+  background: linear-gradient(145deg, #b8d8b8, #98b898);
+  border-color: #6a9a6a;
+  opacity: 0.7;
+  transition: all 0.2s ease-out;
+}
+
+.tile.offered.used {
+  background: linear-gradient(145deg, #a8d8a8, #88b888);
+  border-color: #5a8a5a;
+  transform: scale(0.9);
+  opacity: 0.7;
+  transition: all 0.2s ease-out;
+}
+
+#input-area .tile.invalid {
+  background: linear-gradient(145deg, #ffb0b0, #e09090);
+  border-color: #c06060;
+}
+
 /* Tile Rack */
 .tile-rack {
   display: flex;
@@ -141,9 +185,13 @@ header h1 {
 
 /* Hidden text input for keyboard capture */
 #hidden-input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0.01;
+  font-size: 16px;
 }
 
 /* Message */
@@ -203,6 +251,30 @@ header h1 {
   color: #fff;
   font-weight: bold;
   font-size: 22px;
+}
+
+/* Share button */
+#share-btn {
+  display: block;
+  margin: 0 auto 16px;
+  padding: 10px 32px;
+  background: linear-gradient(145deg, #c9a96e, #a8884e);
+  border: 2px solid #8a6a2e;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+#share-btn:hover {
+  background: linear-gradient(145deg, #d9b97e, #b8985e);
+}
+
+#share-btn:active {
+  transform: scale(0.98);
 }
 
 /* Per-round results */
@@ -317,6 +389,134 @@ header h1 {
   margin-top: 40vh;
 }
 
+/* Virtual keyboard (touch devices only) */
+#virtual-keyboard {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin: 16px 0 8px;
+  padding: 8px 4px;
+}
+
+.keyboard-row {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+}
+
+.keyboard-key {
+  min-width: 32px;
+  min-height: 44px;
+  padding: 0 8px;
+  background: linear-gradient(145deg, #e8d5a3, #d4c49a);
+  border: 1px solid #b89a5a;
+  border-radius: 4px;
+  color: #333;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.keyboard-key:active {
+  background: linear-gradient(145deg, #c9a96e, #a8884e);
+  color: #fff;
+}
+
+.keyboard-key.key-wide {
+  min-width: 52px;
+  font-size: 18px;
+}
+
+@media (pointer: coarse) {
+  #virtual-keyboard {
+    display: flex;
+  }
+}
+
+/* Answer feedback animations */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+#input-area.shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-20px); }
+  70% { transform: translateY(-8px); }
+}
+
+#input-area.bounce .tile {
+  animation: bounce 0.6s ease-out;
+  animation-delay: calc(0.08s * var(--tile-index, 0));
+  animation-fill-mode: both;
+}
+
+/* Round transition animations */
+@keyframes fade-out {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.95); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.fade-out {
+  animation: fade-out 0.15s ease-in forwards;
+}
+
+.fade-in {
+  animation: fade-in 0.2s ease-out forwards;
+}
+
+/* Accessibility: respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  #input-area.shake,
+  #input-area.bounce .tile,
+  .fade-out,
+  .fade-in,
+  #input-area .tile {
+    animation: none;
+  }
+  .tile.used,
+  .tile.offered.used {
+    transition: none;
+  }
+}
+
+/* Touch device improvements */
+@media (pointer: coarse) {
+  #submit-btn {
+    min-height: 48px;
+    width: 100%;
+    font-size: 18px;
+  }
+
+  #skip-btn {
+    min-height: 44px;
+    padding: 10px 24px;
+    font-size: 14px;
+    width: 100%;
+  }
+
+  #share-btn {
+    min-height: 48px;
+    width: 100%;
+    font-size: 18px;
+  }
+}
+
 /* Responsive */
 @media (max-width: 420px) {
   .tile {
@@ -330,5 +530,14 @@ header h1 {
   }
   header h1 {
     font-size: 22px;
+  }
+  .keyboard-key {
+    min-width: 28px;
+    min-height: 40px;
+    padding: 0 5px;
+    font-size: 14px;
+  }
+  .keyboard-key.key-wide {
+    min-width: 44px;
   }
 }
