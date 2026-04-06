@@ -125,3 +125,18 @@ This simple substring check covers: adding s/es/ed/ing/er to end, and common pre
 - **Touch targets**: Apple HIG minimum 44x44pt, Google Material 48x48dp. Virtual keyboard keys should be at least 44px with 8px spacing
 - **Current gaps**: No touch event handlers, buttons not adjusted in mobile breakpoint, skip button too small for touch (6px padding, 12px font), no `inputmode` attribute on hidden input
 - **Approach**: Add on-screen QWERTY keyboard shown when `(pointer: coarse)` matches. Keep hidden input for desktop. Extract `processKeyPress(currentLetters, key, maxLen)` as pure function shared by both input paths. Improve button sizing in mobile breakpoint
+
+## Bounds Check Bug in handleSubmit/handleSkip
+- `handleSubmit()` at `src/ui.js:253` accesses `puzzle[state.currentRound]` without checking bounds
+- After the last round (round 11, index 10), `advanceRound()` increments `state.currentRound` to 11
+- The `state.transitioning` flag prevents input during transitions, but a rapid double-click or Enter keypress could bypass this
+- If `state.currentRound >= 11`, `puzzle[state.currentRound]` is `undefined`, causing a runtime error
+- `handleKeyInput()` and the `input` event handler also access `puzzle[state.currentRound]` without bounds checking
+- **Fix**: Add early return guard `if (state.currentRound >= 11) return;` at the top of `handleSubmit`, `handleSkip`, `handleKeyInput`, and the `input` event handler
+
+## Running Letter Score During Gameplay
+- The spec says "Score tracks total letters used across all words"
+- Currently, total letters only displayed on the score screen post-game (`src/ui.js:383`)
+- No running letter count visible during gameplay — only the timer is shown in the game-info bar
+- **Approach**: Add a `<span id="letter-score">` next to timer in game-info bar. Update it after each round completion (in `handleSubmit` after pushing to `completedRounds`, and in `handleSkip`). Show format like "Letters: 0" to match the game aesthetic
+- `calculateScore` already computes `totalLetters` from `completedRounds`, can reuse that

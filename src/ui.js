@@ -43,6 +43,7 @@ export function initUI(puzzle, dateStr) {
   gameInfo.className = 'game-info';
   gameInfo.innerHTML = `
     <span id="round-indicator">Round 1 of 11</span>
+    <span id="letter-score">Letters: 0</span>
     <span id="timer">0:00</span>
   `;
   container.appendChild(gameInfo);
@@ -229,6 +230,11 @@ export function initUI(puzzle, dateStr) {
     }, 100);
   }
 
+  function updateLetterScore() {
+    const total = state.completedRounds.reduce((sum, r) => sum + r.answer.length, 0);
+    document.getElementById('letter-score').textContent = `Letters: ${total}`;
+  }
+
   function triggerShake() {
     inputArea.classList.remove('shake');
     void inputArea.offsetWidth;
@@ -252,6 +258,7 @@ export function initUI(puzzle, dateStr) {
 
   function handleSubmit() {
     if (state.transitioning) return;
+    if (state.currentRound >= 11) return;
     if (!state.startTime) startTimer();
     const round = puzzle[state.currentRound];
     const answer = state.inputLetters.join('');
@@ -274,6 +281,7 @@ export function initUI(puzzle, dateStr) {
     const timeMs = Date.now() - state.roundStartTime;
     const possibleAnswers = getAnswersForRound(round);
     state.completedRounds.push({ answer, timeMs, root: round.root, possibleAnswers });
+    updateLetterScore();
     setMessage('Correct!', 'success');
     triggerBounce();
     state.transitioning = true;
@@ -282,11 +290,13 @@ export function initUI(puzzle, dateStr) {
 
   function handleSkip() {
     if (state.transitioning) return;
+    if (state.currentRound >= 11) return;
     if (!state.startTime) startTimer();
     const round = puzzle[state.currentRound];
     const timeMs = Date.now() - state.roundStartTime;
     const possibleAnswers = getAnswersForRound(round);
     state.completedRounds.push({ answer: '', timeMs, root: round.root, possibleAnswers });
+    updateLetterScore();
     if (possibleAnswers.length > 0) {
       setMessage(`Possible: ${possibleAnswers.slice(0, 3).join(', ')}`, '');
       state.transitioning = true;
@@ -446,6 +456,7 @@ export function initUI(puzzle, dateStr) {
   }
 
   function handleKeyInput(key) {
+    if (state.currentRound >= 11) return;
     if (!state.startTime) startTimer();
     if (key === 'Enter') {
       handleSubmit();
@@ -461,6 +472,7 @@ export function initUI(puzzle, dateStr) {
 
   // Physical keyboard handling
   hiddenInput.addEventListener('input', (e) => {
+    if (state.currentRound >= 11) return;
     if (!state.startTime) startTimer();
     const round = puzzle[state.currentRound];
     const maxLen = round.root.length + round.offeredLetters.length;

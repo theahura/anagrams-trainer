@@ -47,6 +47,11 @@ header h1 {
   font-weight: bold;
 }
 
+#letter-score {
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+}
+
 /* Scrabble Tile */
 .tile {
   display: inline-flex;

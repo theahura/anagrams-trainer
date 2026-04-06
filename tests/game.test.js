@@ -532,4 +532,22 @@ describe('calculateScore', () => {
     const score = calculateScore(completedRounds);
     expect(score.roundsCompleted).toBe(2);
   });
+
+  it('returns zeros for empty input', () => {
+    const score = calculateScore([]);
+    expect(score.totalLetters).toBe(0);
+    expect(score.totalTimeMs).toBe(0);
+    expect(score.roundsCompleted).toBe(0);
+  });
+
+  it('counts zero letters for skipped rounds (empty answer)', () => {
+    const completedRounds = [
+      { answer: 'grind', timeMs: 5000 },
+      { answer: '', timeMs: 3000 },
+      { answer: 'coat', timeMs: 2000 },
+    ];
+    const score = calculateScore(completedRounds);
+    expect(score.totalLetters).toBe(5 + 0 + 4);
+    expect(score.roundsCompleted).toBe(3);
+  });
 });
