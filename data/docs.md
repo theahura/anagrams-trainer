@@ -9,7 +9,7 @@ Path: @/data
 
 ### How it fits into the larger codebase
 
-- `@/index.html` fetches `puzzles.json` on page load and passes it to `selectDailyPuzzle()` in `@/src/game.js`
+- `@/src/components/App.vue` fetches `puzzles.json` on mount and passes it to `selectDailyPuzzle()` in `@/src/game.js`
 - `@/scripts/build-words.js` or `@/scripts/build-words-web.js` writes this file as its output
 - This is the only data artifact -- the game has no backend or API calls at runtime
 

@@ -105,7 +105,7 @@ export function generateShareText(results, dateStr, totalTimeMs) {
   const solved = results.filter(r => r.answer.length > 0).length;
   const mins = Math.floor(totalTimeMs / 1000 / 60);
   const secs = Math.floor(totalTimeMs / 1000) % 60;
-  return `Anagram Trainer ${dateStr}\n${emojis}\n${solved}/${results.length} | ${mins}:${secs.toString().padStart(2, '0')}`;
+  return `Reword ${dateStr}\n${emojis}\n${solved}/${results.length} | ${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
 export function matchTypedToTiles(typedLetters, rootLetters, offeredLetters) {
@@ -178,4 +178,18 @@ export function calculateScore(completedRounds) {
     totalTimeMs: completedRounds.reduce((sum, r) => sum + r.timeMs, 0),
     roundsCompleted: completedRounds.length,
   };
+}
+
+export function formatCountdown(ms) {
+  const totalSeconds = Math.floor(ms / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+export function getTimeUntilMidnightUTC() {
+  const now = new Date();
+  const tomorrow = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+  return tomorrow.getTime() - now.getTime();
 }
