@@ -11,7 +11,7 @@ Path: @/games/reword
 
 ### How it fits into the larger codebase
 
-- `@/index.html` is the games index page for the published site
+- `@/index.html` is the games index page for the published site, linking to both Reword and Speedrun
 - `@/reword/index.html` is the standalone entry page for the Reword game
 - Both HTML entry points include Open Graph and Twitter Card meta tags for social media share previews. `@/reword/index.html` uses `summary_large_image` card type with an absolute image URL; `@/index.html` uses `summary` card type with no image. All `og:image` and `twitter:image` URLs are absolute (`https://amolkapoor.com/...`) as required by the OG spec
 - `@/games/reword/og-image.png` is a 1200x630 PNG share image used by the OG/Twitter meta tags. It was designed via `@/games/reword/og-card.html` (a standalone HTML mockup) and can also be regenerated programmatically via `@/scripts/generate-og-images.js`
