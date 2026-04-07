@@ -61,11 +61,16 @@ h1 {
   padding: 24px;
   border: 1px solid var(--panel-border);
   border-radius: 18px;
+  overflow: hidden;
   color: inherit;
   text-decoration: none;
   background: linear-gradient(180deg, rgba(28, 36, 48, 0.95), rgba(20, 26, 35, 0.95));
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
   transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+.game-card:has(.game-card-image) {
+  padding: 0;
 }
 
 .game-card:hover,
@@ -74,6 +79,16 @@ h1 {
   border-color: var(--accent);
   background: linear-gradient(180deg, rgba(36, 46, 60, 0.98), rgba(24, 31, 42, 0.98));
   outline: none;
+}
+
+.game-card-image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.game-card-body {
+  padding: 24px;
 }
 
 .game-name {
@@ -96,6 +111,14 @@ h1 {
   }
 
   .game-card {
+    padding: 20px;
+  }
+
+  .game-card:has(.game-card-image) {
+    padding: 0;
+  }
+
+  .game-card-body {
     padding: 20px;
   }
 }
