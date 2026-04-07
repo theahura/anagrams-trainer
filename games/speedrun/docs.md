@@ -27,12 +27,13 @@ Path: @/games/speedrun
     -> updatePlayer(player, inputState, level, dt, config)
     -> clearFrameInput(inputState)        // consume jumpPressed
     -> check player.reachedGoal -> completeRun()
-    -> renderer.render(level, player, timer, gameState)
+    -> renderer.render(level, player, timer, gameState, stats, weekSeed)
   ```
 - **Level generation:** `level.js` uses `getWeeklySeed(date)` to derive an ISO week string (e.g. `"2026-W15"`), then `generateLevel(seed)` builds a 25x19 tile grid using a lane-based system. Three vertical bands (HIGH_LANE rows 3-7, MID_LANE rows 8-10, LOW_LANE rows 11-15) structure platforms into distinct high and low routes connected by mid-lane bridges. Coin placement is route-biased: red coins on high-route platforms, blue coins on low-route/ground surfaces, so 100% red and 100% blue categories require different paths through the level. BFS reachability check with bridge platform fallback remains as a safety net
 - **Physics:** `physics.js` implements acceleration-based movement, axis-separated AABB collision resolution, gravity with variable jump height (jump-cut multiplier when not holding jump), coyote time, input buffering, wall sliding, and wall jumping
 - **Stats persistence:** `stats.js` stores per-week personal bests in localStorage under `speedrun-stats-{weekSeed}`, tracking attempts and best times for three categories (any%, 100% red, 100% blue)
-- **Restart:** On "Try Again", coins are reset to uncollected, player is repositioned to start, timer restarts -- the same generated level is reused
+- **Restart:** `restartRun()` in `@/games/speedrun/src/game.js` resets player position/velocity, coin collected flags, and timer -- the same generated level is reused. Restart is triggered three ways: R key during PLAYING (mid-run reset, counts as an attempt), R key from COMPLETE, or Enter key from COMPLETE. A persistent `handleKeyDown()` listener in `main.js` handles keyboard restart separately from the movement input system in `input.js`
+- **HUD:** During gameplay, the renderer shows the week seed (top-right), PB any% time, and attempt count alongside the timer and coin counts. The week seed also appears on the READY screen
 
 ### Things to Know
 

@@ -58,3 +58,10 @@
 - Use ISO week number + year as seed: `"2026-W15"`.
 - `getISOWeek(date)` computes week number from UTC date.
 - Same week = same map for all players.
+
+## Speedrun QoL — Instant Restart & HUD Improvements
+- **Instant restart**: Speedrunning games universally support a single-key restart (typically R). The current implementation only supports restart via a button click after completing a run. There is no mid-run restart at all.
+- **Restart approach**: Handle R key as a separate `keydown` listener in `main.js`, outside the movement input system. The input system is tightly scoped to movement actions and should stay that way. The existing `startGame` one-shot listener is the established pattern for non-movement keys.
+- **Keyboard results dismissal**: The results overlay currently has no keyboard support. Adding Enter/R to dismiss matches standard game patterns.
+- **HUD additions**: The current HUD shows timer + coin counts. Adding PB any% time and attempt count during gameplay lets players gauge their pace in real-time — critical for the "shave off time" loop the spec targets.
+- **State transitions**: Game has READY→PLAYING→COMPLETE. Restart from PLAYING needs to reset player, coins, timer without showing results. Restart from COMPLETE needs to hide overlay first.

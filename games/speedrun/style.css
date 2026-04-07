@@ -111,6 +111,12 @@ h1 {
   background: #6aaf60;
 }
 
+.results-hint {
+  color: #818384;
+  font-size: 0.8rem;
+  margin-top: 0.75rem;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0s !important;

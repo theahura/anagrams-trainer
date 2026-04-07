@@ -1,10 +1,11 @@
 import { generateLevel, getWeeklySeed } from './level.js'
-import { createPlayer, resetPlayer } from './player.js'
+import { createPlayer } from './player.js'
 import { createPhysicsConfig, updatePlayer } from './physics.js'
 import { createInputState, setupInputListeners, clearFrameInput } from './input.js'
 import { createTimer, updateTimer, formatTime, createCompletionRecord } from './timing.js'
 import { loadStats, saveStats, updatePersonalBest } from './stats.js'
 import { createRenderer } from './renderer.js'
+import { restartRun } from './game.js'
 
 const CANVAS_WIDTH = 800
 const CANVAS_HEIGHT = 608
@@ -29,14 +30,12 @@ function init() {
   inputState = createInputState()
   setupInputListeners(inputState)
 
-  // Start game on any key press
-  document.addEventListener('keydown', startGame, { once: true })
+  document.addEventListener('keydown', handleKeyDown)
 
   requestAnimationFrame(gameLoop)
 }
 
 function startGame() {
-  if (gameState !== 'READY') return
   gameState = 'PLAYING'
   timer.running = true
 }
@@ -57,7 +56,7 @@ function gameLoop(timestamp) {
     clearFrameInput(inputState)
   }
 
-  renderer.render(level, player, timer, gameState)
+  renderer.render(level, player, timer, gameState, stats, weekSeed)
   requestAnimationFrame(gameLoop)
 }
 
@@ -122,20 +121,37 @@ function showResults(record) {
   btn.addEventListener('click', restart)
   content.appendChild(btn)
 
+  const hint = document.createElement('div')
+  hint.className = 'results-hint'
+  hint.textContent = 'Press R or Enter to restart'
+  content.appendChild(hint)
+
   overlay.classList.remove('hidden')
+}
+
+function handleKeyDown(e) {
+  if (gameState === 'READY') {
+    startGame()
+    return
+  }
+  if (e.key === 'r' || e.key === 'R') {
+    if (gameState === 'PLAYING') {
+      stats.attempts++
+      saveStats(weekSeed, stats)
+      restartRun(player, level, timer)
+    } else if (gameState === 'COMPLETE') {
+      restart()
+    }
+  } else if (e.key === 'Enter' && gameState === 'COMPLETE') {
+    restart()
+  }
 }
 
 function restart() {
   const overlay = document.getElementById('results-overlay')
   overlay.classList.add('hidden')
 
-  resetPlayer(player, level.start.x, level.start.y)
-  // Reset coin collected state
-  for (const coin of level.redCoins) coin.collected = false
-  for (const coin of level.blueCoins) coin.collected = false
-
-  timer.elapsed = 0
-  timer.running = true
+  restartRun(player, level, timer)
   gameState = 'PLAYING'
 }
 

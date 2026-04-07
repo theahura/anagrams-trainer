@@ -17,7 +17,7 @@ const COLORS = {
 export function createRenderer(canvas) {
   const ctx = canvas.getContext('2d')
 
-  function render(level, player, timer, state) {
+  function render(level, player, timer, state, stats, weekSeed) {
     const w = canvas.width
     const h = canvas.height
     const ts = level.tileSize
@@ -69,13 +69,13 @@ export function createRenderer(canvas) {
     )
 
     // Draw HUD
-    drawHUD(ctx, w, timer, player, level, state)
+    drawHUD(ctx, w, timer, player, level, state, stats, weekSeed)
   }
 
   return { render }
 }
 
-function drawHUD(ctx, canvasWidth, timer, player, level, state) {
+function drawHUD(ctx, canvasWidth, timer, player, level, state, stats, weekSeed) {
   ctx.font = '16px monospace'
   ctx.textBaseline = 'top'
 
@@ -86,6 +86,13 @@ function drawHUD(ctx, canvasWidth, timer, player, level, state) {
     ctx.fillText('Press any key to start', canvasWidth / 2, 16)
     ctx.textAlign = 'left'
     ctx.font = '16px monospace'
+    // Show week in top-right even on ready screen
+    if (weekSeed) {
+      ctx.fillStyle = COLORS.textDim
+      ctx.textAlign = 'right'
+      ctx.fillText(weekSeed, canvasWidth - 8, 8)
+      ctx.textAlign = 'left'
+    }
     return
   }
 
@@ -101,4 +108,18 @@ function drawHUD(ctx, canvasWidth, timer, player, level, state) {
   ctx.fillText(`●${player.redCoins}/${redTotal}`, 8, 28)
   ctx.fillStyle = COLORS.blueCoin
   ctx.fillText(`●${player.blueCoins}/${blueTotal}`, 90, 28)
+
+  // PB and attempt info on the right side
+  ctx.textAlign = 'right'
+  if (weekSeed) {
+    ctx.fillStyle = COLORS.textDim
+    ctx.fillText(weekSeed, canvasWidth - 8, 8)
+  }
+  if (stats) {
+    ctx.fillStyle = COLORS.textDim
+    const pbText = stats.bestAnyPercent !== null ? formatTime(stats.bestAnyPercent) : '—'
+    ctx.fillText(`PB: ${pbText}`, canvasWidth - 8, 28)
+    ctx.fillText(`#${stats.attempts + 1}`, canvasWidth - 8, 48)
+  }
+  ctx.textAlign = 'left'
 }

@@ -35,7 +35,7 @@ Path: @/tests
 - **`speedrun/level.test.js`** -- Tests grid dimensions, seed determinism, start/goal placement, coin generation, and BFS reachability (verified across multiple seeds). A "multi-route level generation" suite verifies the lane-based design: red coins cluster in the upper half, blue coins cluster in the lower half, coins exist in both halves, and the two colors occupy spatially distinct regions (average Y positions). Also tests weekly seed consistency within a week and divergence across weeks
 - **`speedrun/timing.test.js`** -- Tests timer start state, elapsed tracking, pause/resume, `formatTime` output format (M:SS.mmm), and `createCompletionRecord` category logic (any% always recorded, 100% red/blue only when all coins of that color collected)
 - **`speedrun/stats.test.js`** -- Tests default stats on empty localStorage, round-trip persistence, per-week isolation, personal best update logic (faster replaces, slower keeps old), and first-time PB from null
-- **`speedrun/game-loop.test.js`** -- Integration tests: player initialization at start position, coin collection through simulated movement, and goal detection through simulated movement
+- **`speedrun/game-loop.test.js`** -- Integration tests: player initialization at start position, coin collection through simulated movement, goal detection through simulated movement, and `restartRun()` behavior (resets player position/velocity, coin counts, timer, and coin collected flags)
 
 ### Things to Know
 

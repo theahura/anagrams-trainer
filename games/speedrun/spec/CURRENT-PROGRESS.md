@@ -15,7 +15,7 @@ The 2D platformer "Speedrun" is functional with all core mechanics from the APPL
 - **Canvas rendering**: Dark theme, basic shapes (rectangles for tiles/player, circles for coins, glow for goal)
 - **Results overlay**: DOM-based results screen with times, PBs, restart button
 - **Vite integration**: Added as MPA entry, game card on launcher index
-- **43 tests**: Physics (10), level generation (13), timing (12), stats (5), integration (3)
+- **47 tests**: Physics (10), level generation (13), timing (12), stats (5), integration (7 — includes 4 restartRun tests)
 
 ## Architecture
 - **Pure HTML5 Canvas**: No framework — game loop via requestAnimationFrame
@@ -23,6 +23,14 @@ The 2D platformer "Speedrun" is functional with all core mechanics from the APPL
 - **State ownership**: `main.js` owns all state objects, passes them to pure functions
 - **Rendering**: Canvas 2D for gameplay, DOM overlay for results
 - **Weekly seed**: `getWeeklySeed(date)` returns ISO week string; same week = same level
+
+## Recently Added
+- **Instant restart (R key)**: Players can press R mid-run to restart immediately without completing the run. Counts as an attempt.
+- **Keyboard controls on results**: R or Enter to restart from the results overlay (no mouse click needed)
+- **HUD improvements**: Week seed displayed top-right, PB any% time and attempt count shown during gameplay
+- **`game.js` module**: Extracted `restartRun()` as a shared, DOM-free, testable function for game state reset
+- **Results hint**: "Press R or Enter to restart" shown on results overlay
+- **4 new tests**: `restartRun()` behavior — player reset, coin reset, timer reset, coin collected flags
 
 ## Remaining from APPLICATION-SPEC
 - Mobile/touch controls (spec doesn't mention, skipped for now — platformers need precise keyboard input)
