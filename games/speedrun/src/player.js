@@ -9,6 +9,8 @@ export function createPlayer(x, y) {
     coyoteTimer: 1, // start expired
     jumpBufferTimer: 1, // start expired
     jumpHeld: false,
+    wallJumpControlTimer: 0,
+    wallJumpForceDir: 0,
     redCoins: 0,
     blueCoins: 0,
     reachedGoal: false,
@@ -25,6 +27,8 @@ export function resetPlayer(player, x, y) {
   player.coyoteTimer = 1
   player.jumpBufferTimer = 1
   player.jumpHeld = false
+  player.wallJumpControlTimer = 0
+  player.wallJumpForceDir = 0
   player.redCoins = 0
   player.blueCoins = 0
   player.reachedGoal = false

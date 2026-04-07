@@ -262,6 +262,65 @@ describe('physics', () => {
     expect(player.vx).toBeLessThan(config.maxRunSpeed)
   })
 
+  it('wall jump control delay: holding opposing input does not reverse velocity within delay window', () => {
+    const config = createPhysicsConfig()
+    // Wide grid, no walls except right edge so player doesn't collide during test
+    const grid = Array.from({ length: 15 }, () => {
+      const row = Array(20).fill(0)
+      row[19] = 1 // right wall
+      return row
+    })
+    const level = makeLevel(grid)
+
+    // Player in the air, touching right wall
+    const player = createPlayer(19 * 32 - 20 - 1, 64)
+    player.wallDir = 1 // touching wall on right
+    player.vy = 50
+
+    // Wall jump: sets vx to -200 (away from right wall)
+    const jumpInput = { left: false, right: false, jump: true, jumpPressed: true }
+    updatePlayer(player, jumpInput, level, 1 / 60, config)
+    expect(player.vx).toBeLessThan(0)
+
+    // Hold right (back toward wall) for 12 frames (0.2s)
+    // Without control delay: airAccel=1200, +20/frame. After 12 frames: -200 + 240 = +40 (positive)
+    // With control delay (0.15s=9 frames forced left): velocity goes more negative first
+    const rightInput = { left: false, right: true, jump: true, jumpPressed: false }
+    for (let i = 0; i < 12; i++) {
+      updatePlayer(player, rightInput, level, 1 / 60, config)
+    }
+
+    // With control delay active, vx should still be negative after 12 frames
+    expect(player.vx).toBeLessThan(0)
+  })
+
+  it('wall jump control delay expires and input resumes control', () => {
+    const config = createPhysicsConfig()
+    const grid = Array.from({ length: 15 }, () => {
+      const row = Array(20).fill(0)
+      row[19] = 1
+      return row
+    })
+    const level = makeLevel(grid)
+
+    const player = createPlayer(19 * 32 - 20 - 1, 64)
+    player.wallDir = 1
+    player.vy = 50
+
+    // Wall jump
+    const jumpInput = { left: false, right: false, jump: true, jumpPressed: true }
+    updatePlayer(player, jumpInput, level, 1 / 60, config)
+
+    // Hold right continuously for 30 frames (0.5s — well past the 0.15s delay)
+    const rightInput = { left: false, right: true, jump: false, jumpPressed: false }
+    for (let i = 0; i < 30; i++) {
+      updatePlayer(player, rightInput, level, 1 / 60, config)
+    }
+
+    // After delay expired + many frames of right input, vx should be positive
+    expect(player.vx).toBeGreaterThan(0)
+  })
+
   it('player respects max fall speed', () => {
     const config = createPhysicsConfig()
     const grid = [

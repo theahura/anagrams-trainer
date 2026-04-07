@@ -65,3 +65,11 @@
 - **Keyboard results dismissal**: The results overlay currently has no keyboard support. Adding Enter/R to dismiss matches standard game patterns.
 - **HUD additions**: The current HUD shows timer + coin counts. Adding PB any% time and attempt count during gameplay lets players gauge their pace in real-time — critical for the "shave off time" loop the spec targets.
 - **State transitions**: Game has READY→PLAYING→COMPLETE. Restart from PLAYING needs to reset player, coins, timer without showing results. Restart from COMPLETE needs to hide overlay first.
+
+## Wall Jump Control Delay
+- **Problem**: `wallJumpControlDelay: 0.15` is configured in `createPhysicsConfig()` but never enforced in `updatePlayer()`. Players can immediately override wall jump horizontal velocity by holding back toward the wall, making wall jump chains trivial.
+- **Celeste's approach** (gold standard): Two player state fields — `wallJumpControlTimer` (countdown) and `wallJumpForceDir` (forced direction). During the window, horizontal input is overridden to the forced direction. The timer is set on wall jump and counts down each frame.
+- **Implementation**: Full override style — during the control delay window, the player accelerates in the forced (away-from-wall) direction regardless of input. This prevents cancelling wall jump momentum.
+- **Player state additions**: `wallJumpControlTimer` (starts at 0/expired), `wallJumpForceDir` (0 = none).
+- **Interaction**: Only affects horizontal movement input. Does not affect gravity, collision, wall detection, or wall sliding.
+- **Config value**: 0.15s matches Celeste's 0.16s closely. No change needed.

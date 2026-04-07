@@ -29,6 +29,16 @@ export function createPhysicsConfig() {
 export function updatePlayer(player, input, level, dt, config) {
   const wasGrounded = player.grounded
 
+  // Tick wall jump control timer
+  if (player.wallJumpControlTimer > 0) {
+    player.wallJumpControlTimer = Math.max(0, player.wallJumpControlTimer - dt)
+  }
+
+  // Clear control timer on grounding
+  if (player.grounded) {
+    player.wallJumpControlTimer = 0
+  }
+
   // Update coyote timer
   if (wasGrounded) {
     player.coyoteTimer = 0
@@ -50,9 +60,17 @@ export function updatePlayer(player, input, level, dt, config) {
   const accel = player.grounded ? config.groundAccel : config.airAccel
   const decel = config.groundDecel
 
-  if (input.left) {
+  // During wall jump control delay, override input with forced direction
+  let moveLeft = input.left
+  let moveRight = input.right
+  if (player.wallJumpControlTimer > 0) {
+    moveLeft = player.wallJumpForceDir < 0
+    moveRight = player.wallJumpForceDir > 0
+  }
+
+  if (moveLeft) {
     player.vx = moveToward(player.vx, -config.maxRunSpeed, accel * dt)
-  } else if (input.right) {
+  } else if (moveRight) {
     player.vx = moveToward(player.vx, config.maxRunSpeed, accel * dt)
   } else {
     player.vx = moveToward(player.vx, 0, decel * dt)
@@ -74,6 +92,8 @@ export function updatePlayer(player, input, level, dt, config) {
       // Wall jump
       player.vy = config.wallJumpVerticalSpeed
       player.vx = -player.wallDir * config.wallJumpHorizontalSpeed
+      player.wallJumpForceDir = -player.wallDir
+      player.wallJumpControlTimer = config.wallJumpControlDelay
       player.wallDir = 0
       player.coyoteTimer = config.coyoteTime
       player.jumpBufferTimer = config.jumpBufferTime
@@ -97,7 +117,7 @@ export function updatePlayer(player, input, level, dt, config) {
 
   // Wall sliding
   if (player.wallDir !== 0 && player.vy > 0 && !player.grounded) {
-    if ((player.wallDir === 1 && input.right) || (player.wallDir === -1 && input.left)) {
+    if ((player.wallDir === 1 && moveRight) || (player.wallDir === -1 && moveLeft)) {
       player.vy = Math.min(player.vy, config.wallSlideMaxSpeed)
     }
   }
@@ -171,6 +191,7 @@ export function updatePlayer(player, input, level, dt, config) {
     player.vx = 0
     player.vy = 0
     player.grounded = false
+    player.wallJumpControlTimer = 0
   }
 }
 

@@ -7,7 +7,7 @@ The 2D platformer "Speedrun" is functional with all core mechanics from the APPL
 ## Completed
 - **Project scaffolding**: Follows monorepo pattern (`speedrun/index.html` entry, `games/speedrun/src/` source)
 - **Physics engine**: Gravity, jumping, tile-based AABB collision with axis-separated resolution
-- **Polished movement**: Variable jump height, coyote time (0.1s), input buffering (0.1s), wall sliding, wall jumping, acceleration-based horizontal movement
+- **Polished movement**: Variable jump height, coyote time (0.1s), input buffering (0.1s), wall sliding, wall jumping with control delay (0.15s), acceleration-based horizontal movement
 - **Procedural level generation**: Seeded via ISO week number, 25x19 tile grid, lane-based platform placement (high/mid/low routes), ground gaps, BFS reachability verification
 - **Coins**: Route-biased placement — red coins on high-route platforms, blue coins on low-route/ground platforms; collected on proximity
 - **Timing**: Three categories — any%, 100% red, 100% blue
@@ -15,7 +15,7 @@ The 2D platformer "Speedrun" is functional with all core mechanics from the APPL
 - **Canvas rendering**: Dark theme, basic shapes (rectangles for tiles/player, circles for coins, glow for goal)
 - **Results overlay**: DOM-based results screen with times, PBs, restart button
 - **Vite integration**: Added as MPA entry, game card on launcher index
-- **47 tests**: Physics (10), level generation (13), timing (12), stats (5), integration (7 — includes 4 restartRun tests)
+- **49 tests**: Physics (12), level generation (11), timing (12), stats (5), integration (7 — includes 4 restartRun tests), repo structure (2 speedrun-related)
 
 ## Architecture
 - **Pure HTML5 Canvas**: No framework — game loop via requestAnimationFrame
@@ -25,12 +25,8 @@ The 2D platformer "Speedrun" is functional with all core mechanics from the APPL
 - **Weekly seed**: `getWeeklySeed(date)` returns ISO week string; same week = same level
 
 ## Recently Added
-- **Instant restart (R key)**: Players can press R mid-run to restart immediately without completing the run. Counts as an attempt.
-- **Keyboard controls on results**: R or Enter to restart from the results overlay (no mouse click needed)
-- **HUD improvements**: Week seed displayed top-right, PB any% time and attempt count shown during gameplay
-- **`game.js` module**: Extracted `restartRun()` as a shared, DOM-free, testable function for game state reset
-- **Results hint**: "Press R or Enter to restart" shown on results overlay
-- **4 new tests**: `restartRun()` behavior — player reset, coin reset, timer reset, coin collected flags
+- **Wall jump control delay**: Celeste-style 0.15s control lockout after wall jumps — forces player away from wall, preventing trivial momentum cancellation. Uses `wallJumpControlTimer` and `wallJumpForceDir` player state fields. Timer clears on grounding.
+- **2 new physics tests**: Wall jump control delay enforcement and input resumption after delay expiry
 
 ## Remaining from APPLICATION-SPEC
 - Mobile/touch controls (spec doesn't mention, skipped for now — platformers need precise keyboard input)
