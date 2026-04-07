@@ -25,7 +25,7 @@
         >
           <template #timer>
             <span id="letter-score">Letters: {{ runningLetterScore }}</span>
-            <span class="timer-display">{{ timerDisplay }}</span>
+            <span class="timer-display" :class="{ 'timer-warning': timerWarning }">{{ timerDisplay }}</span>
           </template>
         </GameBoard>
 
@@ -71,11 +71,21 @@ const state = reactive({
   inputLetters: [],
   startTime: null,
   roundStartTime: null,
+  roundDeadline: null,
   transitioning: false,
 });
 
 let timerInterval = null;
-const timerDisplay = ref('0:00');
+const ROUND_TIME_MS = window.matchMedia('(pointer: coarse)').matches ? 70000 : 60000;
+const timerDisplay = ref(formatRoundTime(ROUND_TIME_MS));
+const timerWarning = ref(false);
+
+function formatRoundTime(ms) {
+  const seconds = Math.max(0, Math.ceil(ms / 1000));
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
 
 let audio = null;
 
@@ -112,13 +122,16 @@ const lifetimeStats = ref(null);
 function startTimer() {
   if (!state.startTime) state.startTime = Date.now();
   state.roundStartTime = Date.now();
+  state.roundDeadline = Date.now() + ROUND_TIME_MS;
+  timerWarning.value = false;
   if (timerInterval) clearInterval(timerInterval);
   timerInterval = setInterval(() => {
-    const elapsed = Date.now() - state.startTime;
-    const seconds = Math.floor(elapsed / 1000);
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    timerDisplay.value = `${mins}:${secs.toString().padStart(2, '0')}`;
+    const remaining = state.roundDeadline - Date.now();
+    timerDisplay.value = formatRoundTime(remaining);
+    timerWarning.value = remaining <= 10000;
+    if (remaining <= 0) {
+      handleSkip();
+    }
   }, 100);
 }
 

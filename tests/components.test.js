@@ -137,6 +137,8 @@ describe('ScoreScreen', () => {
       bestLetterScore: 40,
       longestWord: 'strange',
       totalSkips: 8,
+      perfectGamesPlayed: 3,
+      perfectGamesTotalTimeMs: 180000,
     };
     const wrapper = mount(ScoreScreen, {
       props: { results, dateStr: '2026-04-05', totalTimeMs: 12000, lifetimeStats },
@@ -144,8 +146,8 @@ describe('ScoreScreen', () => {
     expect(wrapper.text()).toContain('Lifetime Stats');
     expect(wrapper.text()).toContain('150');
     expect(wrapper.text()).toContain('30');
-    expect(wrapper.text()).toContain('0:45');
-    expect(wrapper.text()).toContain('1:00');
+    expect(wrapper.text()).toContain('0:45'); // fastest time
+    expect(wrapper.text()).toContain('1:00'); // avg time = 180000 / 3 = 60000ms
     expect(wrapper.text()).toContain('STRANGE');
   });
 
@@ -154,6 +156,36 @@ describe('ScoreScreen', () => {
       props: { results, dateStr: '2026-04-05', totalTimeMs: 12000, lifetimeStats: null },
     });
     expect(wrapper.text()).not.toContain('Lifetime Stats');
+  });
+
+  it('shows N/A for avg time and fastest time when no perfect games played', () => {
+    const lifetimeStats = {
+      totalLetters: 50, totalWords: 8, fastestTimeMs: null,
+      totalTimeMs: 100000, gamesPlayed: 2, bestLetterScore: 30,
+      longestWord: 'test', totalSkips: 3,
+      perfectGamesPlayed: 0, perfectGamesTotalTimeMs: 0,
+    };
+    const wrapper = mount(ScoreScreen, {
+      props: { results, dateStr: '2026-04-05', totalTimeMs: 12000, lifetimeStats },
+    });
+    const text = wrapper.text();
+    // Should show N/A for both fastest and avg since no perfect games
+    expect(text).toMatch(/Fastest Time.*N\/A|N\/A.*Fastest Time/s);
+    expect(text).toMatch(/Avg Time.*N\/A|N\/A.*Avg Time/s);
+  });
+
+  it('computes avg time from perfect games only', () => {
+    const lifetimeStats = {
+      totalLetters: 150, totalWords: 30, fastestTimeMs: 30000,
+      totalTimeMs: 500000, gamesPlayed: 10, bestLetterScore: 40,
+      longestWord: 'strange', totalSkips: 8,
+      perfectGamesPlayed: 2, perfectGamesTotalTimeMs: 90000,
+    };
+    const wrapper = mount(ScoreScreen, {
+      props: { results, dateStr: '2026-04-05', totalTimeMs: 12000, lifetimeStats },
+    });
+    // Avg = 90000 / 2 = 45000ms = 0:45
+    expect(wrapper.text()).toContain('0:45');
   });
 });
 
