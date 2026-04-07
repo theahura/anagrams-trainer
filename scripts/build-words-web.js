@@ -1,13 +1,12 @@
 import { writeFileSync, readFileSync, existsSync } from 'fs';
 import { fetchExpansionsFromWeb, fetchWordsFromWeb, groupByExpansionKey } from './web-scraper.js';
+import { trimPuzzleData } from './build-words.js';
 
 const OUTPUT_PATH = new URL('../games/reword/data/puzzles.json', import.meta.url).pathname;
 const CACHE_PATH = new URL('../games/reword/data/web-cache.json', import.meta.url).pathname;
 const MIN_EXPANSIONS = 3;
 const DELAY_MS = 500;
 const MAX_ROOTS_PER_LENGTH = 500;
-const MAX_KEYS_PER_ROOT = 30;
-const MAX_WORDS_PER_KEY = 5;
 
 // TWL06 fallback for +3 letter expansions (website max 2 wildcards)
 const WORD_LIST_URL = 'https://raw.githubusercontent.com/cviebrock/wordlists/master/TWL06.txt';
@@ -85,29 +84,12 @@ async function main() {
   // Save final cache
   saveCache(cache);
 
-  // Trim expansion data (same logic as TWL06 build)
-  for (const roots of Object.values(puzzleData)) {
-    for (const entry of roots) {
-      for (const key of Object.keys(entry.expansions)) {
-        if (entry.expansions[key].length > MAX_WORDS_PER_KEY) {
-          entry.expansions[key] = entry.expansions[key].slice(0, MAX_WORDS_PER_KEY);
-        }
-      }
-      const keys = Object.keys(entry.expansions);
-      if (keys.length > MAX_KEYS_PER_ROOT) {
-        keys.sort((a, b) => a.length - b.length || a.localeCompare(b));
-        const keepKeys = new Set(keys.slice(0, MAX_KEYS_PER_ROOT));
-        for (const key of keys) {
-          if (!keepKeys.has(key)) delete entry.expansions[key];
-        }
-      }
-    }
-  }
+  const trimmed = trimPuzzleData(puzzleData);
 
-  writeFileSync(OUTPUT_PATH, JSON.stringify(puzzleData));
+  writeFileSync(OUTPUT_PATH, JSON.stringify(trimmed));
   console.log(`Wrote puzzle data to ${OUTPUT_PATH}`);
 
-  const sizeKB = (JSON.stringify(puzzleData).length / 1024).toFixed(1);
+  const sizeKB = (JSON.stringify(trimmed).length / 1024).toFixed(1);
   console.log(`Data size: ${sizeKB} KB`);
 }
 
