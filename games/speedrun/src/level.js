@@ -10,10 +10,17 @@ const GRID_W = 25
 const GRID_H = 19
 const TILE_SIZE = 32
 
+const JUMP_H = 4
+const JUMP_D = 5
+
+const HIGH_LANE = { minRow: 3, maxRow: 7 }
+const LOW_LANE = { minRow: 11, maxRow: 15 }
+const MID_LANE = { minRow: 8, maxRow: 10 }
+
 export function getWeeklySeed(date) {
   const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
-  const dayOfWeek = d.getUTCDay() || 7 // Convert Sunday=0 to 7
-  d.setUTCDate(d.getUTCDate() + 4 - dayOfWeek) // Thursday of this week
+  const dayOfWeek = d.getUTCDay() || 7
+  d.setUTCDate(d.getUTCDate() + 4 - dayOfWeek)
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
   const weekNumber = Math.ceil(((d - yearStart) / 86400000 + 1) / 7)
   return `${d.getUTCFullYear()}-W${String(weekNumber).padStart(2, '0')}`
@@ -29,50 +36,16 @@ export function generateLevel(seed) {
     grid[GRID_H - 2][x] = TILE.SOLID
   }
 
-  // Add some ground gaps (pits) — skip first 3 and last 3 columns to keep start/end safe
+  // Add ground gaps (pits)
   for (let x = 4; x < GRID_W - 4; x++) {
     if (rng() < 0.12) {
       grid[GRID_H - 1][x] = TILE.EMPTY
       grid[GRID_H - 2][x] = TILE.EMPTY
-      // Sometimes make wider pits
       if (x + 1 < GRID_W - 4 && rng() < 0.5) {
         grid[GRID_H - 1][x + 1] = TILE.EMPTY
         grid[GRID_H - 2][x + 1] = TILE.EMPTY
-        x++ // skip next column
+        x++
       }
-    }
-  }
-
-  // Place platforms
-  const platforms = []
-  const numPlatforms = 8 + Math.floor(rng() * 5) // 8-12 platforms
-  for (let i = 0; i < numPlatforms; i++) {
-    const platWidth = 2 + Math.floor(rng() * 4) // 2-5 tiles wide
-    const platX = 1 + Math.floor(rng() * (GRID_W - platWidth - 2))
-    const platY = 4 + Math.floor(rng() * (GRID_H - 7)) // rows 4 to GRID_H-4
-
-    let canPlace = true
-    for (let dx = 0; dx < platWidth; dx++) {
-      if (grid[platY][platX + dx] === TILE.SOLID) {
-        canPlace = false
-        break
-      }
-      // Don't place too close to other platforms vertically
-      if (platY > 0 && grid[platY - 1][platX + dx] === TILE.SOLID) {
-        canPlace = false
-        break
-      }
-      if (platY + 1 < GRID_H && grid[platY + 1][platX + dx] === TILE.SOLID) {
-        canPlace = false
-        break
-      }
-    }
-
-    if (canPlace) {
-      for (let dx = 0; dx < platWidth; dx++) {
-        grid[platY][platX + dx] = TILE.SOLID
-      }
-      platforms.push({ x: platX, y: platY, width: platWidth })
     }
   }
 
@@ -82,16 +55,28 @@ export function generateLevel(seed) {
     grid[y][GRID_W - 1] = TILE.SOLID
   }
 
+  // Generate platform chains for high and low routes
+  const highPlatforms = generateLaneChain(grid, HIGH_LANE, rng, 2, GRID_W - 3)
+  const lowPlatforms = generateLaneChain(grid, LOW_LANE, rng, 2, GRID_W - 3)
+
+  // Add connector platforms in the mid lane
+  const connectors = placeConnectors(grid, highPlatforms, lowPlatforms, rng)
+
   // Start position: left side, on ground
   const startX = 2 * TILE_SIZE
-  const startY = findGroundY(grid, 2) * TILE_SIZE - PLAYER_HEIGHT // player height
+  const startY = findGroundY(grid, 2) * TILE_SIZE - PLAYER_HEIGHT
 
-  // Goal position: right side, on a high platform or ground
+  // Goal position: highest right-half high-route platform
   let goalX, goalY
-  // Try to place goal on the highest platform on the right half
-  const rightPlatforms = platforms.filter(p => p.x + p.width / 2 > GRID_W / 2).sort((a, b) => a.y - b.y)
-  if (rightPlatforms.length > 0) {
-    const goalPlat = rightPlatforms[0]
+  const rightHighPlatforms = highPlatforms
+    .filter(p => p.x + p.width / 2 > GRID_W / 2)
+    .sort((a, b) => a.y - b.y)
+  if (rightHighPlatforms.length > 0) {
+    const goalPlat = rightHighPlatforms[0]
+    goalX = (goalPlat.x + Math.floor(goalPlat.width / 2)) * TILE_SIZE
+    goalY = (goalPlat.y - 1) * TILE_SIZE
+  } else if (highPlatforms.length > 0) {
+    const goalPlat = highPlatforms[highPlatforms.length - 1]
     goalX = (goalPlat.x + Math.floor(goalPlat.width / 2)) * TILE_SIZE
     goalY = (goalPlat.y - 1) * TILE_SIZE
   } else {
@@ -99,35 +84,29 @@ export function generateLevel(seed) {
     goalY = findGroundY(grid, GRID_W - 3) * TILE_SIZE - PLAYER_HEIGHT
   }
 
-  // Place coins on platform surfaces
-  const coinPositions = []
-  for (const plat of platforms) {
-    for (let dx = 0; dx < plat.width; dx++) {
-      const cx = plat.x + dx
-      const cy = plat.y - 1
-      if (cy >= 0 && grid[cy][cx] === TILE.EMPTY) {
-        coinPositions.push({ x: cx * TILE_SIZE + TILE_SIZE / 2, y: cy * TILE_SIZE + TILE_SIZE / 2 })
-      }
-    }
-  }
-  // Also add some ground-level coin positions
+  // Route-biased coin placement
+  const highPositions = collectSurfacePositions(grid, highPlatforms)
+  const lowPositions = collectSurfacePositions(grid, lowPlatforms)
+
+  // Add ground-level positions to low route
   for (let x = 3; x < GRID_W - 3; x++) {
     const gy = findGroundY(grid, x)
-    if (gy > 0) {
-      coinPositions.push({ x: x * TILE_SIZE + TILE_SIZE / 2, y: (gy - 1) * TILE_SIZE + TILE_SIZE / 2 })
+    if (gy > 0 && grid[gy - 1][x] === TILE.EMPTY) {
+      lowPositions.push({ x: x * TILE_SIZE + TILE_SIZE / 2, y: (gy - 1) * TILE_SIZE + TILE_SIZE / 2 })
     }
   }
 
-  // Shuffle and pick coins
-  shuffle(coinPositions, rng)
-  const numRed = 3 + Math.floor(rng() * 3) // 3-5
-  const numBlue = 3 + Math.floor(rng() * 3) // 3-5
-  const redCoins = coinPositions.slice(0, Math.min(numRed, coinPositions.length))
-    .map(c => ({ ...c, collected: false }))
-  const blueCoins = coinPositions.slice(numRed, Math.min(numRed + numBlue, coinPositions.length))
-    .map(c => ({ ...c, collected: false }))
+  shuffle(highPositions, rng)
+  shuffle(lowPositions, rng)
 
-  // Verify reachability — if not reachable, add bridge platforms
+  const numRed = 3 + Math.floor(rng() * 3)
+  const numBlue = 3 + Math.floor(rng() * 3)
+
+  // Red coins from high positions, blue from low positions
+  // Fall back to the other pool if primary is empty
+  const redCoins = pickCoins(numRed, highPositions.length > 0 ? highPositions : lowPositions)
+  const blueCoins = pickCoins(numBlue, lowPositions.length > 0 ? lowPositions : highPositions)
+
   const level = {
     grid,
     width: GRID_W,
@@ -144,6 +123,110 @@ export function generateLevel(seed) {
   }
 
   return level
+}
+
+function generateLaneChain(grid, lane, rng, startCol, endCol) {
+  const platforms = []
+  let currentX = startCol
+
+  while (currentX < endCol - 1) {
+    const platWidth = 2 + Math.floor(rng() * 3)
+    const gap = 2 + Math.floor(rng() * (JUMP_D - 2))
+    const platX = currentX + gap
+
+    if (platX + platWidth > endCol) break
+
+    let platY
+    if (platforms.length === 0) {
+      platY = lane.minRow + Math.floor(rng() * (lane.maxRow - lane.minRow + 1))
+    } else {
+      const prev = platforms[platforms.length - 1]
+      const minY = Math.max(lane.minRow, prev.y - JUMP_H + 1)
+      const maxY = Math.min(lane.maxRow, prev.y + JUMP_H - 1)
+      platY = minY + Math.floor(rng() * (maxY - minY + 1))
+    }
+
+    if (canPlacePlatform(grid, platX, platY, platWidth)) {
+      for (let dx = 0; dx < platWidth; dx++) {
+        grid[platY][platX + dx] = TILE.SOLID
+      }
+      platforms.push({ x: platX, y: platY, width: platWidth })
+      currentX = platX + platWidth
+    } else {
+      currentX = platX + 1
+    }
+  }
+
+  return platforms
+}
+
+function canPlacePlatform(grid, x, y, width) {
+  for (let dx = 0; dx < width; dx++) {
+    const col = x + dx
+    if (col < 0 || col >= GRID_W || y < 0 || y >= GRID_H) return false
+    if (grid[y][col] === TILE.SOLID) return false
+    if (y > 0 && grid[y - 1][col] === TILE.SOLID) return false
+    if (y + 1 < GRID_H && grid[y + 1][col] === TILE.SOLID) return false
+  }
+  return true
+}
+
+function placeConnectors(grid, highPlatforms, lowPlatforms, rng) {
+  const connectors = []
+  const numConnectors = 2 + Math.floor(rng() * 2)
+
+  const candidateCols = []
+  for (const hp of highPlatforms) {
+    for (const lp of lowPlatforms) {
+      const midCol = Math.floor((hp.x + hp.width / 2 + lp.x + lp.width / 2) / 2)
+      candidateCols.push(midCol)
+    }
+  }
+
+  if (candidateCols.length === 0) {
+    for (let i = 0; i < numConnectors; i++) {
+      candidateCols.push(3 + Math.floor(rng() * (GRID_W - 6)))
+    }
+  }
+
+  shuffle(candidateCols, rng)
+
+  for (let i = 0; i < Math.min(numConnectors, candidateCols.length); i++) {
+    const col = candidateCols[i]
+    const width = 2 + Math.floor(rng() * 2)
+    const row = MID_LANE.minRow + Math.floor(rng() * (MID_LANE.maxRow - MID_LANE.minRow + 1))
+
+    if (canPlacePlatform(grid, col, row, width)) {
+      for (let dx = 0; dx < width; dx++) {
+        grid[row][col + dx] = TILE.SOLID
+      }
+      connectors.push({ x: col, y: row, width })
+    }
+  }
+
+  return connectors
+}
+
+function collectSurfacePositions(grid, platforms) {
+  const positions = []
+  for (const plat of platforms) {
+    for (let dx = 0; dx < plat.width; dx++) {
+      const cx = plat.x + dx
+      const cy = plat.y - 1
+      if (cy >= 0 && grid[cy][cx] === TILE.EMPTY) {
+        positions.push({ x: cx * TILE_SIZE + TILE_SIZE / 2, y: cy * TILE_SIZE + TILE_SIZE / 2 })
+      }
+    }
+  }
+  return positions
+}
+
+function pickCoins(count, positions) {
+  const coins = []
+  for (let i = 0; i < Math.min(count, positions.length); i++) {
+    coins.push({ ...positions[i], collected: false })
+  }
+  return coins
 }
 
 function findGroundY(grid, col) {
@@ -171,15 +254,12 @@ function isReachable(level) {
   const queue = [[startTX, startTY]]
   visited.add(`${startTX},${startTY}`)
 
-  const jumpH = 4
-  const jumpD = 5
-
   while (queue.length > 0) {
     const [x, y] = queue.shift()
     if (x === goalTX && y === goalTY) return true
 
-    for (let dx = -jumpD; dx <= jumpD; dx++) {
-      for (let dy = -jumpH; dy <= jumpH; dy++) {
+    for (let dx = -JUMP_D; dx <= JUMP_D; dx++) {
+      for (let dy = -JUMP_H; dy <= JUMP_H; dy++) {
         if (dx === 0 && dy === 0) continue
         const nx = x + dx
         const ny = y + dy
@@ -201,7 +281,6 @@ function addBridgePlatforms(grid, level, rng) {
   const goalTX = Math.floor(goal.x / tileSize)
   const goalTY = Math.floor(goal.y / tileSize)
 
-  // Add stepping-stone platforms from left to right, ascending toward goal
   const steps = 3 + Math.floor(rng() * 3)
   for (let i = 1; i <= steps; i++) {
     const fraction = i / (steps + 1)

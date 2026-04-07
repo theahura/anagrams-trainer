@@ -34,6 +34,15 @@
 - Place collectibles on platform surfaces.
 - Start on ground level, end on high platform.
 
+## Multi-Route Level Generation (Lane-Based)
+- **Lane partitioning**: Divide vertical space into high lane (rows 3-7), mid lane (rows 8-12), low lane (rows 13-16), ground (rows 17-18).
+- **Route chains**: Place platforms left-to-right within each lane, ensuring each platform is reachable from the previous (horizontal gap <= jumpD=5, vertical gap <= jumpH=4).
+- **Connector platforms**: Place 2-3 platforms in the mid lane where jump envelopes of high and low routes overlap, enabling route-switching.
+- **Route-biased coin clustering**: Red coins placed predominantly on high-route platforms, blue coins on low-route platforms. Creates meaningful route decisions aligned with the any%/100%-red/100%-blue scoring categories.
+- **Constrained placement over post-hoc patching**: Instead of random scatter + BFS + bridge patching, generate reachable chains by construction. Eliminates the need for addBridgePlatforms() fallback in most cases.
+- **Gap sizing for difficulty**: High route uses larger gaps (4-5 tiles) rewarding precision; low route uses smaller gaps with more pits, rewarding speed.
+- **Single-screen constraint**: Since the entire level is visible, route decisions are about execution choice, not exploration. Both paths should be visually obvious.
+
 ## Existing PRNG — Reusable
 - `games/reword/src/prng.js` exports `getDailyRng(dateStr)`, `seededShuffle()`, `seededPick()`.
 - Uses cyrb128 hash + sfc32 PRNG. Fully deterministic.

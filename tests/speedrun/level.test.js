@@ -74,6 +74,37 @@ describe('level generation', () => {
   })
 })
 
+describe('multi-route level generation', () => {
+  it('red coins are predominantly in the upper half of the level', () => {
+    let totalRed = 0
+    let highRed = 0
+    for (let i = 0; i < 10; i++) {
+      const level = generateLevel(`route-red-${i}`)
+      const midY = (level.height * level.tileSize) / 2
+      for (const coin of level.redCoins) {
+        totalRed++
+        if (coin.y <= midY) highRed++
+      }
+    }
+    expect(highRed / totalRed).toBeGreaterThanOrEqual(0.6)
+  })
+
+  it('blue coins are predominantly in the lower half of the level', () => {
+    let totalBlue = 0
+    let lowBlue = 0
+    for (let i = 0; i < 10; i++) {
+      const level = generateLevel(`route-blue-${i}`)
+      const midY = (level.height * level.tileSize) / 2
+      for (const coin of level.blueCoins) {
+        totalBlue++
+        if (coin.y > midY) lowBlue++
+      }
+    }
+    expect(lowBlue / totalBlue).toBeGreaterThanOrEqual(0.6)
+  })
+
+})
+
 describe('weekly seed', () => {
   it('same date within a week produces same seed', () => {
     // Monday and Tuesday of the same week
