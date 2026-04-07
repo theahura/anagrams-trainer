@@ -85,16 +85,24 @@ export function generateLevel(seed) {
   }
 
   // Route-biased coin placement
-  const highPositions = collectSurfacePositions(grid, highPlatforms)
-  const lowPositions = collectSurfacePositions(grid, lowPlatforms)
+  const goalCenterX = goalX + TILE_SIZE / 2
+  const goalCenterY = goalY + TILE_SIZE / 2
+  const isOutsideGoal = (pos) =>
+    Math.abs(pos.x - goalCenterX) >= TILE_SIZE || Math.abs(pos.y - goalCenterY) >= TILE_SIZE
+
+  const allHighPositions = collectSurfacePositions(grid, highPlatforms)
+  const allLowPositions = collectSurfacePositions(grid, lowPlatforms)
 
   // Add ground-level positions to low route
   for (let x = 3; x < GRID_W - 3; x++) {
     const gy = findGroundY(grid, x)
     if (gy > 0 && grid[gy - 1][x] === TILE.EMPTY) {
-      lowPositions.push({ x: x * TILE_SIZE + TILE_SIZE / 2, y: (gy - 1) * TILE_SIZE + TILE_SIZE / 2 })
+      allLowPositions.push({ x: x * TILE_SIZE + TILE_SIZE / 2, y: (gy - 1) * TILE_SIZE + TILE_SIZE / 2 })
     }
   }
+
+  const highPositions = allHighPositions.filter(isOutsideGoal)
+  const lowPositions = allLowPositions.filter(isOutsideGoal)
 
   shuffle(highPositions, rng)
   shuffle(lowPositions, rng)

@@ -105,6 +105,24 @@ describe('multi-route level generation', () => {
 
 })
 
+describe('coin-goal separation', () => {
+  it('no coin overlaps the goal hitbox across many seeds', () => {
+    for (let i = 0; i < 50; i++) {
+      const level = generateLevel(`goal-overlap-${i}`)
+      const goalCenterX = level.goal.x + level.tileSize / 2
+      const goalCenterY = level.goal.y + level.tileSize / 2
+      const allCoins = [...level.redCoins, ...level.blueCoins]
+      for (const coin of allCoins) {
+        const withinGoal =
+          Math.abs(coin.x - goalCenterX) < level.tileSize &&
+          Math.abs(coin.y - goalCenterY) < level.tileSize
+        expect(withinGoal, `Coin at (${coin.x},${coin.y}) overlaps goal at (${goalCenterX},${goalCenterY}) for seed goal-overlap-${i}`).toBe(false)
+      }
+    }
+  })
+
+})
+
 describe('weekly seed', () => {
   it('same date within a week produces same seed', () => {
     // Monday and Tuesday of the same week
