@@ -7,6 +7,7 @@ Path: @/scripts
 - Contains two alternative build pipelines that each produce `@/games/reword/data/puzzles.json` in the same format
 - **`build-words.js`** (TWL06-based, `npm run build:words`) -- fast offline build using a bundled dictionary
 - **`build-words-web.js`** (web-sourced, `npm run build:words:web`) -- fetches expansion data from wordunscrambler.me, with `web-scraper.js` as its scraping/parsing module
+- **`generate-og-images.js`** -- Canvas-based script that programmatically generates OG share images for social media previews. Kept for reference; the actual `@/games/reword/og-image.png` was screenshotted from `@/games/reword/og-card.html` instead
 
 ### How it fits into the larger codebase
 

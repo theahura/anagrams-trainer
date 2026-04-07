@@ -28,6 +28,7 @@ Path: @/tests
 - **`build-words.test.js`** -- Tests letter signature sorting, expansion finding, a regression test verifying that "ski" + "r" produces "risk", and `trimPuzzleData` behavior (all expansion keys are preserved regardless of count, words-per-key limiting works)
 - **`web-scraper.test.js`** -- Tests the pure functions in `@/scripts/web-scraper.js`: HTML parsing, expansion key derivation, and grouping words by expansion key
 - **`sound.test.js`** -- Tests the sound module using a mock AudioContext. Verifies all play methods exist, mute/unmute toggling, and that all sound methods can be called without throwing
+- **`meta-tags.test.js`** -- Parses both HTML entry points (`@/reword/index.html` and `@/index.html`) via `happy-dom` and verifies OG and Twitter Card meta tags are present with expected values. Also checks that the `og-image.png` file exists on disk. Tests assert absolute URLs for image tags and correct card types (`summary_large_image` for Reword, `summary` for games index)
 - **`repo-structure.test.js`** -- Filesystem-level tests that verify the monorepo layout: root package name, games index page linking to Reword, Reword entry page referencing assets in `@/games/reword/`, and favicon existence with its HTML link tag in `@/reword/index.html`
 
 ### Things to Know
