@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reword — OG Card</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #121213;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+    }
+
+    .card {
+      width: 1200px;
+      height: 630px;
+      background: #121213;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .tiles-area {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 40px;
+    }
+
+    .dropping-tile {
+      position: relative;
+      left: 82px;
+      margin-bottom: 34px;
+      transform: rotate(-25deg);
+      transform-origin: bottom right;
+    }
+
+    .tile-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .tile {
+      width: 72px;
+      height: 72px;
+      background: #538d4e;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .tile.highlight {
+      background: #b59f3b;
+    }
+
+    .subtitle {
+      color: #6a6a6d;
+      font-size: 24px;
+      font-weight: 300;
+      font-style: italic;
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="tiles-area">
+      <div class="dropping-tile">
+        <div class="tile highlight">A</div>
+      </div>
+      <div class="tile-row">
+        <div class="tile">R</div>
+        <div class="tile">E</div>
+        <div class="tile">W</div>
+        <div class="tile highlight">O</div>
+        <div class="tile">R</div>
+        <div class="tile">D</div>
+      </div>
+    </div>
+    <div class="subtitle">a daily anagram puzzle</div>
+  </div>
+</body>
+</html>
