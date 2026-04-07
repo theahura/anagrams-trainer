@@ -589,6 +589,7 @@ describe('getTimeUntilMidnightUTC', () => {
 });
 
 describe('updateLifetimeStats', () => {
+  // gameRounds has a skip — NOT a perfect game
   const gameRounds = [
     { answer: 'coat', timeMs: 5000, root: 'cat', possibleAnswers: ['coat', 'taco'] },
     { answer: '', timeMs: 3000, root: 'dog', possibleAnswers: ['gods'] },
@@ -596,11 +597,15 @@ describe('updateLifetimeStats', () => {
   ];
   const gameTotalTimeMs = 45000;
 
+  // 11 solved rounds = perfect game
+  const perfectGameRounds = Array.from({ length: 11 }, (_, i) => ({
+    answer: 'word' + i, timeMs: 3000, root: 'wor', possibleAnswers: ['word' + i],
+  }));
+
   it('returns correctly initialized stats for first game (null existing)', () => {
     const stats = updateLifetimeStats(null, gameRounds, gameTotalTimeMs);
     expect(stats.totalLetters).toBe(4 + 5); // coat + diner
     expect(stats.totalWords).toBe(2);
-    expect(stats.fastestTimeMs).toBe(45000);
     expect(stats.totalTimeMs).toBe(45000);
     expect(stats.gamesPlayed).toBe(1);
     expect(stats.bestLetterScore).toBe(9);
@@ -610,14 +615,10 @@ describe('updateLifetimeStats', () => {
 
   it('accumulates totals across multiple games', () => {
     const existing = {
-      totalLetters: 20,
-      totalWords: 5,
-      fastestTimeMs: 30000,
-      totalTimeMs: 60000,
-      gamesPlayed: 2,
-      bestLetterScore: 15,
-      longestWord: 'strange',
-      totalSkips: 3,
+      totalLetters: 20, totalWords: 5, fastestTimeMs: 30000,
+      totalTimeMs: 60000, gamesPlayed: 2, bestLetterScore: 15,
+      longestWord: 'strange', totalSkips: 3,
+      perfectGamesPlayed: 1, perfectGamesTotalTimeMs: 30000,
     };
     const stats = updateLifetimeStats(existing, gameRounds, gameTotalTimeMs);
     expect(stats.totalLetters).toBe(20 + 9);
@@ -627,23 +628,36 @@ describe('updateLifetimeStats', () => {
     expect(stats.totalSkips).toBe(3 + 1);
   });
 
-  it('updates fastest time when new game is faster', () => {
+  it('does not update fastest time for imperfect game', () => {
     const existing = {
       totalLetters: 20, totalWords: 5, fastestTimeMs: 60000,
       totalTimeMs: 60000, gamesPlayed: 1, bestLetterScore: 15,
       longestWord: 'strange', totalSkips: 0,
+      perfectGamesPlayed: 1, perfectGamesTotalTimeMs: 60000,
     };
     const stats = updateLifetimeStats(existing, gameRounds, 45000);
+    expect(stats.fastestTimeMs).toBe(60000);
+  });
+
+  it('updates fastest time when perfect game is faster', () => {
+    const existing = {
+      totalLetters: 20, totalWords: 5, fastestTimeMs: 60000,
+      totalTimeMs: 60000, gamesPlayed: 1, bestLetterScore: 15,
+      longestWord: 'strange', totalSkips: 0,
+      perfectGamesPlayed: 1, perfectGamesTotalTimeMs: 60000,
+    };
+    const stats = updateLifetimeStats(existing, perfectGameRounds, 45000);
     expect(stats.fastestTimeMs).toBe(45000);
   });
 
-  it('keeps existing fastest time when new game is slower', () => {
+  it('keeps existing fastest time when perfect game is slower', () => {
     const existing = {
       totalLetters: 20, totalWords: 5, fastestTimeMs: 30000,
       totalTimeMs: 30000, gamesPlayed: 1, bestLetterScore: 15,
       longestWord: 'strange', totalSkips: 0,
+      perfectGamesPlayed: 1, perfectGamesTotalTimeMs: 30000,
     };
-    const stats = updateLifetimeStats(existing, gameRounds, 45000);
+    const stats = updateLifetimeStats(existing, perfectGameRounds, 45000);
     expect(stats.fastestTimeMs).toBe(30000);
   });
 
@@ -652,6 +666,7 @@ describe('updateLifetimeStats', () => {
       totalLetters: 10, totalWords: 3, fastestTimeMs: 30000,
       totalTimeMs: 30000, gamesPlayed: 1, bestLetterScore: 10,
       longestWord: 'cat', totalSkips: 0,
+      perfectGamesPlayed: 1, perfectGamesTotalTimeMs: 30000,
     };
     const stats = updateLifetimeStats(existing, gameRounds, gameTotalTimeMs);
     expect(stats.longestWord).toBe('diner');
@@ -662,6 +677,7 @@ describe('updateLifetimeStats', () => {
       totalLetters: 20, totalWords: 5, fastestTimeMs: 30000,
       totalTimeMs: 60000, gamesPlayed: 2, bestLetterScore: 15,
       longestWord: 'strangest', totalSkips: 0,
+      perfectGamesPlayed: 1, perfectGamesTotalTimeMs: 30000,
     };
     const stats = updateLifetimeStats(existing, gameRounds, gameTotalTimeMs);
     expect(stats.longestWord).toBe('strangest');
@@ -672,6 +688,7 @@ describe('updateLifetimeStats', () => {
       totalLetters: 5, totalWords: 2, fastestTimeMs: 30000,
       totalTimeMs: 30000, gamesPlayed: 1, bestLetterScore: 5,
       longestWord: 'coat', totalSkips: 0,
+      perfectGamesPlayed: 1, perfectGamesTotalTimeMs: 30000,
     };
     const stats = updateLifetimeStats(existing, gameRounds, gameTotalTimeMs);
     expect(stats.bestLetterScore).toBe(9);
@@ -700,6 +717,7 @@ describe('updateLifetimeStats', () => {
       totalLetters: 20, totalWords: 5, fastestTimeMs: 30000,
       totalTimeMs: 30000, gamesPlayed: 1, bestLetterScore: 15,
       longestWord: 'strange', totalSkips: 0,
+      perfectGamesPlayed: 1, perfectGamesTotalTimeMs: 30000,
     };
     const stats = updateLifetimeStats(existing, allSkips, 50000);
     expect(stats.totalLetters).toBe(20);
@@ -707,5 +725,45 @@ describe('updateLifetimeStats', () => {
     expect(stats.totalSkips).toBe(2);
     expect(stats.longestWord).toBe('strange');
     expect(stats.bestLetterScore).toBe(15);
+  });
+
+  it('tracks perfect game count and time for first perfect game', () => {
+    const stats = updateLifetimeStats(null, perfectGameRounds, 33000);
+    expect(stats.perfectGamesPlayed).toBe(1);
+    expect(stats.perfectGamesTotalTimeMs).toBe(33000);
+    expect(stats.fastestTimeMs).toBe(33000);
+  });
+
+  it('does not count imperfect game in perfect game stats', () => {
+    const stats = updateLifetimeStats(null, gameRounds, gameTotalTimeMs);
+    expect(stats.perfectGamesPlayed).toBe(0);
+    expect(stats.perfectGamesTotalTimeMs).toBe(0);
+    expect(stats.fastestTimeMs).toBe(null);
+  });
+
+  it('accumulates perfect game stats across multiple perfect games', () => {
+    const existing = {
+      totalLetters: 50, totalWords: 11, fastestTimeMs: 40000,
+      totalTimeMs: 40000, gamesPlayed: 1, bestLetterScore: 50,
+      longestWord: 'strange', totalSkips: 0,
+      perfectGamesPlayed: 1, perfectGamesTotalTimeMs: 40000,
+    };
+    const stats = updateLifetimeStats(existing, perfectGameRounds, 35000);
+    expect(stats.perfectGamesPlayed).toBe(2);
+    expect(stats.perfectGamesTotalTimeMs).toBe(40000 + 35000);
+    expect(stats.fastestTimeMs).toBe(35000);
+  });
+
+  it('does not change perfect game stats when imperfect game is played', () => {
+    const existing = {
+      totalLetters: 50, totalWords: 11, fastestTimeMs: 40000,
+      totalTimeMs: 40000, gamesPlayed: 1, bestLetterScore: 50,
+      longestWord: 'strange', totalSkips: 0,
+      perfectGamesPlayed: 1, perfectGamesTotalTimeMs: 40000,
+    };
+    const stats = updateLifetimeStats(existing, gameRounds, gameTotalTimeMs);
+    expect(stats.perfectGamesPlayed).toBe(1);
+    expect(stats.perfectGamesTotalTimeMs).toBe(40000);
+    expect(stats.fastestTimeMs).toBe(40000);
   });
 });
