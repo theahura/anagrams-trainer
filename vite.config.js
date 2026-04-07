@@ -11,6 +11,7 @@ export default defineConfig({
       input: {
         index: resolve(__dirname, 'index.html'),
         reword: resolve(__dirname, 'reword/index.html'),
+        speedrun: resolve(__dirname, 'speedrun/index.html'),
       },
     },
   },
