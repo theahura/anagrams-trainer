@@ -13,6 +13,8 @@ Path: @/games/reword
 
 - `@/index.html` is the games index page for the published site
 - `@/reword/index.html` is the standalone entry page for the Reword game
+- Both HTML entry points include Open Graph and Twitter Card meta tags for social media share previews. `@/reword/index.html` uses `summary_large_image` card type with an absolute image URL; `@/index.html` uses `summary` card type with no image. All `og:image` and `twitter:image` URLs are absolute (`https://amolkapoor.com/...`) as required by the OG spec
+- `@/games/reword/og-image.png` is a 1200x630 PNG share image used by the OG/Twitter meta tags. It was designed via `@/games/reword/og-card.html` (a standalone HTML mockup) and can also be regenerated programmatically via `@/scripts/generate-og-images.js`
 - `@/games/reword/style.css` defines the Reword game theme, tile styles, animations, virtual keyboard layout for touch devices, and score screen styling including countdown timer
 - `@/scripts/` contains two alternative build pipelines (`npm run build:words` for TWL06-based, `npm run build:words:web` for web-sourced via wordunscrambler.me) that both produce `@/games/reword/data/puzzles.json` in the same format
 - `@/games/reword/src/` contains the Reword runtime logic: Vue components plus pure-logic modules (`game.js`, `prng.js`, `words.js`, `sound.js`)
@@ -72,5 +74,6 @@ Path: @/games/reword
 - Sound effects use Web Audio API synthesis with zero external dependencies. `playKeyClick` uses a filtered white noise burst (bandpass filter at 1200Hz). AudioContext is lazily created on first user interaction. iOS Safari compatibility via `webkitAudioContext` fallback
 - `@/games/reword/src/ui.js` still exists in the codebase but is unused -- all UI logic was migrated to Vue components
 - Vite is the build tool; Vue 3 and Vitest are the primary dev dependencies
+- The site deploys to GitHub Pages but is served from `amolkapoor.com/games/`, which is the canonical base URL used in OG meta tags and `og:url`
 
 Created and maintained by Nori.
