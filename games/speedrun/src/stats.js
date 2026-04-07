@@ -3,14 +3,22 @@ const STORAGE_PREFIX = 'speedrun-stats-'
 export function loadStats(weekSeed) {
   const data = localStorage.getItem(STORAGE_PREFIX + weekSeed)
   if (!data) {
-    return {
-      attempts: 0,
-      bestAnyPercent: null,
-      bestHundredRed: null,
-      bestHundredBlue: null,
-    }
+    return defaultStats()
   }
-  return JSON.parse(data)
+  try {
+    return JSON.parse(data)
+  } catch {
+    return defaultStats()
+  }
+}
+
+function defaultStats() {
+  return {
+    attempts: 0,
+    bestAnyPercent: null,
+    bestHundredRed: null,
+    bestHundredBlue: null,
+  }
 }
 
 export function saveStats(weekSeed, stats) {

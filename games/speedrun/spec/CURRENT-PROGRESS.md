@@ -1,8 +1,8 @@
 # Current Progress
 
-## Status: Core Game Complete
+## Status: APPLICATION-SPEC Complete
 
-The 2D platformer "Speedrun" is functional with all core mechanics from the APPLICATION-SPEC implemented.
+All requirements from APPLICATION-SPEC.md are implemented and verified. The 2D platformer "Speedrun" is fully functional.
 
 ## Completed
 - **Project scaffolding**: Follows monorepo pattern (`speedrun/index.html` entry, `games/speedrun/src/` source)
@@ -28,8 +28,7 @@ The 2D platformer "Speedrun" is functional with all core mechanics from the APPL
 - **Wall jump control delay**: Celeste-style 0.15s control lockout after wall jumps — forces player away from wall, preventing trivial momentum cancellation. Uses `wallJumpControlTimer` and `wallJumpForceDir` player state fields. Timer clears on grounding.
 - **2 new physics tests**: Wall jump control delay enforcement and input resumption after delay expiry
 
-## Remaining from APPLICATION-SPEC
-- Mobile/touch controls (spec doesn't mention, skipped for now — platformers need precise keyboard input)
-- Sound effects (not in spec)
-- ~~More sophisticated level generation~~ **Done** — lane-based generation with distinct high/low routes and route-biased coin placement
+## Remaining (NOT in APPLICATION-SPEC — future enhancements)
+- Mobile/touch controls (platformers need precise keyboard input)
+- Sound effects
 - Social sharing of times

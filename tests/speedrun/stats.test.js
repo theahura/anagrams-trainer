@@ -54,6 +54,13 @@ describe('stats', () => {
     expect(updated.bestHundredBlue).toBe(18.0) // new record (was null)
   })
 
+  it('returns default stats when localStorage has corrupted data', () => {
+    localStorage.setItem('speedrun-stats-2026-W15', 'not-valid-json{{{')
+    const stats = loadStats('2026-W15')
+    expect(stats.attempts).toBe(0)
+    expect(stats.bestAnyPercent).toBeNull()
+  })
+
   it('sets PB from null when first time recorded', () => {
     const stats = {
       attempts: 0,

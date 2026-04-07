@@ -321,6 +321,32 @@ describe('physics', () => {
     expect(player.vx).toBeGreaterThan(0)
   })
 
+  it('respawn after falling off map resets jump timers', () => {
+    const config = createPhysicsConfig()
+    // Tall grid with ground, player starts high and falls off bottom
+    const grid = [
+      [0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0],
+      [1, 1, 1, 1, 1],
+      [1, 1, 1, 1, 1],
+    ]
+    const level = makeLevel(grid)
+    // Place player below the map boundary to trigger respawn on next frame
+    const player = createPlayer(64, level.height * level.tileSize + 10)
+    player.wallJumpControlTimer = 0.1
+    player.wallJumpForceDir = 1
+
+    const input = emptyInput()
+    updatePlayer(player, input, level, 1 / 60, config)
+
+    // After respawn, timers should be reset
+    expect(player.x).toBe(level.start.x)
+    expect(player.y).toBe(level.start.y)
+    expect(player.wallJumpControlTimer).toBe(0)
+    expect(player.wallJumpForceDir).toBe(0)
+  })
+
   it('player respects max fall speed', () => {
     const config = createPhysicsConfig()
     const grid = [

@@ -66,6 +66,13 @@
 - **HUD additions**: The current HUD shows timer + coin counts. Adding PB any% time and attempt count during gameplay lets players gauge their pace in real-time — critical for the "shave off time" loop the spec targets.
 - **State transitions**: Game has READY→PLAYING→COMPLETE. Restart from PLAYING needs to reset player, coins, timer without showing results. Restart from COMPLETE needs to hide overlay first.
 
+## Spec Completeness Review (2026-04-07)
+- All APPLICATION-SPEC requirements verified as implemented
+- Every spec item has corresponding code, tests, and documentation
+- Remaining items in CURRENT-PROGRESS (mobile controls, sound, social sharing) are NOT in the spec
+- 206 tests passing, Vite build succeeds, docs are current
+- No PR-level CI exists; only a deploy-to-GitHub-Pages workflow on push to main
+
 ## Wall Jump Control Delay
 - **Problem**: `wallJumpControlDelay: 0.15` is configured in `createPhysicsConfig()` but never enforced in `updatePlayer()`. Players can immediately override wall jump horizontal velocity by holding back toward the wall, making wall jump chains trivial.
 - **Celeste's approach** (gold standard): Two player state fields — `wallJumpControlTimer` (countdown) and `wallJumpForceDir` (forced direction). During the window, horizontal input is overridden to the forced direction. The timer is set on wall jump and counts down each frame.

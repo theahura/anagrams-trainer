@@ -191,7 +191,11 @@ export function updatePlayer(player, input, level, dt, config) {
     player.vx = 0
     player.vy = 0
     player.grounded = false
+    player.coyoteTimer = 1
+    player.jumpBufferTimer = 1
     player.wallJumpControlTimer = 0
+    player.wallJumpForceDir = 0
+    player.wallDir = 0
   }
 }
 

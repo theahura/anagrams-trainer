@@ -38,6 +38,7 @@ function init() {
 function startGame() {
   gameState = 'PLAYING'
   timer.running = true
+  clearFrameInput(inputState)
 }
 
 function gameLoop(timestamp) {
