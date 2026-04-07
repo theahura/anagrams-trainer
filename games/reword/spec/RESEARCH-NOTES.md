@@ -90,11 +90,12 @@ This simple substring check covers: adding s/es/ed/ing/er to end, and common pre
 - **JS role**: Add/remove CSS classes + listen for `animationend` events to chain sequences. No JS-driven animation.
 - **Existing codebase**: Already has `pop-in` keyframe on input tiles (0.15s), `.used` transitions (0.2s). Gap: no shake, no bounce, no round transition animation.
 
-## Bug: 3-Word-Per-Letter Cap Drops Valid Words
-- `build-words.js` line 72-75 caps at 3 words per expansion letter
-- For "ski" + "r", the dictionary has: irks, kirs, kris, risk — but "risk" is 4th and gets truncated
-- Fix: remove the cap entirely, or increase it significantly
-- This is the root cause of "ski → risk doesn't work"
+## Bug: Keys-Per-Root Cap Drops Valid Words (FIXED)
+- `build-words.js` previously capped at `MAX_KEYS_PER_ROOT = 30` expansion keys per root, sorted alphabetically with single-letter keys first
+- 66.7% of roots (2000/3000) hit this cap, causing valid multi-letter expansion keys to be silently dropped from `puzzles.json`
+- Example: root "dares" with letters "l","g","n" -- user tried "gardens" but the "gn" expansion key was dropped by the cap
+- The per-key words cap (`MAX_WORDS_PER_KEY`) was also raised from 3 to 5 in an earlier fix (the "ski + r = risk" issue)
+- Fix: removed the `MAX_KEYS_PER_ROOT` cap entirely. All expansion keys are now preserved. Trimming logic extracted into exported `trimPuzzleData()` function
 
 ## Web-Sourced Build Pipeline Research
 - **wordunscrambler.me HTML structure**: Words in `<a href="/dictionary/{word}">{word}</a>` tags, grouped under `<h3>` headings by word length

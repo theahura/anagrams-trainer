@@ -11,7 +11,7 @@ Path: @/tests
 
 - Tests import directly from `@/games/reword/src/prng.js`, `@/games/reword/src/game.js`, `@/games/reword/src/words.js`, `@/games/reword/src/sound.js`, and `@/scripts/web-scraper.js`
 - Vue component tests use `@vue/test-utils` to mount components from `@/games/reword/src/components/`
-- `build-words.test.js` tests the word processing functions that `@/scripts/build-words.js` depends on, not the build script itself
+- `build-words.test.js` tests the word processing functions from `@/games/reword/src/words.js` and the `trimPuzzleData` function exported from `@/scripts/build-words.js`
 - `web-scraper.test.js` tests the HTML parsing and expansion key derivation functions used by the web-sourced build pipeline
 
 ### Core Implementation
@@ -25,7 +25,7 @@ Path: @/tests
   - `GameBoard`: renders root word and offered letters in tile racks, shows round indicator, emits submit/skip events
   - `ScoreScreen`: displays solved count, per-round results, countdown timer, and conditionally renders lifetime stats section (present when prop provided, hidden when null)
   - `HowToPlay`: renders modal content and emits close on button click
-- **`build-words.test.js`** -- Tests letter signature sorting, expansion finding, and a regression test verifying that "ski" + "r" produces "risk"
+- **`build-words.test.js`** -- Tests letter signature sorting, expansion finding, a regression test verifying that "ski" + "r" produces "risk", and `trimPuzzleData` behavior (all expansion keys are preserved regardless of count, words-per-key limiting works)
 - **`web-scraper.test.js`** -- Tests the pure functions in `@/scripts/web-scraper.js`: HTML parsing, expansion key derivation, and grouping words by expansion key
 - **`sound.test.js`** -- Tests the sound module using a mock AudioContext. Verifies all play methods exist, mute/unmute toggling, and that all sound methods can be called without throwing
 - **`repo-structure.test.js`** -- Filesystem-level tests that verify the monorepo layout: root package name, games index page linking to Reword, Reword entry page referencing assets in `@/games/reword/`, and favicon existence with its HTML link tag in `@/reword/index.html`

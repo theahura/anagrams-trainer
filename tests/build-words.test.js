@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { letterSignature, findExpansions } from '../games/reword/src/words.js';
+import { trimPuzzleData } from '../scripts/build-words.js';
 
 const testDictionary = [
   'at', 'bat', 'cat', 'sat', 'tab', 'act',
@@ -70,5 +71,42 @@ describe('findExpansions with multi-letter support', () => {
     expect(expansions['r']).toContain('irks');
     expect(expansions['r']).toContain('kirs');
     expect(expansions['r']).toContain('kris');
+  });
+});
+
+describe('trimPuzzleData', () => {
+  it('does not drop expansion keys when a root has many distinct letter additions', () => {
+    const expansions = {};
+    const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+    for (const ch of alphabet) expansions[ch] = ['word_' + ch];
+    expansions['ab'] = ['combo1'];
+    expansions['cd'] = ['combo2'];
+    expansions['ef'] = ['combo3'];
+    expansions['gh'] = ['combo4'];
+    expansions['ij'] = ['combo5'];
+    expansions['kl'] = ['combo6'];
+
+    const inputKeys = Object.keys(expansions);
+    const puzzleData = { 3: [{ root: 'test', expansions }] };
+
+    const trimmed = trimPuzzleData(puzzleData);
+    const result = trimmed['3'][0].expansions;
+
+    for (const key of inputKeys) {
+      expect(result).toHaveProperty(key);
+    }
+  });
+
+  it('limits the number of words returned for each expansion key', () => {
+    const manyWords = Array.from({ length: 20 }, (_, i) => 'w' + i);
+    const puzzleData = { 3: [{ root: 'test', expansions: { a: manyWords } }] };
+
+    const trimmed = trimPuzzleData(puzzleData);
+    const words = trimmed['3'][0].expansions['a'];
+
+    expect(words).toHaveLength(5);
+    for (const w of words) {
+      expect(manyWords).toContain(w);
+    }
   });
 });

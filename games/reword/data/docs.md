@@ -31,13 +31,13 @@ Path: @/games/reword/data
   }
   ```
 - Each `expansions` object maps an added-letters key (variable length: `"r"`, `"el"`, `"egr"`) to an array of valid anagram words. All valid dictionary words are included without any substring filtering
-- Capped at 500 entries per word length, 30 keys per root, 5 words per key
+- Capped at 500 entries per word length, 5 words per key. All expansion keys are preserved without any cap on the number of keys per root
 
 ### Things to Know
 
 - This file must be regenerated via `npm run build:words` or `npm run build:words:web` if the dictionary source or filtering logic changes
 - The web-sourced build also produces `@/games/reword/data/web-cache.json` (gitignored), which caches raw fetch results from wordunscrambler.me to avoid re-scraping
 - No substring or trivial-extension filtering is applied -- all valid dictionary anagrams are included. Word acceptance is based purely on dictionary lookup and offered-letter availability at runtime
-- The file is approximately 1.7MB due to multi-letter expansion entries (up from ~155KB when only single-letter expansions were stored)
+- The file is approximately 14.5MB raw (~1.9MB gzipped) due to preserving all expansion keys. Previous versions capped at 30 keys per root, which dropped valid expansion keys and caused word rejections during gameplay
 
 Created and maintained by Nori.

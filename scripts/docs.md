@@ -27,14 +27,16 @@ Path: @/scripts
     | 6 | 2 |
     | 7+ | 1 |
 
-  - Applies size caps: 500 roots per length, 30 keys per root, 5 words per key
+  - Trimming is handled by the exported `trimPuzzleData()` function, which applies size caps: 500 roots per length, 5 words per key. All expansion keys are preserved regardless of count
+  - `trimPuzzleData()` is exported so it can be tested independently without running the full build pipeline (`@/tests/build-words.test.js`)
+  - The script only runs `main()` when executed directly (ESM direct-run detection via `fileURLToPath`)
 
 - **`build-words-web.js` (web pipeline):**
   - Downloads TWL06 only to identify candidate root words (same dictionary as the offline build)
   - For each candidate root, calls `fetchExpansionsFromWeb(root, 2)` which queries wordunscrambler.me with wildcard patterns (e.g., `rind*`, `rind**`)
   - Results are cached in `games/reword/data/web-cache.json` (gitignored) to avoid redundant scraping; cache is saved every 50 fetches
   - Rate-limited with a 500ms delay between non-cached fetches
-  - Applies the same size caps as the TWL06 build
+  - Applies size caps: 500 roots per length, 5 words per key. All expansion keys are preserved
   - Website limitation: max 2 wildcards, so only +1 and +2 letter expansions come from the web
 
 - **`web-scraper.js` (scraping module):**
