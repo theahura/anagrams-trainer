@@ -188,30 +188,45 @@ export function updateLifetimeStats(existingStats, completedRounds, totalTimeMs)
   const gameLongestWord = solvedRounds.reduce(
     (longest, r) => r.answer.length > longest.length ? r.answer : longest, ''
   );
+  const isPerfect = completedRounds.length === 11 && gameSkips === 0;
 
   if (!existingStats) {
     return {
       totalLetters: gameLetters,
       totalWords: gameWords,
-      fastestTimeMs: totalTimeMs,
+      fastestTimeMs: isPerfect ? totalTimeMs : null,
       totalTimeMs,
       gamesPlayed: 1,
       bestLetterScore: gameLetters,
       longestWord: gameLongestWord,
       totalSkips: gameSkips,
+      perfectGamesPlayed: isPerfect ? 1 : 0,
+      perfectGamesTotalTimeMs: isPerfect ? totalTimeMs : 0,
     };
+  }
+
+  const prevFastest = existingStats.fastestTimeMs;
+  let newFastest;
+  if (!isPerfect) {
+    newFastest = prevFastest;
+  } else if (prevFastest === null) {
+    newFastest = totalTimeMs;
+  } else {
+    newFastest = Math.min(prevFastest, totalTimeMs);
   }
 
   return {
     totalLetters: existingStats.totalLetters + gameLetters,
     totalWords: existingStats.totalWords + gameWords,
-    fastestTimeMs: Math.min(existingStats.fastestTimeMs, totalTimeMs),
+    fastestTimeMs: newFastest,
     totalTimeMs: existingStats.totalTimeMs + totalTimeMs,
     gamesPlayed: existingStats.gamesPlayed + 1,
     bestLetterScore: Math.max(existingStats.bestLetterScore, gameLetters),
     longestWord: gameLongestWord.length > existingStats.longestWord.length
       ? gameLongestWord : existingStats.longestWord,
     totalSkips: existingStats.totalSkips + gameSkips,
+    perfectGamesPlayed: (existingStats.perfectGamesPlayed || 0) + (isPerfect ? 1 : 0),
+    perfectGamesTotalTimeMs: (existingStats.perfectGamesTotalTimeMs || 0) + (isPerfect ? totalTimeMs : 0),
   };
 }
 

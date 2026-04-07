@@ -15,8 +15,8 @@
       <h3 class="stats-section-title">Lifetime Stats</h3>
       <div class="stat">Total Letters<br><span class="stat-value">{{ lifetimeStats.totalLetters }}</span></div>
       <div class="stat">Total Words<br><span class="stat-value">{{ lifetimeStats.totalWords }}</span></div>
-      <div class="stat">Fastest Time<br><span class="stat-value">{{ formatTime(lifetimeStats.fastestTimeMs) }}</span></div>
-      <div class="stat">Avg Time<br><span class="stat-value">{{ formatTime(lifetimeStats.totalTimeMs / lifetimeStats.gamesPlayed) }}</span></div>
+      <div class="stat">Fastest Time<br><span class="stat-value">{{ lifetimeStats.fastestTimeMs != null ? formatTime(lifetimeStats.fastestTimeMs) : 'N/A' }}</span></div>
+      <div class="stat">Avg Time<br><span class="stat-value">{{ lifetimeStats.perfectGamesPlayed > 0 ? formatTime(lifetimeStats.perfectGamesTotalTimeMs / lifetimeStats.perfectGamesPlayed) : 'N/A' }}</span></div>
       <div class="stat">Best Score<br><span class="stat-value">{{ lifetimeStats.bestLetterScore }}</span></div>
       <div class="stat">Longest Word<br><span class="stat-value">{{ lifetimeStats.longestWord.toUpperCase() }}</span></div>
     </div>
