@@ -65,3 +65,15 @@ describe('games index meta tags', () => {
     expect(getMeta(doc,'description')).toBeTruthy();
   });
 });
+
+describe('games index card images', () => {
+  const doc = parseHTML('index.html');
+
+  it('reword card displays a preview image with alt text', () => {
+    const rewordCard = doc.querySelector('a.game-card[href*="reword"]');
+    const img = rewordCard.querySelector('img');
+    expect(img).not.toBeNull();
+    expect(img.getAttribute('src')).toContain('og-image.png');
+    expect(img.getAttribute('alt')).toBeTruthy();
+  });
+});
