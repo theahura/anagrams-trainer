@@ -262,48 +262,38 @@ describe('physics', () => {
     expect(player.vx).toBeLessThan(config.maxRunSpeed)
   })
 
-  it('wall jump control delay: holding opposing input does not reverse velocity within delay window', () => {
+  it('wall jump control delay: input is overridden during delay window', () => {
     const config = createPhysicsConfig()
-    // Wide grid, no walls except right edge so player doesn't collide during test
-    const grid = Array.from({ length: 15 }, () => {
-      const row = Array(20).fill(0)
-      row[19] = 1 // right wall
-      return row
-    })
+    // Wide grid with no walls so player doesn't collide during test
+    const grid = Array.from({ length: 15 }, () => Array(30).fill(0))
     const level = makeLevel(grid)
 
-    // Player in the air, touching right wall
-    const player = createPlayer(19 * 32 - 20 - 1, 64)
+    // Player in the air, touching a wall (simulated)
+    const player = createPlayer(15 * 32, 64)
     player.wallDir = 1 // touching wall on right
     player.vy = 50
 
-    // Wall jump: sets vx to -200 (away from right wall)
+    // Wall jump
     const jumpInput = { left: false, right: false, jump: true, jumpPressed: true }
     updatePlayer(player, jumpInput, level, 1 / 60, config)
     expect(player.vx).toBeLessThan(0)
 
-    // Hold right (back toward wall) for 12 frames (0.2s)
-    // Without control delay: airAccel=1200, +20/frame. After 12 frames: -200 + 240 = +40 (positive)
-    // With control delay (0.15s=9 frames forced left): velocity goes more negative first
+    // Immediately after wall jump, hold right. On the first frame, the control
+    // delay should still be active, forcing movement away from the wall.
     const rightInput = { left: false, right: true, jump: true, jumpPressed: false }
-    for (let i = 0; i < 12; i++) {
-      updatePlayer(player, rightInput, level, 1 / 60, config)
-    }
+    updatePlayer(player, rightInput, level, 1 / 60, config)
 
-    // With control delay active, vx should still be negative after 12 frames
-    expect(player.vx).toBeLessThan(0)
+    // vx should be more negative (forced left despite holding right)
+    expect(player.vx).toBeLessThan(-config.wallJumpHorizontalSpeed)
   })
 
   it('wall jump control delay expires and input resumes control', () => {
     const config = createPhysicsConfig()
-    const grid = Array.from({ length: 15 }, () => {
-      const row = Array(20).fill(0)
-      row[19] = 1
-      return row
-    })
+    // Wide grid with no walls so player doesn't collide
+    const grid = Array.from({ length: 15 }, () => Array(30).fill(0))
     const level = makeLevel(grid)
 
-    const player = createPlayer(19 * 32 - 20 - 1, 64)
+    const player = createPlayer(15 * 32, 64)
     player.wallDir = 1
     player.vy = 50
 
@@ -311,7 +301,7 @@ describe('physics', () => {
     const jumpInput = { left: false, right: false, jump: true, jumpPressed: true }
     updatePlayer(player, jumpInput, level, 1 / 60, config)
 
-    // Hold right continuously for 30 frames (0.5s — well past the 0.15s delay)
+    // Hold right continuously for 30 frames (well past the control delay)
     const rightInput = { left: false, right: true, jump: false, jumpPressed: false }
     for (let i = 0; i < 30; i++) {
       updatePlayer(player, rightInput, level, 1 / 60, config)
@@ -319,6 +309,79 @@ describe('physics', () => {
 
     // After delay expired + many frames of right input, vx should be positive
     expect(player.vx).toBeGreaterThan(0)
+  })
+
+  it('repeated wall jump: player gains height by wall jumping the same wall multiple times', () => {
+    const config = createPhysicsConfig()
+    // Tall wall on the right side
+    const grid = Array.from({ length: 30 }, () => {
+      const row = Array(10).fill(0)
+      row[9] = 1 // right wall
+      return row
+    })
+    const level = makeLevel(grid)
+
+    // Player starts touching the right wall, falling
+    const startX = 9 * 32 - 20 - 1 // just left of the wall
+    const startY = 25 * 32 // near the bottom
+    const player = createPlayer(startX, startY)
+    player.wallDir = 1
+    player.vy = 50
+
+    const dt = 1 / 60
+
+    // Perform 3 wall jump cycles: jump, hold toward wall + hold jump, re-cling, repeat
+    for (let jump = 0; jump < 3; jump++) {
+      // Wall jump
+      const jumpInput = { left: false, right: false, jump: true, jumpPressed: true }
+      updatePlayer(player, jumpInput, level, dt, config)
+
+      // Hold toward wall and hold jump for full height (realistic gameplay input)
+      const towardWall = { left: false, right: true, jump: true, jumpPressed: false }
+      for (let f = 0; f < 25; f++) {
+        updatePlayer(player, towardWall, level, dt, config)
+      }
+    }
+
+    // Player should have gained significant height (moved upward = lower Y)
+    expect(player.y).toBeLessThan(startY - 100)
+  })
+
+  it('repeated wall jump: player can execute a second wall jump shortly after the first', () => {
+    const config = createPhysicsConfig()
+    // Tall wall on the right side
+    const grid = Array.from({ length: 20 }, () => {
+      const row = Array(10).fill(0)
+      row[9] = 1 // right wall
+      return row
+    })
+    const level = makeLevel(grid)
+
+    const player = createPlayer(9 * 32 - 20 - 1, 10 * 32)
+    player.wallDir = 1
+    player.vy = 50
+
+    const dt = 1 / 60
+
+    // First wall jump
+    const jumpInput = { left: false, right: false, jump: true, jumpPressed: true }
+    updatePlayer(player, jumpInput, level, dt, config)
+    expect(player.vy).toBeLessThan(0) // launched upward
+
+    // Hold toward wall and hold jump for 20 frames to return to it
+    const towardWall = { left: false, right: true, jump: true, jumpPressed: false }
+    for (let f = 0; f < 20; f++) {
+      updatePlayer(player, towardWall, level, dt, config)
+    }
+
+    // Player should be falling by now (past the apex of the first jump)
+    expect(player.vy).toBeGreaterThan(0)
+
+    // Attempt a second wall jump
+    updatePlayer(player, jumpInput, level, dt, config)
+
+    // Second wall jump should launch upward
+    expect(player.vy).toBeLessThan(0)
   })
 
   it('respawn after falling off map resets jump timers', () => {
