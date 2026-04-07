@@ -20,9 +20,9 @@ export function createPhysicsConfig() {
     coyoteTime: 0.1,
     jumpBufferTime: 0.1,
     wallSlideMaxSpeed: 60,
-    wallJumpHorizontalSpeed: 200,
+    wallJumpHorizontalSpeed: 100,
     wallJumpVerticalSpeed: jumpSpeed * 0.85,
-    wallJumpControlDelay: 0.15,
+    wallJumpControlDelay: 0.04,
   }
 }
 
