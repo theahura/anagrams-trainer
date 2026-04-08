@@ -12,12 +12,14 @@ const COLORS = {
   goalGlow: 'rgba(83, 141, 78, 0.3)',
   text: '#d7dadc',
   textDim: '#818384',
+  ghost: 'rgba(100, 160, 255, 0.35)',
+  pathLine: 'rgba(100, 160, 255, 0.5)',
 }
 
 export function createRenderer(canvas) {
   const ctx = canvas.getContext('2d')
 
-  function render(level, player, timer, state, stats, weekSeed) {
+  function render(level, player, timer, state, stats, daySeed, ghostPos, currentPath) {
     const w = canvas.width
     const h = canvas.height
     const ts = level.tileSize
@@ -59,6 +61,29 @@ export function createRenderer(canvas) {
       ctx.fill()
     }
 
+    // Draw path line (on completion)
+    if (state === 'COMPLETE' && currentPath && currentPath.length > 1) {
+      ctx.strokeStyle = COLORS.pathLine
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.moveTo(currentPath[0][0], currentPath[0][1])
+      for (let i = 1; i < currentPath.length; i++) {
+        ctx.lineTo(currentPath[i][0], currentPath[i][1])
+      }
+      ctx.stroke()
+    }
+
+    // Draw ghost
+    if (ghostPos) {
+      ctx.fillStyle = COLORS.ghost
+      ctx.fillRect(
+        Math.round(ghostPos.x),
+        Math.round(ghostPos.y),
+        PLAYER_WIDTH,
+        PLAYER_HEIGHT,
+      )
+    }
+
     // Draw player
     ctx.fillStyle = COLORS.player
     ctx.fillRect(
@@ -69,13 +94,13 @@ export function createRenderer(canvas) {
     )
 
     // Draw HUD
-    drawHUD(ctx, w, timer, player, level, state, stats, weekSeed)
+    drawHUD(ctx, w, timer, player, level, state, stats, daySeed)
   }
 
   return { render }
 }
 
-function drawHUD(ctx, canvasWidth, timer, player, level, state, stats, weekSeed) {
+function drawHUD(ctx, canvasWidth, timer, player, level, state, stats, daySeed) {
   ctx.font = '16px monospace'
   ctx.textBaseline = 'top'
 
@@ -86,11 +111,11 @@ function drawHUD(ctx, canvasWidth, timer, player, level, state, stats, weekSeed)
     ctx.fillText('Press any key to start', canvasWidth / 2, 16)
     ctx.textAlign = 'left'
     ctx.font = '16px monospace'
-    // Show week in top-right even on ready screen
-    if (weekSeed) {
+    // Show day seed in top-right even on ready screen
+    if (daySeed) {
       ctx.fillStyle = COLORS.textDim
       ctx.textAlign = 'right'
-      ctx.fillText(weekSeed, canvasWidth - 8, 8)
+      ctx.fillText(daySeed, canvasWidth - 8, 8)
       ctx.textAlign = 'left'
     }
     return
@@ -111,9 +136,9 @@ function drawHUD(ctx, canvasWidth, timer, player, level, state, stats, weekSeed)
 
   // PB and attempt info on the right side
   ctx.textAlign = 'right'
-  if (weekSeed) {
+  if (daySeed) {
     ctx.fillStyle = COLORS.textDim
-    ctx.fillText(weekSeed, canvasWidth - 8, 8)
+    ctx.fillText(daySeed, canvasWidth - 8, 8)
   }
   if (stats) {
     ctx.fillStyle = COLORS.textDim
