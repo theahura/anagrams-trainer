@@ -1,5 +1,9 @@
 import { resetPlayer } from './player.js'
 
+export function startRun(timer) {
+  timer.running = true
+}
+
 export function restartRun(player, level, timer) {
   resetPlayer(player, level.start.x, level.start.y)
   for (const coin of level.redCoins) coin.collected = false
