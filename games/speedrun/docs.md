@@ -10,7 +10,8 @@ Path: @/games/speedrun
 
 ### How it fits into the larger codebase
 
-- `@/speedrun/index.html` is the Vite entry point (thin HTML shell with `<canvas>` and results overlay div), linked from the games index at `@/index.html`
+- `@/speedrun/index.html` is the Vite entry point (thin HTML shell with `<canvas>` and results overlay div), linked from the games index at `@/index.html`. Includes OpenGraph and Twitter Card meta tags pointing to `@/games/speedrun/og-image.png`
+- `@/games/speedrun/og-card.html` is the design template for the OG image (1200x630px) -- rendered and screenshotted to produce `og-image.png`. Same pattern as Reword's `og-card.html`
 - `@/vite.config.js` includes the speedrun entry in its multi-page rollup inputs alongside the games index and Reword
 - Source modules live in `@/games/speedrun/src/` -- pure-logic modules with no DOM dependencies except `main.js` and `renderer.js`
 - `@/games/speedrun/style.css` defines the dark theme, matching the Wordle-style palette used across the repo (#121213 background, #d7dadc text, #538d4e green accents)
@@ -20,7 +21,7 @@ Path: @/games/speedrun
 
 ### Core Implementation
 
-- **Game loop:** `main.js` orchestrates a `requestAnimationFrame` loop with three states: READY (waiting for keypress), PLAYING (physics + timer active), COMPLETE (results overlay shown)
+- **Game loop:** `main.js` orchestrates a `requestAnimationFrame` loop with three states: READY (waiting for keypress), PLAYING (physics + timer active), COMPLETE (results overlay shown). The state machine always cycles through READY before entering PLAYING -- both initial start and post-reset flows go through the READY gate
 - **Data flow per frame:**
   ```
   gameLoop(timestamp)
@@ -39,7 +40,7 @@ Path: @/games/speedrun
 - **Ghost replay:** During PLAYING state, the renderer draws a semi-transparent blue rectangle at the interpolated position from the PB path for the user's selected ghost category. Ghost position is computed via linear interpolation between path samples. Returns null (no ghost drawn) if the current elapsed time exceeds the ghost path's duration
 - **Settings:** `settings.js` persists user preferences in localStorage under `speedrun-settings`. Currently stores the ghost category preference (off/anyPercent/hundredRed/hundredBlue, defaulting to anyPercent). A gear button in the HTML opens a settings modal with radio buttons. The settings modal is blocked from opening during PLAYING state, and all keydown events are suppressed while the modal is open
 - **Global leaderboard:** Firebase Firestore stores scores in `leaderboards/{daySeed}/scores/{auto-id}` with fields `name`, `time`, `category`, `weekSeed`, `submittedAt`. Submission is manual -- the player clicks "Submit to Leaderboard" on the results screen, enters a name (validated by `@/games/speedrun/src/nameFilter.js`), and each completed category is submitted as a separate Firestore document. The leaderboard modal (accessible from a persistent button in the HTML) shows the top 50 scores per category with tabbed navigation (Any%, 100% Red, 100% Blue). If the player's local PB is outside the top 50, their rank is fetched separately via a count query. The leaderboard is purely additive to the existing localStorage stats system -- it does not replace it
-- **Restart:** `restartRun()` in `@/games/speedrun/src/game.js` resets player position/velocity, coin collected flags, and timer -- the same generated level is reused. Restart also resets the path recorder. Restart is triggered three ways: R key during PLAYING (mid-run reset, counts as an attempt), R key from COMPLETE, or Enter key from COMPLETE. A persistent `handleKeyDown()` listener in `main.js` handles keyboard restart separately from the movement input system in `input.js`
+- **Restart:** `restartRun()` in `@/games/speedrun/src/game.js` resets player position/velocity, coin collected flags, and timer (set to zero, not running) -- the same generated level is reused. All reset paths transition to READY state (not PLAYING), so the player always sees a "press any key to start" prompt before the next run begins. `startGame()` is the single entry point that transitions from READY to PLAYING and starts the timer. Restart is triggered three ways: R key during PLAYING (mid-run reset, counts as an attempt), R key from COMPLETE, or Enter key from COMPLETE. A persistent `handleKeyDown()` listener in `main.js` handles keyboard restart separately from the movement input system in `input.js`
 - **HUD:** During gameplay, the renderer shows the day seed (top-right), PB any% time, and attempt count alongside the timer and coin counts. The day seed also appears on the READY screen
 
 ### Things to Know

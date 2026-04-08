@@ -146,17 +146,17 @@ describe('restartRun', () => {
     expect(player.blueCoins).toBe(0)
   })
 
-  it('resets timer to zero and starts it running', () => {
+  it('resets timer to zero without starting it', () => {
     const level = makeLevel()
     const player = createPlayer(100, 50)
     const timer = createTimer()
     timer.elapsed = 23.7
-    timer.running = false
+    timer.running = true
 
     restartRun(player, level, timer)
 
     expect(timer.elapsed).toBe(0)
-    expect(timer.running).toBe(true)
+    expect(timer.running).toBe(false)
   })
 
   it('resets all coin collected flags to false', () => {

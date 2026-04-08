@@ -371,8 +371,7 @@ function handleKeyDown(e) {
     if (gameState === 'PLAYING') {
       stats.attempts++
       saveStats(daySeed, stats)
-      restartRun(player, level, timer)
-      resetRecorder(pathRecorder)
+      resetToReady()
     } else if (gameState === 'COMPLETE') {
       restart()
     }
@@ -381,13 +380,17 @@ function handleKeyDown(e) {
   }
 }
 
+function resetToReady() {
+  restartRun(player, level, timer)
+  resetRecorder(pathRecorder)
+  gameState = 'READY'
+  updateSettingsButtonState()
+}
+
 function restart() {
   const overlay = document.getElementById('results-overlay')
   overlay.classList.add('hidden')
-
-  restartRun(player, level, timer)
-  resetRecorder(pathRecorder)
-  gameState = 'PLAYING'
+  resetToReady()
 }
 
 function setupSettingsUI() {
