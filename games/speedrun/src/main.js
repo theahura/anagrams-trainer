@@ -44,10 +44,16 @@ function init() {
   requestAnimationFrame(gameLoop)
 }
 
+function updateSettingsButtonState() {
+  const btn = document.getElementById('settings-btn')
+  if (btn) btn.classList.toggle('disabled', gameState !== 'READY')
+}
+
 function startGame() {
   gameState = 'PLAYING'
   timer.running = true
   clearFrameInput(inputState)
+  updateSettingsButtonState()
 }
 
 function getGhostPath() {
@@ -87,6 +93,7 @@ function gameLoop(timestamp) {
 function completeRun() {
   gameState = 'COMPLETE'
   timer.running = false
+  updateSettingsButtonState()
 
   const record = createCompletionRecord(timer, player, level)
   const recordedPath = getPath(pathRecorder)

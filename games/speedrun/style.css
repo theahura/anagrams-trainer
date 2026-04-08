@@ -135,8 +135,13 @@ h1 {
   line-height: 1;
 }
 
-#settings-btn:hover {
+#settings-btn:hover:not(.disabled) {
   background: #3a3a3c;
+}
+
+#settings-btn.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 #settings-overlay {
