@@ -22,6 +22,7 @@
         <li>A new puzzle every day</li>
         <li>Score is based on total letters used</li>
       </ul>
+      <p class="word-source">Valid words are based on the <a href="https://scrabblewordfinder.org" target="_blank" rel="noopener noreferrer">Scrabble Dictionary</a></p>
     </div>
   </div>
 </template>
