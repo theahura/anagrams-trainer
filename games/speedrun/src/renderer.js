@@ -88,14 +88,14 @@ export function createRenderer(canvas) {
     if (player.dashTimer > 0) {
       // Dash afterimage trail
       const trailOffset = player.vx > 0 ? -12 : 12
-      ctx.fillStyle = 'rgba(215, 218, 220, 0.3)'
+      ctx.fillStyle = 'rgba(231, 76, 60, 0.25)'
       ctx.fillRect(
         Math.round(player.x + trailOffset),
         Math.round(player.y),
         PLAYER_WIDTH,
         PLAYER_HEIGHT,
       )
-      ctx.fillStyle = '#ffffff'
+      ctx.fillStyle = '#ff6b6b'
     } else {
       ctx.fillStyle = COLORS.player
     }
