@@ -206,6 +206,7 @@ header h1 {
   animation: pop-in 0.15s ease-out;
 }
 
+
 @keyframes pop-in {
   from { transform: scale(0.5); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
@@ -510,6 +511,21 @@ header h1 {
   animation-fill-mode: both;
 }
 
+/* Correct answer fly-up animation */
+@keyframes fly-up {
+  0% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(-40px); opacity: 0; }
+}
+
+.game-board.fly-up .tile,
+.game-board.fly-up #input-area .tile {
+  animation: fly-up 0.4s ease-in forwards;
+}
+
+.game-board.tiles-fade-in .tile-rack .tile {
+  animation: fade-in 0.2s ease-out forwards;
+}
+
 /* Round transition animations */
 @keyframes fade-out {
   from { opacity: 1; transform: scale(1); }
@@ -533,6 +549,8 @@ header h1 {
 @media (prefers-reduced-motion: reduce) {
   #input-area.shake,
   #input-area.bounce .tile,
+  .game-board.fly-up .tile,
+  .game-board.tiles-fade-in .tile-rack .tile,
   .fade-out,
   .fade-in,
   #input-area .tile,
@@ -730,6 +748,28 @@ header h1 {
   letter-spacing: 2px;
   color: #818384;
   margin-bottom: 8px;
+}
+
+/* Desktop: add vertical breathing room */
+@media (pointer: fine) {
+  .section-label {
+    margin: 24px 0 4px;
+  }
+  .tile-rack {
+    margin: 12px 0;
+  }
+  #input-area {
+    margin: 20px 0;
+  }
+  #message {
+    margin: 12px 0;
+  }
+  .instructions {
+    margin: 12px 0;
+  }
+  .game-info {
+    margin-bottom: 28px;
+  }
 }
 
 /* Responsive */
