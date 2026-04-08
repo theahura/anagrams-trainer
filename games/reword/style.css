@@ -691,12 +691,21 @@ header h1 {
   color: #538d4e;
 }
 
-.how-to-play-modal a {
+.how-to-play-modal .word-source {
+  margin-top: 20px;
+  padding-top: 12px;
+  border-top: 1px solid #3a3a3c;
+  text-align: center;
+  font-size: 11px;
+  color: #585858;
+}
+
+.how-to-play-modal .word-source a {
   color: #538d4e;
   text-decoration: underline;
 }
 
-.how-to-play-modal a:hover {
+.how-to-play-modal .word-source a:hover {
   color: #6aaf5e;
 }
 

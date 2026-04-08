@@ -22,7 +22,7 @@
         <li>A new puzzle every day</li>
         <li>Score is based on total letters used</li>
       </ul>
-      <p>Valid words are based on the Scrabble dictionary (TWL06). You can verify words at <a href="https://scrabblewordfinder.org" target="_blank" rel="noopener noreferrer">scrabblewordfinder.org</a>.</p>
+      <p class="word-source">Valid words are based on the <a href="https://scrabblewordfinder.org" target="_blank" rel="noopener noreferrer">Scrabble Dictionary</a></p>
     </div>
   </div>
 </template>
