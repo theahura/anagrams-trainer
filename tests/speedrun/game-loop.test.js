@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { generateLevel, TILE } from '../../games/speedrun/src/level.js'
 import { createPlayer } from '../../games/speedrun/src/player.js'
 import { createPhysicsConfig, updatePlayer } from '../../games/speedrun/src/physics.js'
-import { restartRun } from '../../games/speedrun/src/game.js'
+import { restartRun, startRun } from '../../games/speedrun/src/game.js'
 import { createTimer } from '../../games/speedrun/src/timing.js'
 
 describe('game integration', () => {
@@ -82,6 +82,16 @@ describe('game integration', () => {
     }
 
     expect(player.reachedGoal).toBe(true)
+  })
+})
+
+describe('startRun', () => {
+  it('starts the timer running', () => {
+    const timer = createTimer()
+
+    startRun(timer)
+
+    expect(timer.running).toBe(true)
   })
 })
 
