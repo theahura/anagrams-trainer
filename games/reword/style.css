@@ -516,9 +516,8 @@ header h1 {
   100% { transform: translateY(-40px); opacity: 0; }
 }
 
-#input-area.fly-up .tile {
+.game-board.fly-up .tile {
   animation: fly-up 0.4s ease-in forwards;
-  animation-delay: calc(0.03s * var(--tile-index, 0));
 }
 
 /* Round transition animations */
@@ -544,7 +543,7 @@ header h1 {
 @media (prefers-reduced-motion: reduce) {
   #input-area.shake,
   #input-area.bounce .tile,
-  #input-area.fly-up .tile,
+  .game-board.fly-up .tile,
   .fade-out,
   .fade-in,
   #input-area .tile,

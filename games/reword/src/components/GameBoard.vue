@@ -1,28 +1,26 @@
 <template>
-  <div class="game-board">
+  <div :class="['game-board', { 'fly-up': flyUp }]">
     <div class="game-info">
       <span id="round-indicator">Round {{ roundNumber }} of 11</span>
       <span id="timer"><slot name="timer"></slot></span>
     </div>
 
-    <div :class="['tiles-area', boardTransition]">
-      <div class="section-label">Root Word</div>
-      <TileRack :letters="round.root.split('')" :used-indices="rootUsedIndices" />
+    <div class="section-label">Root Word</div>
+    <TileRack :letters="round.root.split('')" :used-indices="rootUsedIndices" />
 
-      <div class="section-label">Add Letters</div>
-      <TileRack :letters="round.offeredLetters" tile-class="offered" :used-indices="offeredUsedIndices" />
+    <div class="section-label">Add Letters</div>
+    <TileRack :letters="round.offeredLetters" tile-class="offered" :used-indices="offeredUsedIndices" />
 
-      <div class="instructions">Type a new word using all root letters + one or more offered letters</div>
+    <div class="instructions">Type a new word using all root letters + one or more offered letters</div>
 
-      <div id="input-area" :class="{ 'fly-up': flyUp }">
-        <ScrabbleTile
-          v-for="(letter, i) in displayedInput"
-          :key="i"
-          :letter="letter"
-          :tile-class="inputTileClass(i)"
-          :style="{ '--tile-index': i }"
-        />
-      </div>
+    <div id="input-area">
+      <ScrabbleTile
+        v-for="(letter, i) in displayedInput"
+        :key="i"
+        :letter="letter"
+        :tile-class="inputTileClass(i)"
+        :style="{ '--tile-index': i }"
+      />
     </div>
 
     <div id="message" :class="messageType">{{ message }}</div>
@@ -45,7 +43,6 @@ const props = defineProps({
   message: { type: String, default: '' },
   messageType: { type: String, default: '' },
   flyUp: { type: Boolean, default: false },
-  boardTransition: { type: String, default: '' },
 });
 
 defineEmits(['submit', 'skip']);

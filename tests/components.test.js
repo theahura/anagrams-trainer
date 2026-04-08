@@ -255,19 +255,11 @@ describe('GameBoard', () => {
     expect(wrapper.emitted('skip')).toBeTruthy();
   });
 
-  it('applies fly-up class to input area when flyUp prop is true', () => {
+  it('applies fly-up class to game-board when flyUp prop is true', () => {
     const wrapper = mount(GameBoard, {
       props: { round, roundNumber: 1, inputLetters: ['c', 'o', 'a', 't'], message: '', messageType: '', flyUp: true },
     });
-    const inputArea = wrapper.find('#input-area');
-    expect(inputArea.classes()).toContain('fly-up');
-  });
-
-  it('applies transition class to tiles-area when boardTransition prop is set', () => {
-    const wrapper = mount(GameBoard, {
-      props: { round, roundNumber: 1, inputLetters: [], message: '', messageType: '', boardTransition: 'fade-out' },
-    });
-    expect(wrapper.find('.tiles-area').classes()).toContain('fade-out');
+    expect(wrapper.find('.game-board').classes()).toContain('fly-up');
   });
 
   it('sets tile-index style on input tiles when flyUp is true', () => {
