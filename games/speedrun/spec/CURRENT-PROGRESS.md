@@ -8,10 +8,10 @@ All requirements from APPLICATION-SPEC.md are implemented and verified. The 2D p
 - **Project scaffolding**: Follows monorepo pattern (`speedrun/index.html` entry, `games/speedrun/src/` source)
 - **Physics engine**: Gravity, jumping, tile-based AABB collision with axis-separated resolution
 - **Polished movement**: Variable jump height, coyote time (0.1s), input buffering (0.1s), wall sliding, wall jumping with control delay (0.15s), acceleration-based horizontal movement
-- **Procedural level generation**: Seeded via ISO week number, 25x19 tile grid, lane-based platform placement (high/mid/low routes), ground gaps, BFS reachability verification
+- **Procedural level generation**: Seeded via UTC date, 25x19 tile grid, lane-based platform placement (high/mid/low routes), ground gaps, BFS reachability verification
 - **Coins**: Route-biased placement — red coins on high-route platforms, blue coins on low-route/ground platforms; collected on proximity
 - **Timing**: Three categories — any%, 100% red, 100% blue
-- **Stats**: localStorage persistence per week, personal best tracking, attempt counter
+- **Stats**: localStorage persistence per day, personal best tracking, attempt counter
 - **Canvas rendering**: Dark theme, basic shapes (rectangles for tiles/player, circles for coins, glow for goal)
 - **Results overlay**: DOM-based results screen with times, PBs, restart button
 - **Vite integration**: Added as MPA entry, game card on launcher index
@@ -22,7 +22,7 @@ All requirements from APPLICATION-SPEC.md are implemented and verified. The 2D p
 - **Module structure**: `physics.js`, `level.js` (lane-based generation), `player.js`, `input.js`, `renderer.js`, `timing.js`, `stats.js`, `prng.js`, `main.js`
 - **State ownership**: `main.js` owns all state objects, passes them to pure functions
 - **Rendering**: Canvas 2D for gameplay, DOM overlay for results
-- **Weekly seed**: `getWeeklySeed(date)` returns ISO week string; same week = same level
+- **Daily seed**: `getDailySeed(date)` returns UTC date string (YYYY-MM-DD); same day = same level
 
 ## Recently Added
 - **Wall jump control delay**: Celeste-style 0.15s control lockout after wall jumps — forces player away from wall, preventing trivial momentum cancellation. Uses `wallJumpControlTimer` and `wallJumpForceDir` player state fields. Timer clears on grounding.
