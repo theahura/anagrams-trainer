@@ -27,14 +27,14 @@ Path: @/games/speedrun
   gameLoop(timestamp)
     -> updateTimer(timer, dt)
     -> updatePlayer(player, inputState, level, dt, config)
-    -> clearFrameInput(inputState)        // consume jumpPressed
+    -> clearFrameInput(inputState)        // consume jumpPressed, dashPressed
     -> recordFrame(pathRecorder, ...)     // sample position at ~20Hz
     -> interpolatePosition(ghostPath, t)  // compute ghost position from PB path
     -> check player.reachedGoal -> completeRun()
     -> renderer.render(level, player, timer, gameState, stats, daySeed, ghostPos, currentPath)
   ```
 - **Level generation:** `level.js` uses `getDailySeed(date)` to derive a UTC date string (e.g. `"2026-04-08"`), then `generateLevel(seed)` builds a 25x19 tile grid using a lane-based system. Three vertical bands (HIGH_LANE rows 3-7, MID_LANE rows 8-10, LOW_LANE rows 11-15) structure platforms into distinct high and low routes connected by mid-lane bridges. Coin placement is route-biased: red coins on high-route platforms, blue coins on low-route/ground surfaces, so 100% red and 100% blue categories require different paths through the level. Both coin pools are filtered to exclude positions within the goal's hitbox (one TILE_SIZE in each axis), since the goal detection would trigger run completion before overlapping coins could be collected. BFS reachability check with bridge platform fallback remains as a safety net
-- **Physics:** `physics.js` implements acceleration-based movement, axis-separated AABB collision resolution, gravity with variable jump height (jump-cut multiplier when not holding jump), coyote time, input buffering, wall sliding, and wall jumping with a short control delay. Wall jump parameters are tuned for Hollow Knight-style same-wall climbing: low horizontal push-away speed (100px/s) and a very brief control override (0.04s) so the player arcs only ~7px from the wall before regaining control to hold back and re-cling
+- **Physics:** `physics.js` implements acceleration-based movement, axis-separated AABB collision resolution, gravity with variable jump height (jump-cut multiplier when not holding jump), coyote time, input buffering, wall sliding, wall jumping with a short control delay, dash, and sprint. Wall jump parameters are tuned for Hollow Knight-style same-wall climbing: low horizontal push-away speed (100px/s) and a very brief control override (0.04s) so the player arcs only ~7px from the wall before regaining control to hold back and re-cling. Dash (tap E) applies an instant 500px/s burst in the current movement direction for 0.15s, during which normal horizontal movement is skipped; has a 0.5s cooldown. Sprint (hold E) raises the horizontal speed cap from 250 to 375px/s while held
 - **Stats persistence:** `stats.js` stores per-day personal bests in localStorage under `speedrun-stats-{daySeed}` (e.g. `speedrun-stats-2026-04-08`), tracking attempts and best times for three categories (any%, 100% red, 100% blue). Stats also store `bestPaths` -- per-category path data (arrays of `[x, y, t]` tuples) that correspond to the PB run for each category. Old stats without `bestPaths` are handled gracefully via fallback in `updatePersonalBest`
 - **Path tracking:** `path.js` provides a path recorder that samples player position at ~20Hz (every 0.05s). On run completion, if the path is complete (final sample within 30s max duration), the path is stored alongside PB times per category. During COMPLETE state, the recorded path is rendered as a line overlay on the canvas
 - **Ghost replay:** During PLAYING state, the renderer draws a semi-transparent blue rectangle at the interpolated position from the PB path for the user's selected ghost category. Ghost position is computed via linear interpolation between path samples. Returns null (no ghost drawn) if the current elapsed time exceeds the ghost path's duration
@@ -53,6 +53,6 @@ Path: @/games/speedrun
 - Coin collection uses circle-distance check (16px radius) against player center, not AABB overlap
 - Goal detection uses a tile-sized rectangular proximity check against player center
 - The delta-time is clamped to 1/30s maximum to prevent physics tunneling on long frame drops
-- `jumpPressed` is a single-frame flag consumed by `clearFrameInput()` each frame -- this is what makes input buffering work as a timer rather than a boolean
+- `jumpPressed` and `dashPressed` are single-frame flags consumed by `clearFrameInput()` each frame -- this is what makes input buffering work as a timer rather than a boolean. The dash input follows the same held/edge-triggered pattern (`dash` + `dashPressed`) as jump (`jump` + `jumpPressed`)
 
 Created and maintained by Nori.
