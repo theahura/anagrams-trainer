@@ -1,5 +1,5 @@
 <template>
-  <div class="game-board">
+  <div :class="['game-board', { 'fly-up': flyUp, 'tiles-fade-in': tilesFadingIn }]">
     <div class="game-info">
       <span id="round-indicator">Round {{ roundNumber }} of 11</span>
       <span id="timer"><slot name="timer"></slot></span>
@@ -19,6 +19,7 @@
         :key="i"
         :letter="letter"
         :tile-class="inputTileClass(i)"
+        :style="{ '--tile-index': i }"
       />
     </div>
 
@@ -41,6 +42,8 @@ const props = defineProps({
   inputLetters: { type: Array, default: () => [] },
   message: { type: String, default: '' },
   messageType: { type: String, default: '' },
+  flyUp: { type: Boolean, default: false },
+  tilesFadingIn: { type: Boolean, default: false },
 });
 
 defineEmits(['submit', 'skip']);

@@ -20,6 +20,8 @@
           :input-letters="state.inputLetters"
           :message="message"
           :message-type="messageType"
+          :fly-up="flyUp"
+          :tiles-fading-in="tilesFadingIn"
           @submit="handleSubmit"
           @skip="handleSkip"
         >
@@ -62,6 +64,8 @@ const dateStr = ref('');
 const showHowToPlay = ref(false);
 const message = ref('');
 const messageType = ref('');
+const flyUp = ref(false);
+const tilesFadingIn = ref(false);
 const gameComplete = ref(false);
 const totalTimeMs = ref(0);
 const muted = ref(false);
@@ -172,6 +176,7 @@ function handleSubmit() {
   const timeMs = Date.now() - state.roundStartTime;
   const possibleAnswers = getAnswersForRound(round);
   state.completedRounds.push({ answer, timeMs, root: round.root, possibleAnswers });
+  flyUp.value = true;
   message.value = 'Correct!';
   messageType.value = 'success';
   playSound('playCorrect');
@@ -192,7 +197,7 @@ function handleSkip() {
     message.value = `Possible: ${possibleAnswers.slice(0, 3).join(', ')}`;
     messageType.value = '';
     state.transitioning = true;
-    setTimeout(() => advanceRound(), 1200);
+    setTimeout(() => advanceRound(), 2500);
   } else {
     message.value = 'Skipped';
     messageType.value = '';
@@ -202,16 +207,26 @@ function handleSkip() {
 }
 
 function advanceRound() {
-  state.currentRound++;
-  if (state.currentRound >= 11) {
+  if (state.currentRound + 1 >= 11) {
+    state.currentRound++;
     showScore();
     return;
   }
-  state.inputLetters = [];
-  message.value = '';
-  messageType.value = '';
-  startTimer();
-  state.transitioning = false;
+  const alreadyFlying = flyUp.value;
+  flyUp.value = true;
+  setTimeout(() => {
+    state.currentRound++;
+    state.inputLetters = [];
+    message.value = '';
+    messageType.value = '';
+    flyUp.value = false;
+    tilesFadingIn.value = true;
+    startTimer();
+    setTimeout(() => {
+      tilesFadingIn.value = false;
+      state.transitioning = false;
+    }, 200);
+  }, alreadyFlying ? 0 : 400);
 }
 
 function showScore(savedResults) {

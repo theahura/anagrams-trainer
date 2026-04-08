@@ -23,7 +23,7 @@ Path: @/tests
   - `ScrabbleTile`: renders uppercase letters, no `.points` element, applies tileClass prop
   - `TileRack`: renders each letter, handles empty arrays and tileClass propagation
   - `VirtualKeyboard`: emits `key-press` with lowercased letters, Enter, and Backspace
-  - `GameBoard`: renders root word and offered letters in tile racks, shows round indicator, emits submit/skip events
+  - `GameBoard`: renders root word and offered letters in tile racks, shows round indicator, emits submit/skip events, fly-up class and `--tile-index` style application based on `flyUp` prop
   - `ScoreScreen`: displays solved count, per-round results, countdown timer, and conditionally renders lifetime stats section (present when prop provided, hidden when null). Tests `timerDisabled` prop behavior (hides "Total Time" when true, shows when false)
   - `HowToPlay`: renders modal content and emits close on button click. Tests timer toggle checkbox: emits `toggle-timer`, reflects `timerDisabled` prop as checked state, is disabled when `gameInProgress` is true, and does not emit when disabled
 - **`build-words.test.js`** -- Tests letter signature sorting, expansion finding, a regression test verifying that "ski" + "r" produces "risk", and `trimPuzzleData` behavior (all expansion keys are preserved regardless of count, words-per-key limiting works)
