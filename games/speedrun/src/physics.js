@@ -23,6 +23,8 @@ export function createPhysicsConfig() {
     wallJumpHorizontalSpeed: 100,
     wallJumpVerticalSpeed: jumpSpeed * 0.85,
     wallJumpControlDelay: 0.04,
+    vaultMomentumBoost: 80,
+    vaultMaxOverlap: 6,
   }
 }
 
@@ -98,6 +100,19 @@ export function updatePlayer(player, input, level, dt, config) {
       player.coyoteTimer = config.coyoteTime
       player.jumpBufferTimer = config.jumpBufferTime
       player.jumpHeld = true
+    } else {
+      // Corner vault check
+      const vaultDir = detectCornerVault(player, level, config)
+      if (vaultDir !== 0) {
+        const footTileY = Math.floor((player.y + PLAYER_HEIGHT - 1) / level.tileSize)
+        player.y = footTileY * level.tileSize - PLAYER_HEIGHT
+        player.vy = config.jumpSpeed
+        player.vx += vaultDir * config.vaultMomentumBoost
+        player.grounded = false
+        player.coyoteTimer = config.coyoteTime
+        player.jumpBufferTimer = config.jumpBufferTime
+        player.jumpHeld = true
+      }
     }
   }
 
@@ -212,6 +227,39 @@ function isSolidAt(px, py, level) {
   const ty = Math.floor(py / level.tileSize)
   if (tx < 0 || tx >= level.width || ty < 0 || ty >= level.height) return false
   return level.grid[ty][tx] === TILE.SOLID
+}
+
+function detectCornerVault(player, level, config) {
+  const ts = level.tileSize
+  const footTileY = Math.floor((player.y + PLAYER_HEIGHT - 1) / ts)
+  const overlapIntoTile = (player.y + PLAYER_HEIGHT) - (footTileY * ts)
+
+  if (overlapIntoTile <= 0 || overlapIntoTile > config.vaultMaxOverlap) return 0
+
+  const playerLeftCol = Math.floor(player.x / ts)
+  const playerRightCol = Math.floor((player.x + PLAYER_WIDTH - 1) / ts)
+
+  // Check right side: tile to the right of the player's right edge
+  const rightCol = playerRightCol + 1
+  const distToRight = (rightCol * ts) - (player.x + PLAYER_WIDTH)
+  if (distToRight <= config.vaultMaxOverlap &&
+      rightCol < level.width &&
+      isSolidAt(rightCol * ts, footTileY * ts, level) &&
+      !isSolidAt(rightCol * ts, (footTileY - 1) * ts, level)) {
+    return -1 // vault away from right corner (push left)
+  }
+
+  // Check left side: tile to the left of the player's left edge
+  const leftCol = playerLeftCol - 1
+  const distToLeft = player.x - ((leftCol + 1) * ts)
+  if (distToLeft <= config.vaultMaxOverlap &&
+      leftCol >= 0 &&
+      isSolidAt(leftCol * ts, footTileY * ts, level) &&
+      !isSolidAt(leftCol * ts, (footTileY - 1) * ts, level)) {
+    return 1 // vault away from left corner (push right)
+  }
+
+  return 0
 }
 
 function resolveCollisionX(player, level) {
