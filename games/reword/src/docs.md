@@ -34,6 +34,7 @@ Path: @/games/reword/src
   - Uses computed `matchTypedToTiles()` result to derive per-tile CSS classes for real-time feedback (invalid tiles highlighted)
   - Renders empty placeholder tiles up to `minLen` via `displayLen` computed property
   - Exposes a `#timer` slot used by `App.vue` to inject letter score and timer display
+  - Accepts a `flyUp` boolean prop; when true, applies the `fly-up` CSS class to `#input-area` and sets `--tile-index` as an inline style on each input tile for per-tile stagger delay
 
 - **`components/ScoreScreen.vue`** -- End-of-game display with countdown
   - Shows per-round breakdown (root, answer or SKIPPED, possible answers for skipped rounds)
@@ -81,7 +82,7 @@ Path: @/games/reword/src
 - `getOfferedLetters` extracts individual characters from multi-char expansion keys (e.g., `"el"` yields `"e"` and `"l"`) using `join('').split('')`, then deduplicates. It prioritizes including a single-letter expansion key in the offered set to ensure at least one straightforward answer exists
 - The UI input max length is `root.length + offeredLetters.length`, allowing players to use all offered letters. Submit validation accepts answers between `root.length + 1` and this max
 - `isKeySubsetOfOffered` in `game.js` checks whether each character of a multi-letter key can be consumed from the offered letters array (removing used letters to handle duplicates). This is the core mechanism enabling multi-letter expansion matching at runtime
-- The `state.transitioning` flag in `App.vue` prevents input during the 700ms (correct) or 1200ms (skip with possible answers) delay between rounds
+- The `state.transitioning` flag in `App.vue` prevents input during the 700ms (correct) or 2500ms (skip with possible answers) delay between rounds. On correct answer, `App.vue` sets `flyUp=true` instead of showing a "Correct!" message text; the fly-up animation plays during the 700ms transition, then `flyUp` is reset in `advanceRound()`
 - Each round has a countdown timer (`ROUND_TIME_MS`): 60 seconds on desktop, 70 seconds on touch devices (detected via `pointer: coarse` media query at module load). `roundDeadline` tracks the absolute expiration time; when remaining time hits 0, `handleSkip()` is called automatically. The timer display turns red and pulses when under 10 seconds remain (CSS class `timer-warning`), respecting `prefers-reduced-motion`. `formatRoundTime(ms)` formats remaining milliseconds for the countdown display
 - Both streak and lifetime stat calculation are pure (in `game.js`) with localStorage access only in `App.vue`, consistent with the pattern of keeping side effects out of game logic
 - Sound synthesis follows the same pure-logic-in-module, side-effects-in-UI pattern: `sound.js` is a pure factory testable with a mock AudioContext, while `App.vue` handles AudioContext creation, localStorage mute persistence, and event hookup

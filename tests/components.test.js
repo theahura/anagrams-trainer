@@ -254,6 +254,25 @@ describe('GameBoard', () => {
     await wrapper.find('#skip-btn').trigger('click');
     expect(wrapper.emitted('skip')).toBeTruthy();
   });
+
+  it('applies fly-up class to input area when flyUp prop is true', () => {
+    const wrapper = mount(GameBoard, {
+      props: { round, roundNumber: 1, inputLetters: ['c', 'o', 'a', 't'], message: '', messageType: '', flyUp: true },
+    });
+    const inputArea = wrapper.find('#input-area');
+    expect(inputArea.classes()).toContain('fly-up');
+  });
+
+  it('sets tile-index style on input tiles when flyUp is true', () => {
+    const wrapper = mount(GameBoard, {
+      props: { round, roundNumber: 1, inputLetters: ['c', 'o', 'a', 't'], message: '', messageType: '', flyUp: true },
+    });
+    const inputArea = wrapper.find('#input-area');
+    const tiles = inputArea.findAll('.tile');
+    tiles.forEach((tile, i) => {
+      expect(tile.attributes('style')).toContain(`--tile-index: ${i}`);
+    });
+  });
 });
 
 describe('HowToPlay', () => {

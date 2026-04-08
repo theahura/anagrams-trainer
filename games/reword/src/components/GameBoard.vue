@@ -13,12 +13,13 @@
 
     <div class="instructions">Type a new word using all root letters + one or more offered letters</div>
 
-    <div id="input-area">
+    <div id="input-area" :class="{ 'fly-up': flyUp }">
       <ScrabbleTile
         v-for="(letter, i) in displayedInput"
         :key="i"
         :letter="letter"
         :tile-class="inputTileClass(i)"
+        :style="{ '--tile-index': i }"
       />
     </div>
 
@@ -41,6 +42,7 @@ const props = defineProps({
   inputLetters: { type: Array, default: () => [] },
   message: { type: String, default: '' },
   messageType: { type: String, default: '' },
+  flyUp: { type: Boolean, default: false },
 });
 
 defineEmits(['submit', 'skip']);
