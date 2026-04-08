@@ -1,4 +1,4 @@
-import { generateLevel, getWeeklySeed } from './level.js'
+import { generateLevel, getDailySeed } from './level.js'
 import { createPlayer } from './player.js'
 import { createPhysicsConfig, updatePlayer } from './physics.js'
 import { createInputState, setupInputListeners, clearFrameInput } from './input.js'
@@ -12,7 +12,7 @@ const CANVAS_HEIGHT = 608
 
 let gameState = 'READY' // READY, PLAYING, COMPLETE
 let level, player, timer, stats, config, renderer, inputState
-let weekSeed
+let daySeed
 let lastTime = 0
 
 function init() {
@@ -20,12 +20,12 @@ function init() {
   canvas.width = CANVAS_WIDTH
   canvas.height = CANVAS_HEIGHT
 
-  weekSeed = getWeeklySeed(new Date())
-  level = generateLevel(weekSeed)
+  daySeed = getDailySeed(new Date())
+  level = generateLevel(daySeed)
   player = createPlayer(level.start.x, level.start.y)
   timer = createTimer()
   config = createPhysicsConfig()
-  stats = loadStats(weekSeed)
+  stats = loadStats(daySeed)
   renderer = createRenderer(canvas)
   inputState = createInputState()
   setupInputListeners(inputState)
@@ -57,7 +57,7 @@ function gameLoop(timestamp) {
     clearFrameInput(inputState)
   }
 
-  renderer.render(level, player, timer, gameState, stats, weekSeed)
+  renderer.render(level, player, timer, gameState, stats, daySeed)
   requestAnimationFrame(gameLoop)
 }
 
@@ -68,7 +68,7 @@ function completeRun() {
   const record = createCompletionRecord(timer, player, level)
   stats.attempts++
   stats = updatePersonalBest(stats, record)
-  saveStats(weekSeed, stats)
+  saveStats(daySeed, stats)
 
   showResults(record)
 }
@@ -138,7 +138,7 @@ function handleKeyDown(e) {
   if (e.key === 'r' || e.key === 'R') {
     if (gameState === 'PLAYING') {
       stats.attempts++
-      saveStats(weekSeed, stats)
+      saveStats(daySeed, stats)
       restartRun(player, level, timer)
     } else if (gameState === 'COMPLETE') {
       restart()

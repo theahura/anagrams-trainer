@@ -4,9 +4,9 @@ Path: @/games/speedrun
 
 ### Overview
 
-- **Speedrun** is a weekly 2D platformer where players race through a procedurally generated single-screen level, collecting coins and trying to beat personal best times
+- **Speedrun** is a daily 2D platformer where players race through a procedurally generated single-screen level, collecting coins and trying to beat personal best times
 - Pure HTML5 Canvas game with no framework -- vanilla JS modules, Canvas 2D rendering, DOM-based results overlay
-- Seeded PRNG generates one level per ISO week, so all players share the same map for a given week
+- Seeded PRNG generates one level per UTC day, so all players share the same map for a given date
 
 ### How it fits into the larger codebase
 
@@ -15,7 +15,7 @@ Path: @/games/speedrun
 - Source modules live in `@/games/speedrun/src/` -- pure-logic modules with no DOM dependencies except `main.js` and `renderer.js`
 - `@/games/speedrun/style.css` defines the dark theme, matching the Wordle-style palette used across the repo (#121213 background, #d7dadc text, #538d4e green accents)
 - `@/tests/speedrun/` contains Vitest test suites covering physics, level generation, timing, stats, and game-loop integration
-- Unlike Reword (Vue 3 SPA), Speedrun has no build-time data pipeline -- levels are generated at runtime from a weekly seed
+- Unlike Reword (Vue 3 SPA), Speedrun has no build-time data pipeline -- levels are generated at runtime from a daily seed
 
 ### Core Implementation
 
@@ -27,13 +27,13 @@ Path: @/games/speedrun
     -> updatePlayer(player, inputState, level, dt, config)
     -> clearFrameInput(inputState)        // consume jumpPressed
     -> check player.reachedGoal -> completeRun()
-    -> renderer.render(level, player, timer, gameState, stats, weekSeed)
+    -> renderer.render(level, player, timer, gameState, stats, daySeed)
   ```
-- **Level generation:** `level.js` uses `getWeeklySeed(date)` to derive an ISO week string (e.g. `"2026-W15"`), then `generateLevel(seed)` builds a 25x19 tile grid using a lane-based system. Three vertical bands (HIGH_LANE rows 3-7, MID_LANE rows 8-10, LOW_LANE rows 11-15) structure platforms into distinct high and low routes connected by mid-lane bridges. Coin placement is route-biased: red coins on high-route platforms, blue coins on low-route/ground surfaces, so 100% red and 100% blue categories require different paths through the level. Both coin pools are filtered to exclude positions within the goal's hitbox (one TILE_SIZE in each axis), since the goal detection would trigger run completion before overlapping coins could be collected. BFS reachability check with bridge platform fallback remains as a safety net
+- **Level generation:** `level.js` uses `getDailySeed(date)` to derive a UTC date string (e.g. `"2026-04-08"`), then `generateLevel(seed)` builds a 25x19 tile grid using a lane-based system. Three vertical bands (HIGH_LANE rows 3-7, MID_LANE rows 8-10, LOW_LANE rows 11-15) structure platforms into distinct high and low routes connected by mid-lane bridges. Coin placement is route-biased: red coins on high-route platforms, blue coins on low-route/ground surfaces, so 100% red and 100% blue categories require different paths through the level. Both coin pools are filtered to exclude positions within the goal's hitbox (one TILE_SIZE in each axis), since the goal detection would trigger run completion before overlapping coins could be collected. BFS reachability check with bridge platform fallback remains as a safety net
 - **Physics:** `physics.js` implements acceleration-based movement, axis-separated AABB collision resolution, gravity with variable jump height (jump-cut multiplier when not holding jump), coyote time, input buffering, wall sliding, and wall jumping with a short control delay. Wall jump parameters are tuned for Hollow Knight-style same-wall climbing: low horizontal push-away speed (100px/s) and a very brief control override (0.04s) so the player arcs only ~7px from the wall before regaining control to hold back and re-cling
-- **Stats persistence:** `stats.js` stores per-week personal bests in localStorage under `speedrun-stats-{weekSeed}`, tracking attempts and best times for three categories (any%, 100% red, 100% blue)
+- **Stats persistence:** `stats.js` stores per-day personal bests in localStorage under `speedrun-stats-{daySeed}` (e.g. `speedrun-stats-2026-04-08`), tracking attempts and best times for three categories (any%, 100% red, 100% blue)
 - **Restart:** `restartRun()` in `@/games/speedrun/src/game.js` resets player position/velocity, coin collected flags, and timer -- the same generated level is reused. Restart is triggered three ways: R key during PLAYING (mid-run reset, counts as an attempt), R key from COMPLETE, or Enter key from COMPLETE. A persistent `handleKeyDown()` listener in `main.js` handles keyboard restart separately from the movement input system in `input.js`
-- **HUD:** During gameplay, the renderer shows the week seed (top-right), PB any% time, and attempt count alongside the timer and coin counts. The week seed also appears on the READY screen
+- **HUD:** During gameplay, the renderer shows the day seed (top-right), PB any% time, and attempt count alongside the timer and coin counts. The day seed also appears on the READY screen
 
 ### Things to Know
 

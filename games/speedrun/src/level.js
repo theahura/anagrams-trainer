@@ -17,13 +17,11 @@ const HIGH_LANE = { minRow: 3, maxRow: 7 }
 const LOW_LANE = { minRow: 11, maxRow: 15 }
 const MID_LANE = { minRow: 8, maxRow: 10 }
 
-export function getWeeklySeed(date) {
-  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
-  const dayOfWeek = d.getUTCDay() || 7
-  d.setUTCDate(d.getUTCDate() + 4 - dayOfWeek)
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
-  const weekNumber = Math.ceil(((d - yearStart) / 86400000 + 1) / 7)
-  return `${d.getUTCFullYear()}-W${String(weekNumber).padStart(2, '0')}`
+export function getDailySeed(date) {
+  const y = date.getUTCFullYear()
+  const m = String(date.getUTCMonth() + 1).padStart(2, '0')
+  const d = String(date.getUTCDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
 }
 
 export function generateLevel(seed) {

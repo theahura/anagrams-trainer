@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   generateLevel,
-  getWeeklySeed,
+  getDailySeed,
   TILE,
 } from '../../games/speedrun/src/level.js'
 
@@ -123,18 +123,22 @@ describe('coin-goal separation', () => {
 
 })
 
-describe('weekly seed', () => {
-  it('same date within a week produces same seed', () => {
-    // Monday and Tuesday of the same week
-    const monday = new Date(Date.UTC(2026, 3, 6)) // April 6, 2026 is a Monday
-    const tuesday = new Date(Date.UTC(2026, 3, 7))
-    expect(getWeeklySeed(monday)).toBe(getWeeklySeed(tuesday))
+describe('daily seed', () => {
+  it('returns YYYY-MM-DD format', () => {
+    const date = new Date(Date.UTC(2026, 0, 5))
+    expect(getDailySeed(date)).toBe('2026-01-05')
   })
 
-  it('different weeks produce different seeds', () => {
-    const week1 = new Date(Date.UTC(2026, 3, 6)) // Week 15
-    const week2 = new Date(Date.UTC(2026, 3, 13)) // Week 16
-    expect(getWeeklySeed(week1)).not.toBe(getWeeklySeed(week2))
+  it('same UTC date at different times produces same seed', () => {
+    const midnight = new Date(Date.UTC(2026, 3, 8, 0, 0, 0))
+    const endOfDay = new Date(Date.UTC(2026, 3, 8, 23, 59, 59))
+    expect(getDailySeed(midnight)).toBe(getDailySeed(endOfDay))
+  })
+
+  it('different dates produce different seeds', () => {
+    const day1 = new Date(Date.UTC(2026, 3, 8))
+    const day2 = new Date(Date.UTC(2026, 3, 9))
+    expect(getDailySeed(day1)).not.toBe(getDailySeed(day2))
   })
 })
 
