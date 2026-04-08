@@ -10,8 +10,9 @@
 <body>
   <div class="title-row">
     <h1>Speedrun</h1>
-    <button id="settings-btn" aria-label="Settings">⚙</button>
+    <button id="settings-btn" aria-label="Settings">&#9881;</button>
   </div>
+  <button id="lb-open" class="lb-open-btn">Leaderboard</button>
   <canvas id="game-canvas"></canvas>
   <div id="results-overlay" class="hidden">
     <div id="results-content"></div>
@@ -27,6 +28,20 @@
         <label><input type="radio" name="ghost-category" value="hundredRed"> 100% Red</label>
         <label><input type="radio" name="ghost-category" value="hundredBlue"> 100% Blue</label>
       </fieldset>
+    </div>
+  </div>
+  <div id="leaderboard-modal" class="hidden">
+    <div class="lb-content">
+      <div class="lb-header">
+        <h2>Leaderboard</h2>
+        <button id="lb-close" class="lb-close">&times;</button>
+      </div>
+      <div class="lb-tabs">
+        <button class="lb-tab lb-tab-active" data-category="anyPercent">Any%</button>
+        <button class="lb-tab" data-category="hundredRed">100% Red</button>
+        <button class="lb-tab" data-category="hundredBlue">100% Blue</button>
+      </div>
+      <div id="lb-body" class="lb-body"></div>
     </div>
   </div>
   <script type="module" src="../games/speedrun/src/main.js"></script>

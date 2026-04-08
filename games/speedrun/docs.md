@@ -16,6 +16,7 @@ Path: @/games/speedrun
 - `@/games/speedrun/style.css` defines the dark theme, matching the Wordle-style palette used across the repo (#121213 background, #d7dadc text, #538d4e green accents)
 - `@/tests/speedrun/` contains Vitest test suites covering physics, level generation, timing, stats, and game-loop integration
 - Unlike Reword (Vue 3 SPA), Speedrun has no build-time data pipeline -- levels are generated at runtime from a daily seed
+- The global leaderboard uses Firebase Firestore (client SDK, no backend server). The Firebase config is in `@/games/speedrun/src/firebase.js`. Security is enforced by Firestore rules server-side, not client code. Works with the existing GitHub Pages static deployment
 
 ### Core Implementation
 
@@ -37,11 +38,13 @@ Path: @/games/speedrun
 - **Path tracking:** `path.js` provides a path recorder that samples player position at ~20Hz (every 0.05s). On run completion, if the path is complete (final sample within 30s max duration), the path is stored alongside PB times per category. During COMPLETE state, the recorded path is rendered as a line overlay on the canvas
 - **Ghost replay:** During PLAYING state, the renderer draws a semi-transparent blue rectangle at the interpolated position from the PB path for the user's selected ghost category. Ghost position is computed via linear interpolation between path samples. Returns null (no ghost drawn) if the current elapsed time exceeds the ghost path's duration
 - **Settings:** `settings.js` persists user preferences in localStorage under `speedrun-settings`. Currently stores the ghost category preference (off/anyPercent/hundredRed/hundredBlue, defaulting to anyPercent). A gear button in the HTML opens a settings modal with radio buttons. The settings modal is blocked from opening during PLAYING state, and all keydown events are suppressed while the modal is open
+- **Global leaderboard:** Firebase Firestore stores scores in `leaderboards/{daySeed}/scores/{auto-id}` with fields `name`, `time`, `category`, `weekSeed`, `submittedAt`. Submission is manual -- the player clicks "Submit to Leaderboard" on the results screen, enters a name (validated by `@/games/speedrun/src/nameFilter.js`), and each completed category is submitted as a separate Firestore document. The leaderboard modal (accessible from a persistent button in the HTML) shows the top 50 scores per category with tabbed navigation (Any%, 100% Red, 100% Blue). If the player's local PB is outside the top 50, their rank is fetched separately via a count query. The leaderboard is purely additive to the existing localStorage stats system -- it does not replace it
 - **Restart:** `restartRun()` in `@/games/speedrun/src/game.js` resets player position/velocity, coin collected flags, and timer -- the same generated level is reused. Restart also resets the path recorder. Restart is triggered three ways: R key during PLAYING (mid-run reset, counts as an attempt), R key from COMPLETE, or Enter key from COMPLETE. A persistent `handleKeyDown()` listener in `main.js` handles keyboard restart separately from the movement input system in `input.js`
 - **HUD:** During gameplay, the renderer shows the day seed (top-right), PB any% time, and attempt count alongside the timer and coin counts. The day seed also appears on the READY screen
 
 ### Things to Know
 
+- **Keyboard guard:** `handleKeyDown()` in `main.js` returns early when an `<input>` element is focused (for the name form), when settings are open, or when the leaderboard modal is visible, preventing game actions while the player is typing or browsing scores. Escape closes the leaderboard modal
 - Physics constants are derived from desired jump height (3.5 tiles) and time-to-apex (0.35s): gravity and jump speed are calculated to produce that exact arc. This is set up in `createPhysicsConfig()` in `@/games/speedrun/src/physics.js`
 - The PRNG (`@/games/speedrun/src/prng.js`) uses the same cyrb128 + sfc32 approach as Reword's PRNG, but is a separate copy -- the two games do not share the module
 - Collision resolution happens in two passes: X-axis first, then Y-axis. The Y-axis pass resets `player.grounded` to false at the top, only setting it true if a downward collision is resolved. This order matters for correct corner behavior

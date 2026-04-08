@@ -12,7 +12,7 @@ Path: @/tests
 - Tests import directly from `@/games/reword/src/prng.js`, `@/games/reword/src/game.js`, `@/games/reword/src/words.js`, `@/games/reword/src/sound.js`, and `@/scripts/web-scraper.js`
 - Vue component tests use `@vue/test-utils` to mount components from `@/games/reword/src/components/`
 - `build-words.test.js` tests the word processing functions from `@/games/reword/src/words.js` and the `trimPuzzleData` function exported from `@/scripts/build-words.js`
-- `web-scraper.test.js` tests the HTML parsing and expansion key derivation functions used by the web-sourced build pipeline
+- `web-scraper.test.js` tests the pure functions in `@/scripts/web-scraper.js`: HTML parsing, expansion key derivation, and grouping words by expansion key
 - `@/tests/speedrun/` contains test suites that import from `@/games/speedrun/src/` modules -- physics, level generation, timing, stats, and game-loop integration
 
 ### Core Implementation
@@ -38,6 +38,8 @@ Path: @/tests
 - **`speedrun/stats.test.js`** -- Tests default stats on empty localStorage, round-trip persistence, per-day isolation, personal best update logic (faster replaces, slower keeps old), first-time PB from null, path storage alongside PB times, path preservation when PB does not improve, backwards compatibility with old stats lacking `bestPaths`, independent per-category path storage, and default stats shape including `bestPaths`
 - **`speedrun/path.test.js`** -- Tests path recorder creation, frame recording at sample interval, recorder reset, `isPathComplete` logic (empty path, within max duration, exceeding max duration), and `interpolatePosition` (before path start, exact sample match, midpoint interpolation, past path end, null/empty path)
 - **`speedrun/settings.test.js`** -- Tests default settings on empty localStorage, round-trip persistence, corrupted data fallback, and default ghost category value
+- **`speedrun/name-filter.test.js`** -- Tests player name validation: length constraints (3-12 chars), allowed character set (alphanumeric + underscore), profanity rejection via leo-profanity, whitespace trimming, and the `valid: true`/`valid: false` return shape
+- **`speedrun/leaderboard.test.js`** -- Tests `submitScore` input validation: category must be one of anyPercent/hundredRed/hundredBlue, time must be positive finite number under 3600, name must pass validation. Uses mocked firebase/firestore at the module boundary
 - **`speedrun/game-loop.test.js`** -- Integration tests: player initialization at start position, coin collection through simulated movement, goal detection through simulated movement, and `restartRun()` behavior (resets player position/velocity, coin counts, timer, and coin collected flags)
 
 ### Things to Know
