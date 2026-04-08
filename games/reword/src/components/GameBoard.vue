@@ -1,5 +1,5 @@
 <template>
-  <div class="game-board">
+  <div :class="['game-board', boardTransition]">
     <div class="game-info">
       <span id="round-indicator">Round {{ roundNumber }} of 11</span>
       <span id="timer"><slot name="timer"></slot></span>
@@ -43,6 +43,7 @@ const props = defineProps({
   message: { type: String, default: '' },
   messageType: { type: String, default: '' },
   flyUp: { type: Boolean, default: false },
+  boardTransition: { type: String, default: '' },
 });
 
 defineEmits(['submit', 'skip']);

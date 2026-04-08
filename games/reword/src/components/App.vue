@@ -21,6 +21,7 @@
           :message="message"
           :message-type="messageType"
           :fly-up="flyUp"
+          :board-transition="boardTransition"
           @submit="handleSubmit"
           @skip="handleSkip"
         >
@@ -63,6 +64,7 @@ const showHowToPlay = ref(false);
 const message = ref('');
 const messageType = ref('');
 const flyUp = ref(false);
+const boardTransition = ref('');
 const gameComplete = ref(false);
 const totalTimeMs = ref(0);
 const muted = ref(false);
@@ -200,12 +202,19 @@ function advanceRound() {
     showScore();
     return;
   }
-  state.inputLetters = [];
-  message.value = '';
-  messageType.value = '';
-  flyUp.value = false;
-  startTimer();
-  state.transitioning = false;
+  boardTransition.value = 'fade-out';
+  setTimeout(() => {
+    state.inputLetters = [];
+    message.value = '';
+    messageType.value = '';
+    flyUp.value = false;
+    boardTransition.value = 'fade-in';
+    startTimer();
+    setTimeout(() => {
+      boardTransition.value = '';
+      state.transitioning = false;
+    }, 200);
+  }, 150);
 }
 
 function showScore(savedResults) {
