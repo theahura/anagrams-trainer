@@ -23,10 +23,27 @@
         <li>Score is based on total letters used</li>
       </ul>
       <p class="word-source">Valid words are based on the <a href="https://scrabblewordfinder.org" target="_blank" rel="noopener noreferrer">Scrabble Dictionary</a></p>
+      <div class="timer-toggle-section">
+        <label class="timer-toggle-label">
+          <input
+            type="checkbox"
+            data-testid="timer-toggle"
+            :checked="timerDisabled"
+            :disabled="gameInProgress"
+            @click="!gameInProgress && $emit('toggle-timer')"
+          />
+          Disable Timer
+        </label>
+        <p v-if="gameInProgress" class="timer-toggle-hint">Cannot change during a game</p>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-defineEmits(['close']);
+defineProps({
+  timerDisabled: { type: Boolean, default: false },
+  gameInProgress: { type: Boolean, default: false },
+});
+defineEmits(['close', 'toggle-timer']);
 </script>

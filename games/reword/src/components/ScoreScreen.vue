@@ -4,7 +4,7 @@
     <div class="stats-row">
       <div class="stat">Words Solved<br><span class="stat-value">{{ solved }} / 11</span></div>
       <div class="stat">Total Letters<br><span class="stat-value">{{ totalLetters }}</span></div>
-      <div class="stat">Total Time<br><span class="stat-value">{{ formattedTime }}</span></div>
+      <div v-if="!timerDisabled" class="stat">Total Time<br><span class="stat-value">{{ formattedTime }}</span></div>
     </div>
     <div v-if="streakStats" class="stats-row streak-stats">
       <div class="stat">Played<br><span class="stat-value">{{ streakStats.gamesPlayed }}</span></div>
@@ -56,6 +56,7 @@ const props = defineProps({
   shareButtonText: { type: String, default: 'Share Results' },
   streakStats: { type: Object, default: null },
   lifetimeStats: { type: Object, default: null },
+  timerDisabled: { type: Boolean, default: false },
 });
 
 defineEmits(['share']);

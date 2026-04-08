@@ -727,6 +727,63 @@ header h1 {
   color: #6aaf5e;
 }
 
+.timer-toggle-section {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #3a3a3c;
+  text-align: center;
+}
+
+.timer-toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #585858;
+  cursor: pointer;
+}
+
+.timer-toggle-label input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border: 1px solid #3a3a3c;
+  border-radius: 2px;
+  background: #1a1a1b;
+  cursor: pointer;
+  position: relative;
+}
+
+.timer-toggle-label input[type="checkbox"]:checked {
+  background: #538d4e;
+  border-color: #538d4e;
+}
+
+.timer-toggle-label input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 1px;
+  width: 4px;
+  height: 7px;
+  border: solid #fff;
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
+}
+
+.timer-toggle-label input[type="checkbox"]:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.timer-toggle-hint {
+  font-size: 10px;
+  color: #585858;
+  margin-top: 2px;
+  font-style: italic;
+}
+
 /* Streak stats */
 .streak-stats {
   border-top: 1px solid #3a3a3c;

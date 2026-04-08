@@ -11,7 +11,7 @@
         </button>
       </header>
 
-      <HowToPlay v-if="showHowToPlay" @close="showHowToPlay = false" />
+      <HowToPlay v-if="showHowToPlay" :timer-disabled="timerDisabled" :game-in-progress="gameInProgress" @close="showHowToPlay = false" @toggle-timer="toggleTimer" />
 
       <template v-if="!gameComplete">
         <GameBoard
@@ -27,7 +27,7 @@
         >
           <template #timer>
             <span id="letter-score">Letters: {{ runningLetterScore }}</span>
-            <span class="timer-display" :class="{ 'timer-warning': timerWarning }">{{ timerDisplay }}</span>
+            <span v-if="!timerDisabled" class="timer-display" :class="{ 'timer-warning': timerWarning }">{{ timerDisplay }}</span>
           </template>
         </GameBoard>
 
@@ -42,6 +42,7 @@
         :share-button-text="shareButtonText"
         :streak-stats="streakStats"
         :lifetime-stats="lifetimeStats"
+        :timer-disabled="timerDisabled"
         @share="handleShare"
       />
     </template>
@@ -68,6 +69,7 @@ const tilesFadingIn = ref(false);
 const gameComplete = ref(false);
 const totalTimeMs = ref(0);
 const muted = ref(false);
+const timerDisabled = ref(false);
 
 const state = reactive({
   currentRound: 0,
@@ -118,6 +120,13 @@ function toggleMute() {
   try { localStorage.setItem('reword-sound-muted', muted.value ? '1' : '0'); } catch (e) {}
 }
 
+function toggleTimer() {
+  timerDisabled.value = !timerDisabled.value;
+  try { localStorage.setItem('reword-timer-disabled', timerDisabled.value ? '1' : '0'); } catch (e) {}
+}
+
+const gameInProgress = computed(() => state.startTime !== null && !gameComplete.value);
+
 const currentRound = computed(() => puzzle.value ? puzzle.value[state.currentRound] : null);
 const runningLetterScore = computed(() => state.completedRounds.reduce((sum, r) => sum + r.answer.length, 0));
 const streakStats = ref(null);
@@ -126,6 +135,7 @@ const lifetimeStats = ref(null);
 function startTimer() {
   if (!state.startTime) state.startTime = Date.now();
   state.roundStartTime = Date.now();
+  if (timerDisabled.value) return;
   state.roundDeadline = Date.now() + ROUND_TIME_MS;
   timerWarning.value = false;
   if (timerInterval) clearInterval(timerInterval);
@@ -235,6 +245,7 @@ function showScore(savedResults) {
       localStorage.setItem('reword-' + dateStr.value, JSON.stringify({
         results: state.completedRounds,
         totalTimeMs: totalTimeMs.value,
+        timerDisabled: timerDisabled.value,
       }));
     } catch (e) {}
 
@@ -248,7 +259,7 @@ function showScore(savedResults) {
     try {
       const rawLifetime = localStorage.getItem('reword-lifetime-stats');
       const existingLifetime = rawLifetime ? JSON.parse(rawLifetime) : null;
-      const updatedLifetime = updateLifetimeStats(existingLifetime, state.completedRounds, totalTimeMs.value);
+      const updatedLifetime = updateLifetimeStats(existingLifetime, state.completedRounds, totalTimeMs.value, timerDisabled.value);
       localStorage.setItem('reword-lifetime-stats', JSON.stringify(updatedLifetime));
     } catch (e) {}
   }
@@ -287,7 +298,7 @@ const shareButtonText = ref('Share Results');
 
 async function handleShare() {
   const results = state.completedRounds;
-  const shareText = generateShareText(results, dateStr.value, totalTimeMs.value);
+  const shareText = generateShareText(results, dateStr.value, totalTimeMs.value, timerDisabled.value);
   try {
     if (navigator.clipboard) {
       await navigator.clipboard.writeText(shareText);
@@ -339,6 +350,11 @@ onMounted(async () => {
     if (savedMuteState === '1') muted.value = true;
   } catch (e) {}
 
+  // Load timer disabled state
+  try {
+    if (localStorage.getItem('reword-timer-disabled') === '1') timerDisabled.value = true;
+  } catch (e) {}
+
   // Load puzzle
   const response = await fetch(new URL('../../data/puzzles.json', import.meta.url));
   const puzzleData = await response.json();
@@ -353,10 +369,11 @@ onMounted(async () => {
   try {
     const saved = localStorage.getItem('reword-' + dateStr.value) || localStorage.getItem('anagram-trainer-' + dateStr.value);
     if (saved) {
-      const { results } = JSON.parse(saved);
-      state.completedRounds = results;
+      const parsed = JSON.parse(saved);
+      state.completedRounds = parsed.results;
       state.currentRound = 11;
-      showScore(results);
+      timerDisabled.value = !!parsed.timerDisabled;
+      showScore(parsed.results);
       return;
     }
   } catch (e) {}
