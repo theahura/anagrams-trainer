@@ -432,11 +432,24 @@ header h1 {
 }
 
 /* Loading */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 #loading {
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   color: #d7dadc;
   font-size: 18px;
   margin-top: 40vh;
+}
+
+.loading-icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+  animation: spin 1.2s linear infinite;
 }
 
 /* Virtual keyboard (touch devices only) */
@@ -554,7 +567,8 @@ header h1 {
   .fade-out,
   .fade-in,
   #input-area .tile,
-  .timer-display.timer-warning {
+  .timer-display.timer-warning,
+  .loading-icon {
     animation: none;
   }
   .tile.used,

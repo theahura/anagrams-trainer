@@ -6,6 +6,7 @@ import VirtualKeyboard from '../games/reword/src/components/VirtualKeyboard.vue'
 import ScoreScreen from '../games/reword/src/components/ScoreScreen.vue';
 import GameBoard from '../games/reword/src/components/GameBoard.vue';
 import HowToPlay from '../games/reword/src/components/HowToPlay.vue';
+import LoadingScreen from '../games/reword/src/components/LoadingScreen.vue';
 
 describe('ScrabbleTile', () => {
   it('renders the letter in uppercase', () => {
@@ -354,5 +355,22 @@ describe('HowToPlay', () => {
     const toggle = wrapper.find('[data-testid="timer-toggle"]');
     await toggle.trigger('click');
     expect(wrapper.emitted('toggle-timer')).toBeFalsy();
+  });
+});
+
+describe('LoadingScreen', () => {
+  it('renders a loading indicator icon', () => {
+    const wrapper = mount(LoadingScreen);
+    expect(wrapper.find('.loading-icon').exists()).toBe(true);
+  });
+
+  it('displays loading text', () => {
+    const wrapper = mount(LoadingScreen);
+    expect(wrapper.text()).toContain('Loading puzzle data');
+  });
+
+  it('has role="status" for screen reader accessibility', () => {
+    const wrapper = mount(LoadingScreen);
+    expect(wrapper.attributes('role')).toBe('status');
   });
 });

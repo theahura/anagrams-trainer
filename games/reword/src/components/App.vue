@@ -1,6 +1,6 @@
 <template>
   <div id="game-container">
-    <div v-if="loading" id="loading">Loading puzzle data...</div>
+    <LoadingScreen v-if="loading" />
 
     <template v-else>
       <header>
@@ -57,6 +57,7 @@ import GameBoard from './GameBoard.vue';
 import VirtualKeyboard from './VirtualKeyboard.vue';
 import ScoreScreen from './ScoreScreen.vue';
 import HowToPlay from './HowToPlay.vue';
+import LoadingScreen from './LoadingScreen.vue';
 
 const loading = ref(true);
 const puzzle = ref(null);
