@@ -12,12 +12,14 @@ const COLORS = {
   goalGlow: 'rgba(83, 141, 78, 0.3)',
   text: '#d7dadc',
   textDim: '#818384',
+  ghost: 'rgba(100, 160, 255, 0.35)',
+  pathLine: 'rgba(100, 160, 255, 0.5)',
 }
 
 export function createRenderer(canvas) {
   const ctx = canvas.getContext('2d')
 
-  function render(level, player, timer, state, stats, weekSeed) {
+  function render(level, player, timer, state, stats, weekSeed, ghostPos, currentPath) {
     const w = canvas.width
     const h = canvas.height
     const ts = level.tileSize
@@ -57,6 +59,29 @@ export function createRenderer(canvas) {
       ctx.beginPath()
       ctx.arc(coin.x, coin.y, 6, 0, Math.PI * 2)
       ctx.fill()
+    }
+
+    // Draw path line (on completion)
+    if (state === 'COMPLETE' && currentPath && currentPath.length > 1) {
+      ctx.strokeStyle = COLORS.pathLine
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.moveTo(currentPath[0][0], currentPath[0][1])
+      for (let i = 1; i < currentPath.length; i++) {
+        ctx.lineTo(currentPath[i][0], currentPath[i][1])
+      }
+      ctx.stroke()
+    }
+
+    // Draw ghost
+    if (ghostPos) {
+      ctx.fillStyle = COLORS.ghost
+      ctx.fillRect(
+        Math.round(ghostPos.x),
+        Math.round(ghostPos.y),
+        PLAYER_WIDTH,
+        PLAYER_HEIGHT,
+      )
     }
 
     // Draw player

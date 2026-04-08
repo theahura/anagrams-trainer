@@ -76,4 +76,101 @@ describe('stats', () => {
     expect(updated.bestHundredRed).toBeNull()
     expect(updated.bestHundredBlue).toBeNull()
   })
+
+  it('stores path when PB improves', () => {
+    const stats = {
+      attempts: 0,
+      bestAnyPercent: null,
+      bestHundredRed: null,
+      bestHundredBlue: null,
+    }
+    const record = { anyPercent: 10.0, hundredRed: null, hundredBlue: null }
+    const paths = {
+      anyPercent: [[0, 0, 0], [100, 50, 5.0]],
+      hundredRed: null,
+      hundredBlue: null,
+    }
+
+    const updated = updatePersonalBest(stats, record, paths)
+
+    expect(updated.bestPaths.anyPercent).toEqual([[0, 0, 0], [100, 50, 5.0]])
+    expect(updated.bestPaths.hundredRed).toBeNull()
+  })
+
+  it('does not overwrite path when PB does not improve', () => {
+    const stats = {
+      attempts: 5,
+      bestAnyPercent: 8.0,
+      bestHundredRed: null,
+      bestHundredBlue: null,
+      bestPaths: {
+        anyPercent: [[0, 0, 0], [50, 50, 4.0]],
+        hundredRed: null,
+        hundredBlue: null,
+      },
+    }
+    const record = { anyPercent: 12.0, hundredRed: null, hundredBlue: null }
+    const paths = {
+      anyPercent: [[0, 0, 0], [200, 200, 12.0]],
+      hundredRed: null,
+      hundredBlue: null,
+    }
+
+    const updated = updatePersonalBest(stats, record, paths)
+
+    expect(updated.bestAnyPercent).toBe(8.0)
+    expect(updated.bestPaths.anyPercent).toEqual([[0, 0, 0], [50, 50, 4.0]])
+  })
+
+  it('handles old stats without bestPaths gracefully', () => {
+    const oldStats = {
+      attempts: 3,
+      bestAnyPercent: 15.0,
+      bestHundredRed: null,
+      bestHundredBlue: null,
+    }
+    saveStats('2026-W15', oldStats)
+    const loaded = loadStats('2026-W15')
+
+    const record = { anyPercent: 10.0, hundredRed: null, hundredBlue: null }
+    const paths = {
+      anyPercent: [[0, 0, 0], [100, 50, 10.0]],
+      hundredRed: null,
+      hundredBlue: null,
+    }
+    const updated = updatePersonalBest(loaded, record, paths)
+
+    expect(updated.bestAnyPercent).toBe(10.0)
+    expect(updated.bestPaths.anyPercent).toEqual([[0, 0, 0], [100, 50, 10.0]])
+  })
+
+  it('stores paths independently per category', () => {
+    const stats = {
+      attempts: 0,
+      bestAnyPercent: null,
+      bestHundredRed: null,
+      bestHundredBlue: null,
+    }
+    const record = { anyPercent: 10.0, hundredRed: 10.0, hundredBlue: null }
+    const paths = {
+      anyPercent: [[0, 0, 0], [100, 50, 10.0]],
+      hundredRed: [[0, 0, 0], [80, 40, 10.0]],
+      hundredBlue: null,
+    }
+
+    const updated = updatePersonalBest(stats, record, paths)
+
+    expect(updated.bestPaths.anyPercent).toEqual(paths.anyPercent)
+    expect(updated.bestPaths.hundredRed).toEqual(paths.hundredRed)
+    expect(updated.bestPaths.hundredBlue).toBeNull()
+  })
+
+  it('default stats include bestPaths', () => {
+    const stats = loadStats('nonexistent-week')
+    expect(stats.bestPaths).toEqual({
+      anyPercent: null,
+      hundredRed: null,
+      hundredBlue: null,
+    })
+  })
 })
