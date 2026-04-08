@@ -1,7 +1,7 @@
 const STORAGE_PREFIX = 'speedrun-stats-'
 
-export function loadStats(weekSeed) {
-  const data = localStorage.getItem(STORAGE_PREFIX + weekSeed)
+export function loadStats(seed) {
+  const data = localStorage.getItem(STORAGE_PREFIX + seed)
   if (!data) {
     return defaultStats()
   }
@@ -26,8 +26,8 @@ function defaultStats() {
   }
 }
 
-export function saveStats(weekSeed, stats) {
-  localStorage.setItem(STORAGE_PREFIX + weekSeed, JSON.stringify(stats))
+export function saveStats(seed, stats) {
+  localStorage.setItem(STORAGE_PREFIX + seed, JSON.stringify(stats))
 }
 
 export function updatePersonalBest(stats, record, paths) {

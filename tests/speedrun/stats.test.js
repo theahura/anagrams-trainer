@@ -11,7 +11,7 @@ describe('stats', () => {
   })
 
   it('returns default stats when nothing saved', () => {
-    const stats = loadStats('2026-W15')
+    const stats = loadStats('2026-04-08')
     expect(stats.attempts).toBe(0)
     expect(stats.bestAnyPercent).toBeNull()
     expect(stats.bestHundredRed).toBeNull()
@@ -25,17 +25,17 @@ describe('stats', () => {
       bestHundredRed: 20.0,
       bestHundredBlue: null,
     }
-    saveStats('2026-W15', stats)
-    const loaded = loadStats('2026-W15')
+    saveStats('2026-04-08', stats)
+    const loaded = loadStats('2026-04-08')
     expect(loaded).toEqual(stats)
   })
 
-  it('different weeks have independent stats', () => {
-    saveStats('2026-W15', { attempts: 3, bestAnyPercent: 10.0, bestHundredRed: null, bestHundredBlue: null })
-    saveStats('2026-W16', { attempts: 1, bestAnyPercent: 15.0, bestHundredRed: null, bestHundredBlue: null })
+  it('different days have independent stats', () => {
+    saveStats('2026-04-08', { attempts: 3, bestAnyPercent: 10.0, bestHundredRed: null, bestHundredBlue: null })
+    saveStats('2026-04-09', { attempts: 1, bestAnyPercent: 15.0, bestHundredRed: null, bestHundredBlue: null })
 
-    expect(loadStats('2026-W15').attempts).toBe(3)
-    expect(loadStats('2026-W16').attempts).toBe(1)
+    expect(loadStats('2026-04-08').attempts).toBe(3)
+    expect(loadStats('2026-04-09').attempts).toBe(1)
   })
 
   it('updates personal best only if faster', () => {
@@ -55,8 +55,8 @@ describe('stats', () => {
   })
 
   it('returns default stats when localStorage has corrupted data', () => {
-    localStorage.setItem('speedrun-stats-2026-W15', 'not-valid-json{{{')
-    const stats = loadStats('2026-W15')
+    localStorage.setItem('speedrun-stats-2026-04-08', 'not-valid-json{{{')
+    const stats = loadStats('2026-04-08')
     expect(stats.attempts).toBe(0)
     expect(stats.bestAnyPercent).toBeNull()
   })

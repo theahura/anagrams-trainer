@@ -19,7 +19,7 @@ const COLORS = {
 export function createRenderer(canvas) {
   const ctx = canvas.getContext('2d')
 
-  function render(level, player, timer, state, stats, weekSeed, ghostPos, currentPath) {
+  function render(level, player, timer, state, stats, daySeed, ghostPos, currentPath) {
     const w = canvas.width
     const h = canvas.height
     const ts = level.tileSize
@@ -94,13 +94,13 @@ export function createRenderer(canvas) {
     )
 
     // Draw HUD
-    drawHUD(ctx, w, timer, player, level, state, stats, weekSeed)
+    drawHUD(ctx, w, timer, player, level, state, stats, daySeed)
   }
 
   return { render }
 }
 
-function drawHUD(ctx, canvasWidth, timer, player, level, state, stats, weekSeed) {
+function drawHUD(ctx, canvasWidth, timer, player, level, state, stats, daySeed) {
   ctx.font = '16px monospace'
   ctx.textBaseline = 'top'
 
@@ -111,11 +111,11 @@ function drawHUD(ctx, canvasWidth, timer, player, level, state, stats, weekSeed)
     ctx.fillText('Press any key to start', canvasWidth / 2, 16)
     ctx.textAlign = 'left'
     ctx.font = '16px monospace'
-    // Show week in top-right even on ready screen
-    if (weekSeed) {
+    // Show day seed in top-right even on ready screen
+    if (daySeed) {
       ctx.fillStyle = COLORS.textDim
       ctx.textAlign = 'right'
-      ctx.fillText(weekSeed, canvasWidth - 8, 8)
+      ctx.fillText(daySeed, canvasWidth - 8, 8)
       ctx.textAlign = 'left'
     }
     return
@@ -136,9 +136,9 @@ function drawHUD(ctx, canvasWidth, timer, player, level, state, stats, weekSeed)
 
   // PB and attempt info on the right side
   ctx.textAlign = 'right'
-  if (weekSeed) {
+  if (daySeed) {
     ctx.fillStyle = COLORS.textDim
-    ctx.fillText(weekSeed, canvasWidth - 8, 8)
+    ctx.fillText(daySeed, canvasWidth - 8, 8)
   }
   if (stats) {
     ctx.fillStyle = COLORS.textDim
