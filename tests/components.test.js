@@ -263,11 +263,11 @@ describe('GameBoard', () => {
     expect(inputArea.classes()).toContain('fly-up');
   });
 
-  it('applies board-transition class to game-board when boardTransition prop is set', () => {
+  it('applies transition class to tiles-area when boardTransition prop is set', () => {
     const wrapper = mount(GameBoard, {
       props: { round, roundNumber: 1, inputLetters: [], message: '', messageType: '', boardTransition: 'fade-out' },
     });
-    expect(wrapper.find('.game-board').classes()).toContain('fade-out');
+    expect(wrapper.find('.tiles-area').classes()).toContain('fade-out');
   });
 
   it('sets tile-index style on input tiles when flyUp is true', () => {
