@@ -21,6 +21,7 @@
           :message="message"
           :message-type="messageType"
           :fly-up="flyUp"
+          :tiles-fading-in="tilesFadingIn"
           @submit="handleSubmit"
           @skip="handleSkip"
         >
@@ -63,6 +64,7 @@ const showHowToPlay = ref(false);
 const message = ref('');
 const messageType = ref('');
 const flyUp = ref(false);
+const tilesFadingIn = ref(false);
 const gameComplete = ref(false);
 const totalTimeMs = ref(0);
 const muted = ref(false);
@@ -208,8 +210,12 @@ function advanceRound() {
     message.value = '';
     messageType.value = '';
     flyUp.value = false;
+    tilesFadingIn.value = true;
     startTimer();
-    state.transitioning = false;
+    setTimeout(() => {
+      tilesFadingIn.value = false;
+      state.transitioning = false;
+    }, 200);
   }, alreadyFlying ? 0 : 400);
 }
 
