@@ -21,7 +21,10 @@ Path: @/games/reword/src
 - **`main.js`** -- Vue app entry point
   - `createApp(App).mount('#app')` -- mounts the root component into the `#app` div
 
+- **`components/LoadingScreen.vue`** -- Displays a spinning favicon SVG (green "R" tile) above "Loading puzzle data..." text while puzzle data is being fetched. Uses `role="status"` for screen reader accessibility. The spin animation and layout are defined in `@/games/reword/style.css`
+
 - **`components/App.vue`** -- Root component, owns all game state
+  - Renders `<LoadingScreen v-if="loading" />` during puzzle fetch, then switches to the game UI
   - All game state lives in a `reactive()` object: `{ currentRound, completedRounds, inputLetters, startTime, roundStartTime, roundDeadline, transitioning }`. UI flags (`loading`, `gameComplete`, `muted`, `showHowToPlay`, `timerDisabled`, etc.) are individual `ref()` values. `timerDisabled` is persisted to `reword-timer-disabled` in localStorage and restored on mount. A `gameInProgress` computed (`startTime !== null && !gameComplete`) prevents the timer toggle from being changed mid-game
   - On mount: checks `reword-seen-how-to-play` localStorage to auto-show `HowToPlay` on first visit, fetches `puzzles.json`, derives UTC date string, selects daily puzzle, and checks for saved game (with fallback read from old `anagram-trainer-*` keys)
   - `handleKeyInput(key)` dispatches to `processKeyPress` from `game.js` for letter processing, and to `handleSubmit` for Enter
