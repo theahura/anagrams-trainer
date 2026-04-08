@@ -8,10 +8,26 @@
   <link rel="stylesheet" href="../games/speedrun/style.css">
 </head>
 <body>
-  <h1>Speedrun</h1>
+  <div class="title-row">
+    <h1>Speedrun</h1>
+    <button id="settings-btn" aria-label="Settings">⚙</button>
+  </div>
   <canvas id="game-canvas"></canvas>
   <div id="results-overlay" class="hidden">
     <div id="results-content"></div>
+  </div>
+  <div id="settings-overlay" class="hidden">
+    <div class="settings-modal">
+      <button class="settings-close" aria-label="Close">&times;</button>
+      <h2>Settings</h2>
+      <fieldset class="ghost-fieldset">
+        <legend>Ghost Replay</legend>
+        <label><input type="radio" name="ghost-category" value="off"> Off</label>
+        <label><input type="radio" name="ghost-category" value="anyPercent" checked> Any%</label>
+        <label><input type="radio" name="ghost-category" value="hundredRed"> 100% Red</label>
+        <label><input type="radio" name="ghost-category" value="hundredBlue"> 100% Blue</label>
+      </fieldset>
+    </div>
   </div>
   <script type="module" src="../games/speedrun/src/main.js"></script>
 </body>

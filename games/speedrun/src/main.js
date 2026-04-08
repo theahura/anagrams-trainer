@@ -6,6 +6,8 @@ import { createTimer, updateTimer, formatTime, createCompletionRecord } from './
 import { loadStats, saveStats, updatePersonalBest } from './stats.js'
 import { createRenderer } from './renderer.js'
 import { restartRun } from './game.js'
+import { createPathRecorder, recordFrame, resetRecorder, getPath, isPathComplete, interpolatePosition } from './path.js'
+import { loadSettings, saveSettings } from './settings.js'
 
 const CANVAS_WIDTH = 800
 const CANVAS_HEIGHT = 608
@@ -14,6 +16,9 @@ let gameState = 'READY' // READY, PLAYING, COMPLETE
 let level, player, timer, stats, config, renderer, inputState
 let daySeed
 let lastTime = 0
+let pathRecorder
+let settings
+let settingsOpen = false
 
 function init() {
   const canvas = document.getElementById('game-canvas')
@@ -29,26 +34,49 @@ function init() {
   renderer = createRenderer(canvas)
   inputState = createInputState()
   setupInputListeners(inputState)
+  pathRecorder = createPathRecorder()
+  settings = loadSettings()
+
+  setupSettingsUI()
 
   document.addEventListener('keydown', handleKeyDown)
 
   requestAnimationFrame(gameLoop)
 }
 
+function updateSettingsButtonState() {
+  const btn = document.getElementById('settings-btn')
+  if (btn) btn.classList.toggle('disabled', gameState !== 'READY')
+}
+
 function startGame() {
   gameState = 'PLAYING'
   timer.running = true
   clearFrameInput(inputState)
+  updateSettingsButtonState()
+}
+
+function getGhostPath() {
+  if (settings.ghostCategory === 'off') return null
+  if (!stats.bestPaths) return null
+  return stats.bestPaths[settings.ghostCategory] || null
 }
 
 function gameLoop(timestamp) {
   const dt = lastTime === 0 ? 1 / 60 : Math.min((timestamp - lastTime) / 1000, 1 / 30)
   lastTime = timestamp
 
+  let ghostPos = null
+
   if (gameState === 'PLAYING') {
     updateTimer(timer, dt)
     updatePlayer(player, inputState, level, dt, config)
     clearFrameInput(inputState)
+
+    recordFrame(pathRecorder, player.x, player.y, timer.elapsed)
+
+    const ghostPath = getGhostPath()
+    ghostPos = interpolatePosition(ghostPath, timer.elapsed)
 
     if (player.reachedGoal) {
       completeRun()
@@ -57,17 +85,28 @@ function gameLoop(timestamp) {
     clearFrameInput(inputState)
   }
 
-  renderer.render(level, player, timer, gameState, stats, daySeed)
+  const currentPath = gameState === 'COMPLETE' ? getPath(pathRecorder) : null
+  renderer.render(level, player, timer, gameState, stats, daySeed, ghostPos, currentPath)
   requestAnimationFrame(gameLoop)
 }
 
 function completeRun() {
   gameState = 'COMPLETE'
   timer.running = false
+  updateSettingsButtonState()
 
   const record = createCompletionRecord(timer, player, level)
+  const recordedPath = getPath(pathRecorder)
+  const pathComplete = isPathComplete(pathRecorder)
+
+  const paths = pathComplete ? {
+    anyPercent: record.anyPercent !== null ? recordedPath : null,
+    hundredRed: record.hundredRed !== null ? recordedPath : null,
+    hundredBlue: record.hundredBlue !== null ? recordedPath : null,
+  } : undefined
+
   stats.attempts++
-  stats = updatePersonalBest(stats, record)
+  stats = updatePersonalBest(stats, record, paths)
   saveStats(daySeed, stats)
 
   showResults(record)
@@ -131,6 +170,7 @@ function showResults(record) {
 }
 
 function handleKeyDown(e) {
+  if (settingsOpen) return
   if (gameState === 'READY') {
     startGame()
     return
@@ -140,6 +180,7 @@ function handleKeyDown(e) {
       stats.attempts++
       saveStats(daySeed, stats)
       restartRun(player, level, timer)
+      resetRecorder(pathRecorder)
     } else if (gameState === 'COMPLETE') {
       restart()
     }
@@ -153,7 +194,50 @@ function restart() {
   overlay.classList.add('hidden')
 
   restartRun(player, level, timer)
+  resetRecorder(pathRecorder)
   gameState = 'PLAYING'
+}
+
+function setupSettingsUI() {
+  const gearBtn = document.getElementById('settings-btn')
+  const overlay = document.getElementById('settings-overlay')
+  if (!gearBtn || !overlay) return
+
+  gearBtn.addEventListener('click', () => {
+    if (gameState !== 'READY') return
+    settingsOpen = true
+    overlay.classList.remove('hidden')
+    updateSettingsUI()
+  })
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeSettings()
+  })
+
+  const closeBtn = overlay.querySelector('.settings-close')
+  if (closeBtn) closeBtn.addEventListener('click', closeSettings)
+
+  const radios = overlay.querySelectorAll('input[name="ghost-category"]')
+  radios.forEach(radio => {
+    radio.addEventListener('change', () => {
+      settings.ghostCategory = radio.value
+      saveSettings(settings)
+    })
+  })
+}
+
+function closeSettings() {
+  const overlay = document.getElementById('settings-overlay')
+  overlay.classList.add('hidden')
+  settingsOpen = false
+}
+
+function updateSettingsUI() {
+  const overlay = document.getElementById('settings-overlay')
+  const radios = overlay.querySelectorAll('input[name="ghost-category"]')
+  radios.forEach(radio => {
+    radio.checked = radio.value === settings.ghostCategory
+  })
 }
 
 document.addEventListener('DOMContentLoaded', init)
