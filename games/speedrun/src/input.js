@@ -4,6 +4,8 @@ export function createInputState() {
     right: false,
     jump: false,
     jumpPressed: false,
+    dash: false,
+    dashPressed: false,
   }
 }
 
@@ -19,6 +21,8 @@ export function setupInputListeners(inputState) {
     w: 'jump',
     W: 'jump',
     ' ': 'jump',
+    e: 'dash',
+    E: 'dash',
   }
 
   function onKeyDown(e) {
@@ -27,6 +31,9 @@ export function setupInputListeners(inputState) {
     e.preventDefault()
     if (action === 'jump' && !inputState.jump) {
       inputState.jumpPressed = true
+    }
+    if (action === 'dash' && !inputState.dash) {
+      inputState.dashPressed = true
     }
     inputState[action] = true
   }
@@ -49,4 +56,5 @@ export function setupInputListeners(inputState) {
 
 export function clearFrameInput(inputState) {
   inputState.jumpPressed = false
+  inputState.dashPressed = false
 }

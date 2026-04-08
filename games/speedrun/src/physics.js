@@ -23,6 +23,10 @@ export function createPhysicsConfig() {
     wallJumpHorizontalSpeed: 100,
     wallJumpVerticalSpeed: jumpSpeed * 0.85,
     wallJumpControlDelay: 0.04,
+    dashSpeed: 500,
+    dashDuration: 0.15,
+    dashCooldown: 0.5,
+    sprintMaxSpeed: 375,
   }
 }
 
@@ -56,11 +60,23 @@ export function updatePlayer(player, input, level, dt, config) {
   // Track jump held state
   player.jumpHeld = input.jump
 
-  // Horizontal movement
-  const accel = player.grounded ? config.groundAccel : config.airAccel
-  const decel = config.groundDecel
+  // Tick dash timers
+  if (player.dashTimer > 0) {
+    player.dashTimer = Math.max(0, player.dashTimer - dt)
+  }
+  if (player.dashCooldownTimer > 0) {
+    player.dashCooldownTimer = Math.max(0, player.dashCooldownTimer - dt)
+  }
 
-  // During wall jump control delay, override input with forced direction
+  // Dash initiation
+  if (input.dashPressed && player.dashCooldownTimer <= 0) {
+    const dir = input.left ? -1 : input.right ? 1 : (player.vx >= 0 ? 1 : -1)
+    player.vx = dir * config.dashSpeed
+    player.dashTimer = config.dashDuration
+    player.dashCooldownTimer = config.dashCooldown
+  }
+
+  // Resolve movement direction (needed by both horizontal movement and wall sliding)
   let moveLeft = input.left
   let moveRight = input.right
   if (player.wallJumpControlTimer > 0) {
@@ -68,12 +84,19 @@ export function updatePlayer(player, input, level, dt, config) {
     moveRight = player.wallJumpForceDir > 0
   }
 
-  if (moveLeft) {
-    player.vx = moveToward(player.vx, -config.maxRunSpeed, accel * dt)
-  } else if (moveRight) {
-    player.vx = moveToward(player.vx, config.maxRunSpeed, accel * dt)
-  } else {
-    player.vx = moveToward(player.vx, 0, decel * dt)
+  // Horizontal movement (skip during active dash)
+  if (player.dashTimer <= 0) {
+    const accel = player.grounded ? config.groundAccel : config.airAccel
+    const decel = config.groundDecel
+    const effectiveMaxSpeed = input.dash ? config.sprintMaxSpeed : config.maxRunSpeed
+
+    if (moveLeft) {
+      player.vx = moveToward(player.vx, -effectiveMaxSpeed, accel * dt)
+    } else if (moveRight) {
+      player.vx = moveToward(player.vx, effectiveMaxSpeed, accel * dt)
+    } else {
+      player.vx = moveToward(player.vx, 0, decel * dt)
+    }
   }
 
   // Jumping
@@ -196,6 +219,8 @@ export function updatePlayer(player, input, level, dt, config) {
     player.wallJumpControlTimer = 0
     player.wallJumpForceDir = 0
     player.wallDir = 0
+    player.dashTimer = 0
+    player.dashCooldownTimer = 0
   }
 }
 
