@@ -197,13 +197,14 @@ function handleSkip() {
 }
 
 function advanceRound() {
-  state.currentRound++;
-  if (state.currentRound >= 11) {
+  if (state.currentRound + 1 >= 11) {
+    state.currentRound++;
     showScore();
     return;
   }
   boardTransition.value = 'fade-out';
   setTimeout(() => {
+    state.currentRound++;
     state.inputLetters = [];
     message.value = '';
     messageType.value = '';
