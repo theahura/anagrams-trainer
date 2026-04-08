@@ -5,5 +5,5 @@ export function restartRun(player, level, timer) {
   for (const coin of level.redCoins) coin.collected = false
   for (const coin of level.blueCoins) coin.collected = false
   timer.elapsed = 0
-  timer.running = true
+  timer.running = false
 }
