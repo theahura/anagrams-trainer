@@ -187,6 +187,20 @@ describe('ScoreScreen', () => {
     // Avg = 90000 / 2 = 45000ms = 0:45
     expect(wrapper.text()).toContain('0:45');
   });
+
+  it('hides Total Time stat when timerDisabled is true', () => {
+    const wrapper = mount(ScoreScreen, {
+      props: { results, dateStr: '2026-04-05', totalTimeMs: 12000, timerDisabled: true },
+    });
+    expect(wrapper.text()).not.toContain('Total Time');
+  });
+
+  it('shows Total Time stat when timerDisabled is false', () => {
+    const wrapper = mount(ScoreScreen, {
+      props: { results, dateStr: '2026-04-05', totalTimeMs: 12000, timerDisabled: false },
+    });
+    expect(wrapper.text()).toContain('Total Time');
+  });
 });
 
 describe('GameBoard', () => {
@@ -280,5 +294,47 @@ describe('HowToPlay', () => {
     const closeBtn = wrapper.find('[data-testid="close-how-to-play"]');
     await closeBtn.trigger('click');
     expect(wrapper.emitted('close')).toBeTruthy();
+  });
+
+  it('renders a timer toggle control', () => {
+    const wrapper = mount(HowToPlay, {
+      props: { timerDisabled: false, gameInProgress: false },
+    });
+    const toggle = wrapper.find('[data-testid="timer-toggle"]');
+    expect(toggle.exists()).toBe(true);
+  });
+
+  it('emits toggle-timer when timer toggle is clicked', async () => {
+    const wrapper = mount(HowToPlay, {
+      props: { timerDisabled: false, gameInProgress: false },
+    });
+    const toggle = wrapper.find('[data-testid="timer-toggle"]');
+    await toggle.trigger('click');
+    expect(wrapper.emitted('toggle-timer')).toBeTruthy();
+  });
+
+  it('shows checked state when timerDisabled is true', () => {
+    const wrapper = mount(HowToPlay, {
+      props: { timerDisabled: true, gameInProgress: false },
+    });
+    const toggle = wrapper.find('[data-testid="timer-toggle"]');
+    expect(toggle.element.checked).toBe(true);
+  });
+
+  it('disables timer toggle when game is in progress', () => {
+    const wrapper = mount(HowToPlay, {
+      props: { timerDisabled: false, gameInProgress: true },
+    });
+    const toggle = wrapper.find('[data-testid="timer-toggle"]');
+    expect(toggle.element.disabled).toBe(true);
+  });
+
+  it('does not emit toggle-timer when toggle is disabled and clicked', async () => {
+    const wrapper = mount(HowToPlay, {
+      props: { timerDisabled: false, gameInProgress: true },
+    });
+    const toggle = wrapper.find('[data-testid="timer-toggle"]');
+    await toggle.trigger('click');
+    expect(wrapper.emitted('toggle-timer')).toBeFalsy();
   });
 });

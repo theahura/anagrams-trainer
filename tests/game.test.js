@@ -304,6 +304,24 @@ describe('generateShareText', () => {
     expect(lines[2]).toBe('0/11 | 2:00');
   });
 
+  it('omits time from share text when timer is disabled', () => {
+    const results = Array.from({ length: 11 }, () => ({ answer: 'word', timeMs: 1000, root: 'wor' }));
+    const text = generateShareText(results, '2026-04-05', 60000, true);
+    const lines = text.split('\n');
+    expect(lines[0]).toBe('Reword 2026-04-05');
+    expect(lines[1]).toBe('🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩');
+    expect(lines[2]).toBe('11/11');
+    expect(text).not.toContain('|');
+    expect(text).not.toContain('1:00');
+  });
+
+  it('includes time in share text when timer is not disabled', () => {
+    const results = Array.from({ length: 11 }, () => ({ answer: 'word', timeMs: 1000, root: 'wor' }));
+    const text = generateShareText(results, '2026-04-05', 60000, false);
+    const lines = text.split('\n');
+    expect(lines[2]).toBe('11/11 | 1:00');
+  });
+
 });
 
 describe('matchTypedToTiles', () => {
@@ -762,6 +780,19 @@ describe('updateLifetimeStats', () => {
       perfectGamesPlayed: 1, perfectGamesTotalTimeMs: 40000,
     };
     const stats = updateLifetimeStats(existing, gameRounds, gameTotalTimeMs);
+    expect(stats.perfectGamesPlayed).toBe(1);
+    expect(stats.perfectGamesTotalTimeMs).toBe(40000);
+    expect(stats.fastestTimeMs).toBe(40000);
+  });
+
+  it('does not count timer-disabled game as perfect even with all rounds solved', () => {
+    const existing = {
+      totalLetters: 50, totalWords: 11, fastestTimeMs: 40000,
+      totalTimeMs: 40000, gamesPlayed: 1, bestLetterScore: 50,
+      longestWord: 'strange', totalSkips: 0,
+      perfectGamesPlayed: 1, perfectGamesTotalTimeMs: 40000,
+    };
+    const stats = updateLifetimeStats(existing, perfectGameRounds, 20000, true);
     expect(stats.perfectGamesPlayed).toBe(1);
     expect(stats.perfectGamesTotalTimeMs).toBe(40000);
     expect(stats.fastestTimeMs).toBe(40000);

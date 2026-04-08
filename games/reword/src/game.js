@@ -100,9 +100,12 @@ export function getOfferedLetters(puzzleEntry, rng) {
   return seededShuffle([...letters], rng);
 }
 
-export function generateShareText(results, dateStr, totalTimeMs) {
+export function generateShareText(results, dateStr, totalTimeMs, timerDisabled) {
   const emojis = results.map(r => r.answer.length > 0 ? '🟩' : '⬜').join('');
   const solved = results.filter(r => r.answer.length > 0).length;
+  if (timerDisabled) {
+    return `Reword ${dateStr}\n${emojis}\n${solved}/${results.length}`;
+  }
   const mins = Math.floor(totalTimeMs / 1000 / 60);
   const secs = Math.floor(totalTimeMs / 1000) % 60;
   return `Reword ${dateStr}\n${emojis}\n${solved}/${results.length} | ${mins}:${secs.toString().padStart(2, '0')}`;
@@ -180,7 +183,7 @@ export function calculateScore(completedRounds) {
   };
 }
 
-export function updateLifetimeStats(existingStats, completedRounds, totalTimeMs) {
+export function updateLifetimeStats(existingStats, completedRounds, totalTimeMs, timerDisabled) {
   const solvedRounds = completedRounds.filter(r => r.answer.length > 0);
   const gameLetters = solvedRounds.reduce((sum, r) => sum + r.answer.length, 0);
   const gameWords = solvedRounds.length;
@@ -188,7 +191,7 @@ export function updateLifetimeStats(existingStats, completedRounds, totalTimeMs)
   const gameLongestWord = solvedRounds.reduce(
     (longest, r) => r.answer.length > longest.length ? r.answer : longest, ''
   );
-  const isPerfect = completedRounds.length === 11 && gameSkips === 0;
+  const isPerfect = completedRounds.length === 11 && gameSkips === 0 && !timerDisabled;
 
   if (!existingStats) {
     return {
