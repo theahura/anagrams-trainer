@@ -269,6 +269,12 @@ describe('HowToPlay', () => {
     expect(text).toMatch(/add.*letter|letter.*add/);
   });
 
+  it('mentions Scrabble dictionary as the word source', () => {
+    const wrapper = mount(HowToPlay);
+    const text = wrapper.text().toLowerCase();
+    expect(text).toMatch(/scrabble/);
+  });
+
   it('emits close when close button is clicked', async () => {
     const wrapper = mount(HowToPlay);
     const closeBtn = wrapper.find('[data-testid="close-how-to-play"]');
