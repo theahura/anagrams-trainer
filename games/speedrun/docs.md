@@ -10,7 +10,8 @@ Path: @/games/speedrun
 
 ### How it fits into the larger codebase
 
-- `@/speedrun/index.html` is the Vite entry point (thin HTML shell with `<canvas>` and results overlay div), linked from the games index at `@/index.html`
+- `@/speedrun/index.html` is the Vite entry point (thin HTML shell with `<canvas>` and results overlay div), linked from the games index at `@/index.html`. Includes OpenGraph and Twitter Card meta tags pointing to `@/games/speedrun/og-image.png`
+- `@/games/speedrun/og-card.html` is the design template for the OG image (1200x630px) -- rendered and screenshotted to produce `og-image.png`. Same pattern as Reword's `og-card.html`
 - `@/vite.config.js` includes the speedrun entry in its multi-page rollup inputs alongside the games index and Reword
 - Source modules live in `@/games/speedrun/src/` -- pure-logic modules with no DOM dependencies except `main.js` and `renderer.js`
 - `@/games/speedrun/style.css` defines the dark theme, matching the Wordle-style palette used across the repo (#121213 background, #d7dadc text, #538d4e green accents)
