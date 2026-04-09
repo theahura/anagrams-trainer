@@ -13,6 +13,7 @@ const COLORS = {
   text: '#d7dadc',
   textDim: '#818384',
   ghost: 'rgba(100, 160, 255, 0.35)',
+  vaultFlash: '#ff6b6b',
   pathLine: 'rgba(100, 160, 255, 0.5)',
 }
 
@@ -85,7 +86,7 @@ export function createRenderer(canvas) {
     }
 
     // Draw player
-    ctx.fillStyle = COLORS.player
+    ctx.fillStyle = player.vaultFlashTimer > 0 ? COLORS.vaultFlash : COLORS.player
     ctx.fillRect(
       Math.round(player.x),
       Math.round(player.y),

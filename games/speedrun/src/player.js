@@ -14,6 +14,8 @@ export function createPlayer(x, y) {
     redCoins: 0,
     blueCoins: 0,
     reachedGoal: false,
+    vaultFlashTimer: 0,
+    groundedTime: 1,
   }
 }
 
@@ -32,6 +34,8 @@ export function resetPlayer(player, x, y) {
   player.redCoins = 0
   player.blueCoins = 0
   player.reachedGoal = false
+  player.vaultFlashTimer = 0
+  player.groundedTime = 1
 }
 
 export const PLAYER_WIDTH = 20

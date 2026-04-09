@@ -23,13 +23,23 @@ export function createPhysicsConfig() {
     wallJumpHorizontalSpeed: 100,
     wallJumpVerticalSpeed: jumpSpeed * 0.85,
     wallJumpControlDelay: 0.04,
-    vaultMomentumBoost: 80,
-    vaultMaxOverlap: 6,
+    vaultMomentumBoost: 150,
   }
 }
 
 export function updatePlayer(player, input, level, dt, config) {
   const wasGrounded = player.grounded
+
+  // Track how long the player has been continuously grounded
+  if (player.grounded) {
+    player.groundedTime += dt
+  } else {
+    player.groundedTime = 0
+  }
+
+  if (player.vaultFlashTimer > 0) {
+    player.vaultFlashTimer = Math.max(0, player.vaultFlashTimer - dt)
+  }
 
   // Tick wall jump control timer
   if (player.wallJumpControlTimer > 0) {
@@ -83,15 +93,38 @@ export function updatePlayer(player, input, level, dt, config) {
   const hasBufferedJump = player.jumpBufferTimer < config.jumpBufferTime
 
   if (input.jumpPressed || hasBufferedJump) {
-    if (player.grounded || canCoyoteJump) {
+    if ((player.grounded || canCoyoteJump) && player.groundedTime < config.jumpBufferTime && detectEdgeVault(player, input, level) !== 0) {
+      // Edge vault: player just landed on a platform edge and is pressing into it.
+      const edgeDir = detectEdgeVault(player, input, level)
+      player.vy = config.jumpSpeed
+      player.vx = edgeDir * config.vaultMomentumBoost
+      player.vaultFlashTimer = 0.15
+      player.grounded = false
+      player.coyoteTimer = config.coyoteTime
+      player.jumpBufferTimer = config.jumpBufferTime
+      player.jumpHeld = true
+    } else if (player.grounded || canCoyoteJump) {
       // Regular jump
       player.vy = config.jumpSpeed
       player.grounded = false
       player.coyoteTimer = config.coyoteTime // exhaust coyote time
       player.jumpBufferTimer = config.jumpBufferTime // exhaust buffer
       player.jumpHeld = true
+    } else if (player.wallDir !== 0 && isWallVaultEligible(player, level)) {
+      // Corner vault from wall: top half is past the corner, bottom half still on wall.
+      // Snap Y up so feet clear the platform top, then launch forward.
+      const probeTileY = Math.floor((player.y + PLAYER_HEIGHT - 4) / level.tileSize)
+      player.y = probeTileY * level.tileSize - PLAYER_HEIGHT
+      player.vy = config.jumpSpeed
+      player.vx = player.wallDir * config.vaultMomentumBoost
+      player.vaultFlashTimer = 0.15
+      player.wallDir = 0
+      player.grounded = false
+      player.coyoteTimer = config.coyoteTime
+      player.jumpBufferTimer = config.jumpBufferTime
+      player.jumpHeld = true
     } else if (player.wallDir !== 0) {
-      // Wall jump
+      // Normal wall jump
       player.vy = config.wallJumpVerticalSpeed
       player.vx = -player.wallDir * config.wallJumpHorizontalSpeed
       player.wallJumpForceDir = -player.wallDir
@@ -100,19 +133,6 @@ export function updatePlayer(player, input, level, dt, config) {
       player.coyoteTimer = config.coyoteTime
       player.jumpBufferTimer = config.jumpBufferTime
       player.jumpHeld = true
-    } else {
-      // Corner vault check
-      const vaultDir = detectCornerVault(player, level, config)
-      if (vaultDir !== 0) {
-        const footTileY = Math.floor((player.y + PLAYER_HEIGHT - 1) / level.tileSize)
-        player.y = footTileY * level.tileSize - PLAYER_HEIGHT
-        player.vy = config.jumpSpeed
-        player.vx += vaultDir * config.vaultMomentumBoost
-        player.grounded = false
-        player.coyoteTimer = config.coyoteTime
-        player.jumpBufferTimer = config.jumpBufferTime
-        player.jumpHeld = true
-      }
     }
   }
 
@@ -222,44 +242,49 @@ function moveToward(current, target, maxDelta) {
   }
 }
 
+function isWallVaultEligible(player, level) {
+  const wallProbeX = player.wallDir === 1
+    ? player.x + PLAYER_WIDTH + 1
+    : player.x - 1
+  const topOnWall = isSolidAt(wallProbeX, player.y + 4, level)
+  const bottomOnWall = isSolidAt(wallProbeX, player.y + PLAYER_HEIGHT - 4, level)
+  return !topOnWall && bottomOnWall
+}
+
+function detectEdgeVault(player, input, level) {
+  // Forgiveness for players who barely landed on a platform edge instead of
+  // wall-sliding past it. The player's hitbox must overhang the edge — their
+  // position extends past the platform boundary into an air column.
+  const ts = level.tileSize
+  const footRow = Math.floor((player.y + PLAYER_HEIGHT) / ts)
+  if (footRow < 0 || footRow >= level.height) return 0
+
+  // Player overhangs LEFT edge: their left side is in an air column, pressing RIGHT
+  if (input.right || player.vx > 0) {
+    const leftCol = Math.floor(player.x / ts)
+    if (leftCol >= 0 && leftCol < level.width &&
+        level.grid[footRow][leftCol] !== TILE.SOLID) {
+      return 1 // vault right (forward over the platform)
+    }
+  }
+
+  // Player overhangs RIGHT edge: their right side is in an air column, pressing LEFT
+  if (input.left || player.vx < 0) {
+    const rightCol = Math.floor((player.x + PLAYER_WIDTH - 1) / ts)
+    if (rightCol >= 0 && rightCol < level.width &&
+        level.grid[footRow][rightCol] !== TILE.SOLID) {
+      return -1 // vault left (forward over the platform)
+    }
+  }
+
+  return 0
+}
+
 function isSolidAt(px, py, level) {
   const tx = Math.floor(px / level.tileSize)
   const ty = Math.floor(py / level.tileSize)
   if (tx < 0 || tx >= level.width || ty < 0 || ty >= level.height) return false
   return level.grid[ty][tx] === TILE.SOLID
-}
-
-function detectCornerVault(player, level, config) {
-  const ts = level.tileSize
-  const footTileY = Math.floor((player.y + PLAYER_HEIGHT - 1) / ts)
-  const overlapIntoTile = (player.y + PLAYER_HEIGHT) - (footTileY * ts)
-
-  if (overlapIntoTile <= 0 || overlapIntoTile > config.vaultMaxOverlap) return 0
-
-  const playerLeftCol = Math.floor(player.x / ts)
-  const playerRightCol = Math.floor((player.x + PLAYER_WIDTH - 1) / ts)
-
-  // Check right side: tile to the right of the player's right edge
-  const rightCol = playerRightCol + 1
-  const distToRight = (rightCol * ts) - (player.x + PLAYER_WIDTH)
-  if (distToRight <= config.vaultMaxOverlap &&
-      rightCol < level.width &&
-      isSolidAt(rightCol * ts, footTileY * ts, level) &&
-      !isSolidAt(rightCol * ts, (footTileY - 1) * ts, level)) {
-    return -1 // vault away from right corner (push left)
-  }
-
-  // Check left side: tile to the left of the player's left edge
-  const leftCol = playerLeftCol - 1
-  const distToLeft = player.x - ((leftCol + 1) * ts)
-  if (distToLeft <= config.vaultMaxOverlap &&
-      leftCol >= 0 &&
-      isSolidAt(leftCol * ts, footTileY * ts, level) &&
-      !isSolidAt(leftCol * ts, (footTileY - 1) * ts, level)) {
-    return 1 // vault away from left corner (push right)
-  }
-
-  return 0
 }
 
 function resolveCollisionX(player, level) {
