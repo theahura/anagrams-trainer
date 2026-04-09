@@ -5,7 +5,7 @@ import { createInputState, setupInputListeners, clearFrameInput } from './input.
 import { createTimer, updateTimer, formatTime, createCompletionRecord } from './timing.js'
 import { loadStats, saveStats, updatePersonalBest } from './stats.js'
 import { createRenderer } from './renderer.js'
-import { restartRun } from './game.js'
+import { startRun, restartRun } from './game.js'
 import { createPathRecorder, recordFrame, resetRecorder, getPath, isPathComplete, interpolatePosition } from './path.js'
 import { loadSettings, saveSettings } from './settings.js'
 import { validateName, getSavedName, setSavedName } from './nameFilter.js'
@@ -54,8 +54,7 @@ function updateSettingsButtonState() {
 
 function startGame() {
   gameState = 'PLAYING'
-  timer.running = true
-  clearFrameInput(inputState)
+  startRun(timer)
   updateSettingsButtonState()
 }
 

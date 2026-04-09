@@ -86,7 +86,22 @@ export function createRenderer(canvas) {
     }
 
     // Draw player
-    ctx.fillStyle = player.vaultFlashTimer > 0 ? COLORS.vaultFlash : COLORS.player
+    if (player.vaultFlashTimer > 0) {
+      ctx.fillStyle = COLORS.vaultFlash
+    } else if (player.dashTimer > 0) {
+      // Dash afterimage trail
+      const trailOffset = player.vx > 0 ? -12 : 12
+      ctx.fillStyle = 'rgba(231, 76, 60, 0.25)'
+      ctx.fillRect(
+        Math.round(player.x + trailOffset),
+        Math.round(player.y),
+        PLAYER_WIDTH,
+        PLAYER_HEIGHT,
+      )
+      ctx.fillStyle = '#ff6b6b'
+    } else {
+      ctx.fillStyle = COLORS.player
+    }
     ctx.fillRect(
       Math.round(player.x),
       Math.round(player.y),

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { background: #121213; color: #d7dadc; font-family: monospace; padding: 40px; }
+  h2 { color: #538d4e; margin-top: 40px; }
+  .scenes { display: flex; gap: 40px; flex-wrap: wrap; margin-top: 16px; }
+  .scene { width: 280px; }
+  .scene h3 { margin: 0 0 8px; font-size: 14px; }
+  .label { font-size: 11px; color: #818384; margin-top: 8px; line-height: 1.5; }
+  .grid { position: relative; width: 224px; height: 192px; border: 1px solid #333; }
+  .tile { position: absolute; width: 32px; height: 32px; background: #3a3a3c; box-sizing: border-box; }
+  .player { position: absolute; width: 20px; height: 28px; background: #d7dadc; }
+  .player.vault { background: #ff6b6b; }
+  .player.ghost { opacity: 0.25; }
+  .arrow { position: absolute; font-size: 18px; color: #538d4e; font-weight: bold; }
+  .note { position: absolute; font-size: 10px; color: #3498db; white-space: nowrap; }
+  .note.red { color: #e74c3c; }
+</style>
+</head>
+<body>
+
+<h2>WALL-SLIDE VAULT (working, confirmed good)</h2>
+<div class="scenes">
+
+<div class="scene">
+  <h3>✅ Wall-slide vault</h3>
+  <div class="grid">
+    <!-- Platform: 1 tile tall at row 3, cols 2-4 -->
+    <div class="tile" style="left:64px; top:96px;"></div>
+    <div class="tile" style="left:96px; top:96px;"></div>
+    <div class="tile" style="left:128px; top:96px;"></div>
+    <!-- Floor -->
+    <div class="tile" style="left:0px; top:128px;"></div>
+    <div class="tile" style="left:32px; top:128px;"></div>
+    <div class="tile" style="left:64px; top:128px;"></div>
+    <div class="tile" style="left:96px; top:128px;"></div>
+    <div class="tile" style="left:128px; top:128px;"></div>
+    <div class="tile" style="left:160px; top:128px;"></div>
+    <div class="tile" style="left:192px; top:128px;"></div>
+
+    <!-- Player: wall sliding, top half above platform, bottom half beside it -->
+    <div class="player vault" style="left:42px; top:82px;"></div>
+    <div class="note" style="left:2px; top:70px;">▼ sliding</div>
+    <div class="arrow" style="left:68px; top:72px;">→↑</div>
+    <div class="note" style="left:68px; top:58px;">vault!</div>
+  </div>
+  <div class="label">Player is wall-sliding down the side of<br>the platform. Top half is above the<br>platform surface. Bottom half is still<br>beside it. Jump → vault over.</div>
+</div>
+
+</div>
+
+<h2>EDGE VAULT (the new one — forgiveness for barely landing on top)</h2>
+<p style="color: #e74c3c; font-size: 13px;">My understanding: player was approaching the platform from the side (trying to wall-slide vault), but barely landed on top instead. They press jump quickly → should still vault forward.</p>
+
+<div class="scenes">
+
+<div class="scene">
+  <h3>✅ Edge vault — SHOULD fire</h3>
+  <div class="grid">
+    <!-- Platform: 1 tile tall at row 3, cols 2-4 -->
+    <div class="tile" style="left:64px; top:96px;"></div>
+    <div class="tile" style="left:96px; top:96px;"></div>
+    <div class="tile" style="left:128px; top:96px;"></div>
+    <!-- Floor -->
+    <div class="tile" style="left:0px; top:128px;"></div>
+    <div class="tile" style="left:32px; top:128px;"></div>
+    <div class="tile" style="left:64px; top:128px;"></div>
+    <div class="tile" style="left:96px; top:128px;"></div>
+    <div class="tile" style="left:128px; top:128px;"></div>
+    <div class="tile" style="left:160px; top:128px;"></div>
+    <div class="tile" style="left:192px; top:128px;"></div>
+
+    <!-- Ghost: where player was (approaching from left, falling) -->
+    <div class="player ghost" style="left:38px; top:50px;"></div>
+    <div class="player ghost" style="left:44px; top:62px;"></div>
+    <!-- Player: just barely landed on the left edge of the platform -->
+    <div class="player vault" style="left:52px; top:68px;"></div>
+    <div class="note" style="left:2px; top:48px;">was falling<br>toward platform</div>
+    <div class="note" style="left:76px; top:64px;">just landed<br>on edge!</div>
+    <div class="arrow" style="left:76px; top:82px;">→↑</div>
+  </div>
+  <div class="label">Player was approaching from the left,<br>fell slightly too high, and landed on the<br>very edge of the platform. They're<br>pressing right + jump. Since they JUST<br>landed on the edge → vault forward.</div>
+</div>
+
+<div class="scene">
+  <h3>❌ Should NOT fire — middle of platform</h3>
+  <div class="grid">
+    <!-- Platform -->
+    <div class="tile" style="left:64px; top:96px;"></div>
+    <div class="tile" style="left:96px; top:96px;"></div>
+    <div class="tile" style="left:128px; top:96px;"></div>
+    <!-- Floor -->
+    <div class="tile" style="left:0px; top:128px;"></div>
+    <div class="tile" style="left:32px; top:128px;"></div>
+    <div class="tile" style="left:64px; top:128px;"></div>
+    <div class="tile" style="left:96px; top:128px;"></div>
+    <div class="tile" style="left:128px; top:128px;"></div>
+    <div class="tile" style="left:160px; top:128px;"></div>
+    <div class="tile" style="left:192px; top:128px;"></div>
+
+    <!-- Player: in the middle of the platform -->
+    <div class="player" style="left:98px; top:68px;"></div>
+    <div class="note red" style="left:122px; top:68px;">not near<br>any edge</div>
+  </div>
+  <div class="label">Player is in the middle of the platform,<br>not near any edge. Normal jump, NOT a<br>vault. This is the key difference.</div>
+</div>
+
+<div class="scene">
+  <h3>❌ Should NOT fire — running along platform</h3>
+  <div class="grid">
+    <!-- Long platform -->
+    <div class="tile" style="left:0px; top:96px;"></div>
+    <div class="tile" style="left:32px; top:96px;"></div>
+    <div class="tile" style="left:64px; top:96px;"></div>
+    <div class="tile" style="left:96px; top:96px;"></div>
+    <div class="tile" style="left:128px; top:96px;"></div>
+    <div class="tile" style="left:160px; top:96px;"></div>
+    <div class="tile" style="left:192px; top:96px;"></div>
+    <!-- Floor -->
+    <div class="tile" style="left:0px; top:128px;"></div>
+    <div class="tile" style="left:32px; top:128px;"></div>
+    <div class="tile" style="left:64px; top:128px;"></div>
+    <div class="tile" style="left:96px; top:128px;"></div>
+    <div class="tile" style="left:128px; top:128px;"></div>
+    <div class="tile" style="left:160px; top:128px;"></div>
+    <div class="tile" style="left:192px; top:128px;"></div>
+
+    <!-- Player running right -->
+    <div class="player" style="left:80px; top:68px;"></div>
+    <div class="note red" style="left:104px; top:68px;">running →<br>normal jump</div>
+  </div>
+  <div class="label">Player is running along a wide platform<br>and jumps. This is a normal jump, NOT a<br>vault. Platform extends in both<br>directions.</div>
+</div>
+
+<div class="scene">
+  <h3>❓ Question: how close is "the edge"?</h3>
+  <div class="grid">
+    <!-- Platform -->
+    <div class="tile" style="left:64px; top:96px; border: 2px dashed #e74c3c;"></div>
+    <div class="tile" style="left:96px; top:96px;"></div>
+    <div class="tile" style="left:128px; top:96px;"></div>
+    <!-- Floor -->
+    <div class="tile" style="left:0px; top:128px;"></div>
+    <div class="tile" style="left:32px; top:128px;"></div>
+    <div class="tile" style="left:64px; top:128px;"></div>
+    <div class="tile" style="left:96px; top:128px;"></div>
+    <div class="tile" style="left:128px; top:128px;"></div>
+    <div class="tile" style="left:160px; top:128px;"></div>
+    <div class="tile" style="left:192px; top:128px;"></div>
+
+    <!-- Player positions at various spots -->
+    <div class="player vault" style="left:54px; top:68px; opacity:0.8;"></div>
+    <div class="note" style="left:44px; top:56px; color:#538d4e;">✓ edge</div>
+
+    <div class="player" style="left:70px; top:68px; opacity:0.5;"></div>
+    <div class="note red" style="left:62px; top:56px;">? here?</div>
+
+    <div class="player" style="left:86px; top:68px; opacity:0.3;"></div>
+    <div class="note red" style="left:80px; top:56px;">✗ too far</div>
+  </div>
+  <div class="label">The player needs to be very close to the<br>edge for this to count. Should it be:<br>- Player hitbox overhangs the edge?<br>- Player is within 1 tile of the edge?<br>- Something else?</div>
+</div>
+
+</div>
+
+</body>
+</html>
