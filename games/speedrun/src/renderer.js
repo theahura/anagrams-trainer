@@ -13,6 +13,7 @@ const COLORS = {
   text: '#d7dadc',
   textDim: '#818384',
   ghost: 'rgba(100, 160, 255, 0.35)',
+  vaultFlash: '#ff6b6b',
   pathLine: 'rgba(100, 160, 255, 0.5)',
 }
 
@@ -85,7 +86,9 @@ export function createRenderer(canvas) {
     }
 
     // Draw player
-    if (player.dashTimer > 0) {
+    if (player.vaultFlashTimer > 0) {
+      ctx.fillStyle = COLORS.vaultFlash
+    } else if (player.dashTimer > 0) {
       // Dash afterimage trail
       const trailOffset = player.vx > 0 ? -12 : 12
       ctx.fillStyle = 'rgba(231, 76, 60, 0.25)'
