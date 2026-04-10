@@ -327,7 +327,7 @@ export function initUI(puzzle, dateStr) {
     const possibleAnswers = getAnswersForRound(round);
     state.completedRounds.push({ answer, timeMs, root: round.root, possibleAnswers });
     updateLetterScore();
-    setMessage('Correct!', 'success');
+    setMessage('', '');
     playSound('playCorrect');
     triggerBounce();
     state.transitioning = true;
