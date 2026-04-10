@@ -21,7 +21,7 @@ function makeLevel(grid) {
 }
 
 function emptyInput() {
-  return { left: false, right: false, jump: false, jumpPressed: false, dash: false, dashPressed: false }
+  return { left: false, right: false, down: false, jump: false, jumpPressed: false, dash: false, dashPressed: false }
 }
 
 describe('physics', () => {
@@ -83,7 +83,7 @@ describe('physics', () => {
     player.grounded = true
     player.vx = 300 // moving right fast
 
-    const input = { left: false, right: true, jump: false, jumpPressed: false, dash: false, dashPressed: false }
+    const input = { left: false, right: true, down: false, jump: false, jumpPressed: false, dash: false, dashPressed: false }
     updatePlayer(player, input, level, 1 / 60, config)
 
     // Player should not pass through the wall at column 2
@@ -105,7 +105,7 @@ describe('physics', () => {
     // Full jump: hold jump for 30 frames
     const playerFull = createPlayer(64, groundY)
     playerFull.grounded = true
-    const inputHeld = { left: false, right: false, jump: true, jumpPressed: true, dash: false, dashPressed: false }
+    const inputHeld = { left: false, right: false, down: false, jump: true, jumpPressed: true, dash: false, dashPressed: false }
     updatePlayer(playerFull, inputHeld, level, 1 / 60, config) // initiate jump
 
     for (let i = 0; i < 29; i++) {
@@ -118,7 +118,7 @@ describe('physics', () => {
     playerShort.grounded = true
     updatePlayer(playerShort, { ...inputHeld, jumpPressed: true }, level, 1 / 60, config)
 
-    const inputReleased = { left: false, right: false, jump: false, jumpPressed: false, dash: false, dashPressed: false }
+    const inputReleased = { left: false, right: false, down: false, jump: false, jumpPressed: false, dash: false, dashPressed: false }
     for (let i = 0; i < 29; i++) {
       updatePlayer(playerShort, inputReleased, level, 1 / 60, config)
     }
@@ -142,7 +142,7 @@ describe('physics', () => {
     player.vx = 200
 
     // Walk off the edge
-    const inputRight = { left: false, right: true, jump: false, jumpPressed: false, dash: false, dashPressed: false }
+    const inputRight = { left: false, right: true, down: false, jump: false, jumpPressed: false, dash: false, dashPressed: false }
     for (let i = 0; i < 5; i++) {
       updatePlayer(player, inputRight, level, 1 / 60, config)
     }
@@ -151,7 +151,7 @@ describe('physics', () => {
     expect(player.grounded).toBe(false)
 
     // Try to jump during coyote time
-    const inputJump = { left: false, right: false, jump: true, jumpPressed: true, dash: false, dashPressed: false }
+    const inputJump = { left: false, right: false, down: false, jump: true, jumpPressed: true, dash: false, dashPressed: false }
     updatePlayer(player, inputJump, level, 1 / 60, config)
     // Should have jumped (velocity upward)
     expect(player.vy).toBeLessThan(0)
@@ -173,11 +173,11 @@ describe('physics', () => {
     player.vy = 100
 
     // Press jump while in air (before landing) — should buffer
-    const inputJump = { left: false, right: false, jump: true, jumpPressed: true, dash: false, dashPressed: false }
+    const inputJump = { left: false, right: false, down: false, jump: true, jumpPressed: true, dash: false, dashPressed: false }
     updatePlayer(player, inputJump, level, 1 / 60, config)
 
     // Continue with jump held — player should land and buffered jump should fire
-    const inputHeld = { left: false, right: false, jump: true, jumpPressed: false, dash: false, dashPressed: false }
+    const inputHeld = { left: false, right: false, down: false, jump: true, jumpPressed: false, dash: false, dashPressed: false }
     for (let i = 0; i < 5; i++) {
       updatePlayer(player, inputHeld, level, 1 / 60, config)
     }
@@ -203,7 +203,7 @@ describe('physics', () => {
     // Player wall sliding (touching wall, pressing into it)
     const wallPlayer = createPlayer(2 * 32 - 20 - 1, 32)
     wallPlayer.vy = 0
-    const wallInput = { left: false, right: true, jump: false, jumpPressed: false, dash: false, dashPressed: false }
+    const wallInput = { left: false, right: true, down: false, jump: false, jumpPressed: false, dash: false, dashPressed: false }
     for (let i = 0; i < 30; i++) {
       updatePlayer(wallPlayer, wallInput, level, 1 / 60, config)
     }
@@ -227,14 +227,14 @@ describe('physics', () => {
     player.vy = 50
     player.wallDir = 1 // touching wall on right
 
-    const wallInput = { left: false, right: true, jump: false, jumpPressed: false, dash: false, dashPressed: false }
+    const wallInput = { left: false, right: true, down: false, jump: false, jumpPressed: false, dash: false, dashPressed: false }
     // Slide into wall for a few frames to establish wall contact
     for (let i = 0; i < 3; i++) {
       updatePlayer(player, wallInput, level, 1 / 60, config)
     }
 
     // Now wall jump
-    const jumpInput = { left: false, right: false, jump: true, jumpPressed: true, dash: false, dashPressed: false }
+    const jumpInput = { left: false, right: false, down: false, jump: true, jumpPressed: true, dash: false, dashPressed: false }
     updatePlayer(player, jumpInput, level, 1 / 60, config)
 
     expect(player.vy).toBeLessThan(0) // upward
@@ -254,7 +254,7 @@ describe('physics', () => {
     const player = createPlayer(64, 4 * 32 - 28)
     player.grounded = true
 
-    const input = { left: false, right: true, jump: false, jumpPressed: false, dash: false, dashPressed: false }
+    const input = { left: false, right: true, down: false, jump: false, jumpPressed: false, dash: false, dashPressed: false }
     updatePlayer(player, input, level, 1 / 60, config)
 
     // After one frame, velocity should be positive but less than max speed
@@ -274,13 +274,13 @@ describe('physics', () => {
     player.vy = 50
 
     // Wall jump
-    const jumpInput = { left: false, right: false, jump: true, jumpPressed: true, dash: false, dashPressed: false }
+    const jumpInput = { left: false, right: false, down: false, jump: true, jumpPressed: true, dash: false, dashPressed: false }
     updatePlayer(player, jumpInput, level, 1 / 60, config)
     expect(player.vx).toBeLessThan(0)
 
     // Immediately after wall jump, hold right. On the first frame, the control
     // delay should still be active, forcing movement away from the wall.
-    const rightInput = { left: false, right: true, jump: true, jumpPressed: false }
+    const rightInput = { left: false, right: true, down: false, jump: true, jumpPressed: false, dash: false, dashPressed: false }
     updatePlayer(player, rightInput, level, 1 / 60, config)
 
     // vx should be more negative (forced left despite holding right)
@@ -298,11 +298,11 @@ describe('physics', () => {
     player.vy = 50
 
     // Wall jump
-    const jumpInput = { left: false, right: false, jump: true, jumpPressed: true, dash: false, dashPressed: false }
+    const jumpInput = { left: false, right: false, down: false, jump: true, jumpPressed: true, dash: false, dashPressed: false }
     updatePlayer(player, jumpInput, level, 1 / 60, config)
 
     // Hold right continuously for 30 frames (well past the control delay)
-    const rightInput = { left: false, right: true, jump: false, jumpPressed: false, dash: false, dashPressed: false }
+    const rightInput = { left: false, right: true, down: false, jump: false, jumpPressed: false, dash: false, dashPressed: false }
     for (let i = 0; i < 30; i++) {
       updatePlayer(player, rightInput, level, 1 / 60, config)
     }
@@ -333,11 +333,11 @@ describe('physics', () => {
     // Perform 3 wall jump cycles: jump, hold toward wall + hold jump, re-cling, repeat
     for (let jump = 0; jump < 3; jump++) {
       // Wall jump
-      const jumpInput = { left: false, right: false, jump: true, jumpPressed: true, dash: false, dashPressed: false }
+      const jumpInput = { left: false, right: false, down: false, jump: true, jumpPressed: true, dash: false, dashPressed: false }
       updatePlayer(player, jumpInput, level, dt, config)
 
       // Hold toward wall and hold jump for full height (realistic gameplay input)
-      const towardWall = { left: false, right: true, jump: true, jumpPressed: false }
+      const towardWall = { left: false, right: true, down: false, jump: true, jumpPressed: false, dash: false, dashPressed: false }
       for (let f = 0; f < 25; f++) {
         updatePlayer(player, towardWall, level, dt, config)
       }
@@ -364,12 +364,12 @@ describe('physics', () => {
     const dt = 1 / 60
 
     // First wall jump
-    const jumpInput = { left: false, right: false, jump: true, jumpPressed: true, dash: false, dashPressed: false }
+    const jumpInput = { left: false, right: false, down: false, jump: true, jumpPressed: true, dash: false, dashPressed: false }
     updatePlayer(player, jumpInput, level, dt, config)
     expect(player.vy).toBeLessThan(0) // launched upward
 
     // Hold toward wall and hold jump for 20 frames to return to it
-    const towardWall = { left: false, right: true, jump: true, jumpPressed: false }
+    const towardWall = { left: false, right: true, down: false, jump: true, jumpPressed: false, dash: false, dashPressed: false }
     for (let f = 0; f < 20; f++) {
       updatePlayer(player, towardWall, level, dt, config)
     }
@@ -445,7 +445,7 @@ describe('physics', () => {
     player.grounded = true
     player.vx = 100 // already moving right
 
-    const input = { left: false, right: true, jump: false, jumpPressed: false, dash: true, dashPressed: true }
+    const input = { left: false, right: true, down: false, jump: false, jumpPressed: false, dash: true, dashPressed: true }
     updatePlayer(player, input, level, 1 / 60, config)
 
     expect(player.vx).toBe(config.dashSpeed)
@@ -465,7 +465,7 @@ describe('physics', () => {
     player.grounded = true
     player.vx = -100 // moving left
 
-    const input = { left: true, right: false, jump: false, jumpPressed: false, dash: true, dashPressed: true }
+    const input = { left: true, right: false, down: false, jump: false, jumpPressed: false, dash: true, dashPressed: true }
     updatePlayer(player, input, level, 1 / 60, config)
 
     expect(player.vx).toBe(-config.dashSpeed)
@@ -486,18 +486,18 @@ describe('physics', () => {
     player.vx = 100
 
     // First dash — should work
-    const dashInput = { left: false, right: true, jump: false, jumpPressed: false, dash: true, dashPressed: true }
+    const dashInput = { left: false, right: true, down: false, jump: false, jumpPressed: false, dash: true, dashPressed: true }
     updatePlayer(player, dashInput, level, 1 / 60, config)
     expect(player.vx).toBe(config.dashSpeed)
 
     // Immediately try a second dash — cooldown should prevent it
-    const noMoveInput = { left: false, right: true, jump: false, jumpPressed: false, dash: false, dashPressed: false }
+    const noMoveInput = { left: false, right: true, down: false, jump: false, jumpPressed: false, dash: false, dashPressed: false }
     // Run a few frames to let dash timer expire but not cooldown
     for (let i = 0; i < 10; i++) {
       updatePlayer(player, noMoveInput, level, 1 / 60, config)
     }
 
-    const secondDash = { left: false, right: true, jump: false, jumpPressed: false, dash: true, dashPressed: true }
+    const secondDash = { left: false, right: true, down: false, jump: false, jumpPressed: false, dash: true, dashPressed: true }
     updatePlayer(player, secondDash, level, 1 / 60, config)
     // Should NOT be at dashSpeed again — cooldown still active (10 frames = ~0.17s < 0.5s cooldown)
     expect(player.vx).not.toBe(config.dashSpeed)
@@ -518,19 +518,19 @@ describe('physics', () => {
     player.vx = 100
 
     // Initiate dash
-    const dashInput = { left: false, right: true, jump: false, jumpPressed: false, dash: true, dashPressed: true }
+    const dashInput = { left: false, right: true, down: false, jump: false, jumpPressed: false, dash: true, dashPressed: true }
     updatePlayer(player, dashInput, level, 1 / 60, config)
     expect(player.vx).toBe(config.dashSpeed)
 
     // Next frame: release dash key, no direction input — during dash duration, speed should hold
-    const noInput = { left: false, right: false, jump: false, jumpPressed: false, dash: false, dashPressed: false }
+    const noInput = { left: false, right: false, down: false, jump: false, jumpPressed: false, dash: false, dashPressed: false }
     updatePlayer(player, noInput, level, 1 / 60, config)
 
     // During dash, vx should still be dashSpeed (no deceleration)
     expect(player.vx).toBe(config.dashSpeed)
   })
 
-  it('dash: after dash duration expires, player decelerates normally', () => {
+  it('dash: after dash duration expires, velocity restores to pre-dash value', () => {
     const config = createPhysicsConfig()
     const grid = [
       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -544,19 +544,20 @@ describe('physics', () => {
     player.grounded = true
     player.vx = 100
 
-    // Initiate dash
-    const dashInput = { left: false, right: true, jump: false, jumpPressed: false, dash: true, dashPressed: true }
+    // Initiate dash from vx=100
+    const dashInput = { left: false, right: true, down: false, jump: false, jumpPressed: false, dash: true, dashPressed: true }
     updatePlayer(player, dashInput, level, 1 / 60, config)
     expect(player.vx).toBe(config.dashSpeed)
 
-    // Run many frames with no input — well past dash duration
-    const noInput = { left: false, right: false, jump: false, jumpPressed: false, dash: false, dashPressed: false }
+    // Run frames past dash duration with no input
+    const noInput = { left: false, right: false, down: false, jump: false, jumpPressed: false, dash: false, dashPressed: false }
     for (let i = 0; i < 30; i++) {
       updatePlayer(player, noInput, level, 1 / 60, config)
     }
 
-    // After dash expires, deceleration should have reduced speed below dashSpeed
-    expect(player.vx).toBeLessThan(config.dashSpeed)
+    // After dash expires, vx should have restored to pre-dash value (100) then decelerated from there
+    // It should NOT be near dashSpeed (500) — it should be at or below pre-dash speed
+    expect(player.vx).toBeLessThanOrEqual(100)
   })
 
   it('dash: after reset, player can dash again immediately', () => {
@@ -574,7 +575,7 @@ describe('physics', () => {
     player.vx = 100
 
     // Dash to start cooldown
-    const dashInput = { left: false, right: true, jump: false, jumpPressed: false, dash: true, dashPressed: true }
+    const dashInput = { left: false, right: true, down: false, jump: false, jumpPressed: false, dash: true, dashPressed: true }
     updatePlayer(player, dashInput, level, 1 / 60, config)
 
     // Reset the player (simulating restart)
@@ -601,7 +602,7 @@ describe('physics', () => {
     player.grounded = true
 
     // Hold right + dash (sprint) for many frames to reach max speed
-    const sprintInput = { left: false, right: true, jump: false, jumpPressed: false, dash: true, dashPressed: false }
+    const sprintInput = { left: false, right: true, down: false, jump: false, jumpPressed: false, dash: true, dashPressed: false }
     for (let i = 0; i < 60; i++) {
       updatePlayer(player, sprintInput, level, 1 / 60, config)
     }
@@ -625,7 +626,7 @@ describe('physics', () => {
     player.grounded = true
 
     // Sprint to full speed
-    const sprintInput = { left: false, right: true, jump: false, jumpPressed: false, dash: true, dashPressed: false }
+    const sprintInput = { left: false, right: true, down: false, jump: false, jumpPressed: false, dash: true, dashPressed: false }
     for (let i = 0; i < 60; i++) {
       updatePlayer(player, sprintInput, level, 1 / 60, config)
     }
@@ -633,7 +634,7 @@ describe('physics', () => {
     expect(sprintSpeed).toBeGreaterThan(config.maxRunSpeed)
 
     // Release sprint, keep holding right
-    const runInput = { left: false, right: true, jump: false, jumpPressed: false, dash: false, dashPressed: false }
+    const runInput = { left: false, right: true, down: false, jump: false, jumpPressed: false, dash: false, dashPressed: false }
     for (let i = 0; i < 60; i++) {
       updatePlayer(player, runInput, level, 1 / 60, config)
     }
@@ -657,18 +658,159 @@ describe('physics', () => {
     // Jump without sprint
     const playerNormal = createPlayer(64, groundY)
     playerNormal.grounded = true
-    const jumpInput = { left: false, right: true, jump: true, jumpPressed: true, dash: false, dashPressed: false }
+    const jumpInput = { left: false, right: true, down: false, jump: true, jumpPressed: true, dash: false, dashPressed: false }
     updatePlayer(playerNormal, jumpInput, level, 1 / 60, config)
     const normalJumpVy = playerNormal.vy
 
     // Jump with sprint
     const playerSprint = createPlayer(64, groundY)
     playerSprint.grounded = true
-    const sprintJumpInput = { left: false, right: true, jump: true, jumpPressed: true, dash: true, dashPressed: false }
+    const sprintJumpInput = { left: false, right: true, down: false, jump: true, jumpPressed: true, dash: true, dashPressed: false }
     updatePlayer(playerSprint, sprintJumpInput, level, 1 / 60, config)
     const sprintJumpVy = playerSprint.vy
 
     // Jump velocity should be identical
     expect(sprintJumpVy).toBe(normalJumpVy)
+  })
+
+  it('dash: right dash while jumping zeroes vy during dash', () => {
+    const config = createPhysicsConfig()
+    const grid = Array.from({ length: 15 }, () => Array(20).fill(0))
+    const level = makeLevel(grid)
+
+    // Player mid-jump: moving right and upward
+    const player = createPlayer(5 * 32, 5 * 32)
+    player.vx = 150
+    player.vy = -300 // rising
+
+    const dashInput = { left: false, right: true, down: false, jump: false, jumpPressed: false, dash: true, dashPressed: true }
+    updatePlayer(player, dashInput, level, 1 / 60, config)
+
+    // During dash: vx should be dashSpeed, vy should be 0 (pure horizontal)
+    expect(player.vx).toBe(config.dashSpeed)
+    expect(player.vy).toBe(0)
+  })
+
+  it('dash: left dash while jumping zeroes vy during dash', () => {
+    const config = createPhysicsConfig()
+    const grid = Array.from({ length: 15 }, () => Array(20).fill(0))
+    const level = makeLevel(grid)
+
+    // Player mid-jump: moving left and upward
+    const player = createPlayer(5 * 32, 5 * 32)
+    player.vx = -150
+    player.vy = -300 // rising
+
+    const dashInput = { left: true, right: false, down: false, jump: false, jumpPressed: false, dash: true, dashPressed: true }
+    updatePlayer(player, dashInput, level, 1 / 60, config)
+
+    expect(player.vx).toBe(-config.dashSpeed)
+    expect(player.vy).toBe(0)
+  })
+
+  it('dash: down dash zeroes vx and sets vy to dashSpeed', () => {
+    const config = createPhysicsConfig()
+    const grid = Array.from({ length: 15 }, () => Array(20).fill(0))
+    const level = makeLevel(grid)
+
+    // Player mid-air with horizontal velocity
+    const player = createPlayer(5 * 32, 5 * 32)
+    player.vx = 200
+    player.vy = -100
+
+    const dashInput = { left: false, right: false, down: true, jump: false, jumpPressed: false, dash: true, dashPressed: true }
+    updatePlayer(player, dashInput, level, 1 / 60, config)
+
+    // Down dash: vx should be 0, vy should be dashSpeed (positive = downward)
+    expect(player.vx).toBe(0)
+    expect(player.vy).toBe(config.dashSpeed)
+  })
+
+  it('dash: no up dash — dash with only jump held defaults to horizontal', () => {
+    const config = createPhysicsConfig()
+    const grid = Array.from({ length: 15 }, () => Array(20).fill(0))
+    const level = makeLevel(grid)
+
+    // Player mid-air moving right
+    const player = createPlayer(5 * 32, 5 * 32)
+    player.vx = 100
+    player.vy = -200
+
+    // Holding jump but no left/right/down — should default to horizontal based on vx sign
+    const dashInput = { left: false, right: false, down: false, jump: true, jumpPressed: false, dash: true, dashPressed: true }
+    updatePlayer(player, dashInput, level, 1 / 60, config)
+
+    // Should dash right (sign of vx), not up
+    expect(player.vx).toBe(config.dashSpeed)
+    expect(player.vy).toBe(0)
+  })
+
+  it('dash: post-dash restores pre-dash vy when airborne', () => {
+    const config = createPhysicsConfig()
+    const grid = Array.from({ length: 15 }, () => Array(20).fill(0))
+    const level = makeLevel(grid)
+
+    // Player mid-jump: moving up-right
+    const player = createPlayer(5 * 32, 5 * 32)
+    player.vx = 150
+    player.vy = -300
+
+    const preDashVy = player.vy
+
+    // Dash right
+    const dashInput = { left: false, right: true, down: false, jump: false, jumpPressed: false, dash: true, dashPressed: true }
+    updatePlayer(player, dashInput, level, 1 / 60, config)
+    expect(player.vy).toBe(0) // zeroed during dash
+
+    // Run exactly enough frames for dash to expire (dashDuration = 0.15s, ~9 frames at 60fps)
+    const noInput = { left: false, right: false, down: false, jump: true, jumpPressed: false, dash: false, dashPressed: false }
+    for (let i = 0; i < 10; i++) {
+      updatePlayer(player, noInput, level, 1 / 60, config)
+    }
+
+    // After dash ends, vy should be restored to pre-dash value (negative = upward)
+    // Gravity will have run for 1-2 frames after restoration, but with jump held,
+    // the multiplier is 1x so -300 should still be negative
+    expect(player.vy).toBeLessThan(0)
+  })
+
+  it('dash: horizontal takes priority over down when both are held', () => {
+    const config = createPhysicsConfig()
+    const grid = Array.from({ length: 15 }, () => Array(20).fill(0))
+    const level = makeLevel(grid)
+
+    const player = createPlayer(5 * 32, 5 * 32)
+    player.vx = 100
+    player.vy = 0
+
+    // down + right held: down should take priority when both down and horizontal are pressed
+    // (or horizontal takes priority — either is fine per user)
+    // We chose horizontal takes priority, so right+down = right dash
+    const dashInput = { left: false, right: true, down: true, jump: false, jumpPressed: false, dash: true, dashPressed: true }
+    updatePlayer(player, dashInput, level, 1 / 60, config)
+
+    // Horizontal takes priority: should be a right dash
+    expect(player.vx).toBe(config.dashSpeed)
+    expect(player.vy).toBe(0)
+  })
+
+  it('dash: gravity is frozen during dash', () => {
+    const config = createPhysicsConfig()
+    const grid = Array.from({ length: 15 }, () => Array(20).fill(0))
+    const level = makeLevel(grid)
+
+    const player = createPlayer(5 * 32, 5 * 32)
+    player.vx = 100
+    player.vy = 0
+
+    // Dash right from zero vy
+    const dashInput = { left: false, right: true, down: false, jump: false, jumpPressed: false, dash: true, dashPressed: true }
+    updatePlayer(player, dashInput, level, 1 / 60, config)
+    expect(player.vy).toBe(0)
+
+    // Run a frame during dash — gravity should NOT increase vy
+    const noInput = { left: false, right: false, down: false, jump: false, jumpPressed: false, dash: false, dashPressed: false }
+    updatePlayer(player, noInput, level, 1 / 60, config)
+    expect(player.vy).toBe(0) // gravity frozen during dash
   })
 })

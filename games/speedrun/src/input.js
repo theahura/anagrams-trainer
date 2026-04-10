@@ -2,6 +2,7 @@ export function createInputState() {
   return {
     left: false,
     right: false,
+    down: false,
     jump: false,
     jumpPressed: false,
     dash: false,
@@ -17,6 +18,9 @@ export function setupInputListeners(inputState) {
     ArrowRight: 'right',
     d: 'right',
     D: 'right',
+    ArrowDown: 'down',
+    s: 'down',
+    S: 'down',
     ArrowUp: 'jump',
     w: 'jump',
     W: 'jump',

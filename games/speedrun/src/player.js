@@ -13,6 +13,8 @@ export function createPlayer(x, y) {
     wallJumpForceDir: 0,
     dashTimer: 0,
     dashCooldownTimer: 0,
+    dashSavedVx: 0,
+    dashSavedVy: 0,
     redCoins: 0,
     blueCoins: 0,
     reachedGoal: false,
@@ -35,6 +37,8 @@ export function resetPlayer(player, x, y) {
   player.wallJumpForceDir = 0
   player.dashTimer = 0
   player.dashCooldownTimer = 0
+  player.dashSavedVx = 0
+  player.dashSavedVy = 0
   player.redCoins = 0
   player.blueCoins = 0
   player.reachedGoal = false
