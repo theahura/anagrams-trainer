@@ -8,6 +8,7 @@ import { createRenderer } from './renderer.js'
 import { startRun, restartRun } from './game.js'
 import { createPathRecorder, recordFrame, resetRecorder, getPath, isPathComplete, interpolatePosition } from './path.js'
 import { loadSettings, saveSettings } from './settings.js'
+import { setupHowToPlayModal } from './howToPlay.js'
 import { validateName, getSavedName, setSavedName } from './nameFilter.js'
 import { submitScore, fetchLeaderboard, fetchPlayerRank } from './leaderboard.js'
 
@@ -21,6 +22,7 @@ let lastTime = 0
 let pathRecorder
 let settings
 let settingsOpen = false
+let howToPlay
 
 function init() {
   const canvas = document.getElementById('game-canvas')
@@ -40,6 +42,7 @@ function init() {
   settings = loadSettings()
 
   setupSettingsUI()
+  howToPlay = setupHowToPlayModal()
 
   document.addEventListener('keydown', handleKeyDown)
   setupLeaderboardModal()
@@ -359,6 +362,10 @@ function setupLeaderboardModal() {
 function handleKeyDown(e) {
   if (e.target.tagName === 'INPUT') return
   if (settingsOpen) return
+  if (howToPlay && howToPlay.isOpen()) {
+    if (e.key === 'Escape') howToPlay.close()
+    return
+  }
 
   const lbModal = document.getElementById('leaderboard-modal')
   if (lbModal && !lbModal.classList.contains('hidden')) {

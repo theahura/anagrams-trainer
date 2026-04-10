@@ -411,6 +411,101 @@ h1 {
   text-align: center;
 }
 
+/* How to Play button */
+#how-to-play-btn {
+  background: transparent;
+  border: 1px solid #3a3a3c;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #d7dadc;
+  cursor: pointer;
+  line-height: 1;
+}
+
+#how-to-play-btn:hover {
+  background: #3a3a3c;
+}
+
+/* How to Play modal */
+#how-to-play-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+}
+
+#how-to-play-modal.hidden {
+  display: none;
+}
+
+.htp-content {
+  background: #1a1a1b;
+  border: 1px solid #3a3a3c;
+  border-radius: 8px;
+  padding: 1.5rem;
+  max-width: 400px;
+  width: 90%;
+  position: relative;
+  color: #d7dadc;
+}
+
+.htp-content h2 {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.htp-close {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: #818384;
+  font-size: 24px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.htp-close:hover {
+  color: #d7dadc;
+}
+
+.htp-section {
+  margin-bottom: 1rem;
+}
+
+.htp-section:last-child {
+  margin-bottom: 0;
+}
+
+.htp-section h3 {
+  font-size: 0.9rem;
+  color: #818384;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.htp-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid #2a2a2b;
+  font-size: 0.85rem;
+}
+
+.htp-key {
+  color: #538d4e;
+  font-weight: 600;
+  font-family: monospace;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0s !important;
