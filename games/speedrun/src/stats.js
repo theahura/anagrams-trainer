@@ -18,10 +18,12 @@ function defaultStats() {
     bestAnyPercent: null,
     bestHundredRed: null,
     bestHundredBlue: null,
+    bestHundredPercent: null,
     bestPaths: {
       anyPercent: null,
       hundredRed: null,
       hundredBlue: null,
+      hundredPercent: null,
     },
   }
 }
@@ -32,7 +34,7 @@ export function saveStats(seed, stats) {
 
 export function updatePersonalBest(stats, record, paths) {
   const updated = { ...stats }
-  const currentPaths = updated.bestPaths || { anyPercent: null, hundredRed: null, hundredBlue: null }
+  const currentPaths = updated.bestPaths || { anyPercent: null, hundredRed: null, hundredBlue: null, hundredPercent: null }
   updated.bestPaths = { ...currentPaths }
 
   if (record.anyPercent !== null) {
@@ -53,6 +55,13 @@ export function updatePersonalBest(stats, record, paths) {
     if (updated.bestHundredBlue === null || record.hundredBlue < updated.bestHundredBlue) {
       updated.bestHundredBlue = record.hundredBlue
       if (paths) updated.bestPaths.hundredBlue = paths.hundredBlue
+    }
+  }
+
+  if (record.hundredPercent !== null && record.hundredPercent !== undefined) {
+    if (updated.bestHundredPercent === null || updated.bestHundredPercent === undefined || record.hundredPercent < updated.bestHundredPercent) {
+      updated.bestHundredPercent = record.hundredPercent
+      if (paths) updated.bestPaths.hundredPercent = paths.hundredPercent
     }
   }
 

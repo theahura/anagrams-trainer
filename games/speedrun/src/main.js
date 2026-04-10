@@ -105,6 +105,7 @@ function completeRun() {
     anyPercent: record.anyPercent !== null ? recordedPath : null,
     hundredRed: record.hundredRed !== null ? recordedPath : null,
     hundredBlue: record.hundredBlue !== null ? recordedPath : null,
+    hundredPercent: record.hundredPercent !== null ? recordedPath : null,
   } : undefined
 
   stats.attempts++
@@ -148,6 +149,7 @@ function showResults(record) {
   timesDiv.appendChild(makeTimeRow('Any%', record.anyPercent, stats.bestAnyPercent))
   timesDiv.appendChild(makeTimeRow('100% Red', record.hundredRed, stats.bestHundredRed))
   timesDiv.appendChild(makeTimeRow('100% Blue', record.hundredBlue, stats.bestHundredBlue))
+  timesDiv.appendChild(makeTimeRow('100%', record.hundredPercent, stats.bestHundredPercent))
   content.appendChild(timesDiv)
 
   const statsDiv = document.createElement('div')
@@ -237,6 +239,7 @@ async function handleSubmit(input, errorEl, confirmBtn, record) {
     ['anyPercent', record.anyPercent],
     ['hundredRed', record.hundredRed],
     ['hundredBlue', record.hundredBlue],
+    ['hundredPercent', record.hundredPercent],
   ]
 
   try {
@@ -332,6 +335,7 @@ function getBestTimeForCategory(category) {
   if (category === 'anyPercent') return stats.bestAnyPercent
   if (category === 'hundredRed') return stats.bestHundredRed
   if (category === 'hundredBlue') return stats.bestHundredBlue
+  if (category === 'hundredPercent') return stats.bestHundredPercent
   return null
 }
 

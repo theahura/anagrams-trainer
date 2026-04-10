@@ -12,7 +12,7 @@ import {
 import { db } from './firebase.js'
 import { validateName } from './nameFilter.js'
 
-const VALID_CATEGORIES = ['anyPercent', 'hundredRed', 'hundredBlue']
+const VALID_CATEGORIES = ['anyPercent', 'hundredRed', 'hundredBlue', 'hundredPercent']
 
 function scoresCollection(weekSeed) {
   return collection(db, 'leaderboards', weekSeed, 'scores')
