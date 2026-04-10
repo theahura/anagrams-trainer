@@ -171,6 +171,78 @@ describe('stats', () => {
       anyPercent: null,
       hundredRed: null,
       hundredBlue: null,
+      hundredPercent: null,
     })
+  })
+
+  it('default stats include bestHundredPercent', () => {
+    const stats = loadStats('nonexistent-seed')
+    expect(stats.bestHundredPercent).toBeNull()
+  })
+
+  it('updates hundredPercent PB when faster', () => {
+    const stats = {
+      attempts: 2,
+      bestAnyPercent: 10.0,
+      bestHundredRed: 20.0,
+      bestHundredBlue: 18.0,
+      bestHundredPercent: 30.0,
+    }
+
+    const record = { anyPercent: 12.0, hundredRed: null, hundredBlue: null, hundredPercent: 25.0 }
+    const updated = updatePersonalBest(stats, record)
+
+    expect(updated.bestHundredPercent).toBe(25.0)
+  })
+
+  it('does not update hundredPercent PB when slower', () => {
+    const stats = {
+      attempts: 2,
+      bestAnyPercent: 10.0,
+      bestHundredRed: null,
+      bestHundredBlue: null,
+      bestHundredPercent: 20.0,
+    }
+
+    const record = { anyPercent: 12.0, hundredRed: null, hundredBlue: null, hundredPercent: 25.0 }
+    const updated = updatePersonalBest(stats, record)
+
+    expect(updated.bestHundredPercent).toBe(20.0)
+  })
+
+  it('sets hundredPercent PB from null', () => {
+    const stats = {
+      attempts: 0,
+      bestAnyPercent: null,
+      bestHundredRed: null,
+      bestHundredBlue: null,
+      bestHundredPercent: null,
+    }
+
+    const record = { anyPercent: 15.0, hundredRed: 15.0, hundredBlue: 15.0, hundredPercent: 15.0 }
+    const updated = updatePersonalBest(stats, record)
+
+    expect(updated.bestHundredPercent).toBe(15.0)
+  })
+
+  it('stores hundredPercent path when PB improves', () => {
+    const stats = {
+      attempts: 0,
+      bestAnyPercent: null,
+      bestHundredRed: null,
+      bestHundredBlue: null,
+      bestHundredPercent: null,
+    }
+    const record = { anyPercent: 10.0, hundredRed: 10.0, hundredBlue: 10.0, hundredPercent: 10.0 }
+    const paths = {
+      anyPercent: [[0, 0, 0], [100, 50, 10.0]],
+      hundredRed: [[0, 0, 0], [80, 40, 10.0]],
+      hundredBlue: [[0, 0, 0], [60, 30, 10.0]],
+      hundredPercent: [[0, 0, 0], [120, 60, 10.0]],
+    }
+
+    const updated = updatePersonalBest(stats, record, paths)
+
+    expect(updated.bestPaths.hundredPercent).toEqual([[0, 0, 0], [120, 60, 10.0]])
   })
 })

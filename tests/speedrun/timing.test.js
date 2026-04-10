@@ -68,6 +68,7 @@ describe('completion record', () => {
     expect(record.anyPercent).toBeCloseTo(12.345)
     expect(record.hundredRed).toBeNull()
     expect(record.hundredBlue).toBeNull()
+    expect(record.hundredPercent).toBeNull()
   })
 
   it('records 100% red time when all red coins collected', () => {
@@ -110,5 +111,42 @@ describe('completion record', () => {
     expect(record.anyPercent).toBeCloseTo(30.0)
     expect(record.hundredRed).toBeCloseTo(30.0)
     expect(record.hundredBlue).toBeCloseTo(30.0)
+    expect(record.hundredPercent).toBeCloseTo(30.0)
+  })
+
+  it('records 100% time only when all red and all blue coins collected', () => {
+    const player = { reachedGoal: true, redCoins: 2, blueCoins: 3 }
+    const level = {
+      redCoins: [{ x: 0, y: 0 }, { x: 1, y: 1 }],
+      blueCoins: [{ x: 2, y: 2 }, { x: 3, y: 3 }, { x: 4, y: 4 }],
+    }
+    const timer = { elapsed: 25.0 }
+
+    const record = createCompletionRecord(timer, player, level)
+    expect(record.hundredPercent).toBeCloseTo(25.0)
+  })
+
+  it('does not record 100% time when only red coins collected', () => {
+    const player = { reachedGoal: true, redCoins: 2, blueCoins: 0 }
+    const level = {
+      redCoins: [{ x: 0, y: 0 }, { x: 1, y: 1 }],
+      blueCoins: [{ x: 2, y: 2 }],
+    }
+    const timer = { elapsed: 15.0 }
+
+    const record = createCompletionRecord(timer, player, level)
+    expect(record.hundredPercent).toBeNull()
+  })
+
+  it('does not record 100% time when only blue coins collected', () => {
+    const player = { reachedGoal: true, redCoins: 0, blueCoins: 2 }
+    const level = {
+      redCoins: [{ x: 0, y: 0 }],
+      blueCoins: [{ x: 1, y: 1 }, { x: 2, y: 2 }],
+    }
+    const timer = { elapsed: 18.0 }
+
+    const record = createCompletionRecord(timer, player, level)
+    expect(record.hundredPercent).toBeNull()
   })
 })
