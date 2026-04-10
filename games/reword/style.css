@@ -234,8 +234,11 @@ header h1 {
 /* Message */
 #message {
   text-align: center;
-  color: #d7dadc;
-  font-size: 16px;
+  color: #818384;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-variant-numeric: tabular-nums;
   min-height: 24px;
   margin: 8px 0;
 }
