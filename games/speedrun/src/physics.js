@@ -73,6 +73,7 @@ export function updatePlayer(player, input, level, dt, config) {
   player.jumpHeld = input.jump
 
   // Tick dash timers
+  const wasDashing = player.dashTimer > 0
   if (player.dashTimer > 0) {
     player.dashTimer = Math.max(0, player.dashTimer - dt)
   }
@@ -80,10 +81,25 @@ export function updatePlayer(player, input, level, dt, config) {
     player.dashCooldownTimer = Math.max(0, player.dashCooldownTimer - dt)
   }
 
+  // Restore velocity when dash expires
+  if (wasDashing && player.dashTimer <= 0) {
+    player.vx = player.dashSavedVx
+    player.vy = player.dashSavedVy
+  }
+
   // Dash initiation
   if (input.dashPressed && player.dashCooldownTimer <= 0) {
-    const dir = input.left ? -1 : input.right ? 1 : (player.vx >= 0 ? 1 : -1)
-    player.vx = dir * config.dashSpeed
+    player.dashSavedVx = player.vx
+    player.dashSavedVy = player.vy
+    const isDown = input.down && !input.left && !input.right
+    if (isDown) {
+      player.vx = 0
+      player.vy = config.dashSpeed
+    } else {
+      const dir = input.left ? -1 : input.right ? 1 : (player.vx >= 0 ? 1 : -1)
+      player.vx = dir * config.dashSpeed
+      player.vy = 0
+    }
     player.dashTimer = config.dashDuration
     player.dashCooldownTimer = config.dashCooldown
   }
@@ -159,30 +175,33 @@ export function updatePlayer(player, input, level, dt, config) {
     }
   }
 
-  // Variable jump height — increased gravity when not holding jump while rising
-  let gravMultiplier = 1.0
-  if (player.vy < 0) {
-    // Rising
-    if (!player.jumpHeld) {
-      gravMultiplier = config.jumpCutMultiplier
+  // Freeze vertical physics during dash
+  if (player.dashTimer <= 0) {
+    // Variable jump height — increased gravity when not holding jump while rising
+    let gravMultiplier = 1.0
+    if (player.vy < 0) {
+      // Rising
+      if (!player.jumpHeld) {
+        gravMultiplier = config.jumpCutMultiplier
+      }
+    } else if (player.vy > 0) {
+      // Falling
+      gravMultiplier = config.fallMultiplier
     }
-  } else if (player.vy > 0) {
-    // Falling
-    gravMultiplier = config.fallMultiplier
-  }
 
-  player.vy += config.gravity * gravMultiplier * dt
+    player.vy += config.gravity * gravMultiplier * dt
 
-  // Wall sliding
-  if (player.wallDir !== 0 && player.vy > 0 && !player.grounded) {
-    if ((player.wallDir === 1 && moveRight) || (player.wallDir === -1 && moveLeft)) {
-      player.vy = Math.min(player.vy, config.wallSlideMaxSpeed)
+    // Wall sliding
+    if (player.wallDir !== 0 && player.vy > 0 && !player.grounded) {
+      if ((player.wallDir === 1 && moveRight) || (player.wallDir === -1 && moveLeft)) {
+        player.vy = Math.min(player.vy, config.wallSlideMaxSpeed)
+      }
     }
-  }
 
-  // Clamp fall speed
-  if (player.vy > config.maxFallSpeed) {
-    player.vy = config.maxFallSpeed
+    // Clamp fall speed
+    if (player.vy > config.maxFallSpeed) {
+      player.vy = config.maxFallSpeed
+    }
   }
 
   // Move X and resolve collisions
@@ -256,6 +275,8 @@ export function updatePlayer(player, input, level, dt, config) {
     player.wallDir = 0
     player.dashTimer = 0
     player.dashCooldownTimer = 0
+    player.dashSavedVx = 0
+    player.dashSavedVy = 0
   }
 }
 

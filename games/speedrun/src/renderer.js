@@ -90,11 +90,12 @@ export function createRenderer(canvas) {
       ctx.fillStyle = COLORS.vaultFlash
     } else if (player.dashTimer > 0) {
       // Dash afterimage trail
-      const trailOffset = player.vx > 0 ? -12 : 12
+      const trailOffsetX = player.vy > 0 ? 0 : (player.vx > 0 ? -12 : 12)
+      const trailOffsetY = player.vy > 0 ? -12 : 0
       ctx.fillStyle = 'rgba(231, 76, 60, 0.25)'
       ctx.fillRect(
-        Math.round(player.x + trailOffset),
-        Math.round(player.y),
+        Math.round(player.x + trailOffsetX),
+        Math.round(player.y + trailOffsetY),
         PLAYER_WIDTH,
         PLAYER_HEIGHT,
       )
