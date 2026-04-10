@@ -55,5 +55,9 @@ describe('submitScore input validation', () => {
     await expect(submitScore('2026-W15', 'hundredRed', 20.0, 'player_1')).resolves.not.toThrow()
     await expect(submitScore('2026-W15', 'hundredBlue', 5.0, 'abc')).resolves.not.toThrow()
   })
+
+  it('accepts hundredPercent as a valid category', async () => {
+    await expect(submitScore('2026-W15', 'hundredPercent', 15.0, 'player_1')).resolves.not.toThrow()
+  })
 })
 

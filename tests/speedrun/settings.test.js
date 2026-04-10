@@ -36,4 +36,9 @@ describe('settings', () => {
     saveSettings({ ghostCategory: 'hundredBlue' })
     expect(loadSettings().ghostCategory).toBe('hundredBlue')
   })
+
+  it('persists hundredPercent setting', () => {
+    saveSettings({ ghostCategory: 'hundredPercent' })
+    expect(loadSettings().ghostCategory).toBe('hundredPercent')
+  })
 })

@@ -17,9 +17,12 @@ export function formatTime(seconds) {
 
 export function createCompletionRecord(timer, player, level) {
   const time = timer.elapsed
+  const allRed = player.redCoins >= level.redCoins.length
+  const allBlue = player.blueCoins >= level.blueCoins.length
   return {
     anyPercent: time,
-    hundredRed: player.redCoins >= level.redCoins.length ? time : null,
-    hundredBlue: player.blueCoins >= level.blueCoins.length ? time : null,
+    hundredRed: allRed ? time : null,
+    hundredBlue: allBlue ? time : null,
+    hundredPercent: allRed && allBlue ? time : null,
   }
 }
