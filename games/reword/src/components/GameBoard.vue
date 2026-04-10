@@ -23,7 +23,11 @@
       />
     </div>
 
-    <div id="message" :class="messageType">{{ message }}</div>
+    <div id="message" :class="messageType">
+      <Transition name="message-fade">
+        <span v-if="message" :key="message">{{ message }}</span>
+      </Transition>
+    </div>
 
     <button id="submit-btn" @click="$emit('submit')">Submit</button>
     <button id="skip-btn" @click="$emit('skip')">Skip</button>

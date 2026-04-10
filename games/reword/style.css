@@ -87,6 +87,14 @@ header h1 {
   font-size: 14px;
 }
 
+#round-indicator {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #818384;
+  font-variant-numeric: tabular-nums;
+}
+
 #timer {
   display: flex;
   gap: 16px;
@@ -379,7 +387,9 @@ header h1 {
 .possible-answers {
   width: 100%;
   padding-left: 28px;
-  font-size: 12px;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
   color: #818384;
   font-style: italic;
 }
@@ -558,6 +568,18 @@ header h1 {
   animation: fade-in 0.2s ease-out forwards;
 }
 
+/* Message fade transition */
+.message-fade-enter-active {
+  transition: opacity 0.3s ease-out;
+}
+.message-fade-leave-active {
+  transition: opacity 0.4s ease-in;
+}
+.message-fade-enter-from,
+.message-fade-leave-to {
+  opacity: 0;
+}
+
 /* Accessibility: respect reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
   #input-area.shake,
@@ -572,7 +594,9 @@ header h1 {
     animation: none;
   }
   .tile.used,
-  .tile.offered.used {
+  .tile.offered.used,
+  .message-fade-enter-active,
+  .message-fade-leave-active {
     transition: none;
   }
 }
