@@ -38,6 +38,7 @@ Path: @/games/reword/src
   - Renders empty placeholder tiles up to `minLen` via `displayLen` computed property
   - Exposes a `#timer` slot used by `App.vue` to inject letter score and timer display
   - Accepts a `flyUp` boolean prop; when true, applies the `fly-up` CSS class to `#input-area` and sets `--tile-index` as an inline style on each input tile for per-tile stagger delay
+  - The `#message` area wraps its content in a Vue `<Transition name="message-fade">` with `v-if` on a `<span>`, so messages (errors, "Possible: ..." lists) fade in/out rather than appearing instantly. The `:key="message"` binding ensures the transition fires on every message text change
 
 - **`components/ScoreScreen.vue`** -- End-of-game display with countdown
   - Shows per-round breakdown (root, answer or SKIPPED, possible answers for skipped rounds)
