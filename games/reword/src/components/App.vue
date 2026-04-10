@@ -178,8 +178,8 @@ function handleSubmit() {
   const possibleAnswers = getAnswersForRound(round);
   state.completedRounds.push({ answer, timeMs, root: round.root, possibleAnswers });
   flyUp.value = true;
-  message.value = 'Correct!';
-  messageType.value = 'success';
+  message.value = '';
+  messageType.value = '';
   playSound('playCorrect');
   state.transitioning = true;
   setTimeout(() => advanceRound(), 700);

@@ -236,10 +236,6 @@ header h1 {
   color: #e74c3c;
 }
 
-#message.success {
-  color: #538d4e;
-}
-
 /* Instructions */
 .instructions {
   text-align: center;
