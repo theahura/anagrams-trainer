@@ -388,10 +388,10 @@ header h1 {
   width: 100%;
   padding-left: 28px;
   font-size: 11px;
-  letter-spacing: 0.5px;
+  letter-spacing: 2px;
   text-transform: uppercase;
   color: #818384;
-  font-style: italic;
+  font-variant-numeric: tabular-nums;
 }
 
 .possible-answers::before {
@@ -845,8 +845,11 @@ header h1 {
   margin-bottom: 8px;
 }
 
-/* Desktop: add vertical breathing room */
+/* Desktop: scale up and add vertical breathing room */
 @media (pointer: fine) {
+  #app {
+    zoom: 1.5;
+  }
   .section-label {
     margin: 24px 0 4px;
   }
