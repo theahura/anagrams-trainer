@@ -348,6 +348,12 @@ describe('HowToPlay', () => {
     expect(toggle.element.disabled).toBe(true);
   });
 
+  it('mentions that words must be true anagrams', () => {
+    const wrapper = mount(HowToPlay);
+    const text = wrapper.text().toLowerCase();
+    expect(text).toMatch(/true anagram/);
+  });
+
   it('does not emit toggle-timer when toggle is disabled and clicked', async () => {
     const wrapper = mount(HowToPlay, {
       props: { timerDisabled: false, gameInProgress: true },

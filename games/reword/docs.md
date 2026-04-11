@@ -59,7 +59,7 @@ Path: @/games/reword
   ```
 - **Difficulty progression:** 11 rounds per game: 3x3-letter roots, 3x4-letter, 3x5-letter, 1x6-letter, 1x7+-letter root
 - **Multi-letter expansions:** Expansion keys are variable-length strings (for example, `"r"`, `"el"`, `"egr"`). Players can use 1, 2, or 3 of the offered letters. `maxExtraLetters` varies by root length: +3 for roots of length 3-5, +2 for length 6, +1 for length 7+
-- **Word acceptance rule:** Valid dictionary words are accepted unless they are trivial suffix appends (`s`, `ed`, `er`). Validation checks dictionary lookup, offered-letter availability (the expansion key's letters must be a subset of the offered letters), and rejects trivial suffixes via `TRIVIAL_SUFFIXES` in `@/games/reword/src/game.js`
+- **Word acceptance rule:** Valid dictionary words are accepted unless they are trivial suffix appends (`s`, `ed`, `er`). The `isTrivialSuffix()` function in `@/games/reword/src/game.js` centralizes this check; it is used by answer validation, submit feedback classification, and answer list generation. Trivial suffixes get a distinct feedback type (`'trivial-suffix'`) so the UI can explain why the word was rejected ("Not a true anagram") rather than showing a generic error. The possible-answers list shown on skip/score screens also filters out trivial suffixes to stay consistent with what the game accepts
 
 ### Things to Know
 

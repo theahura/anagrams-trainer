@@ -2,14 +2,26 @@ import { getDailyRng, seededShuffle, seededPick } from './prng.js';
 
 const TRIVIAL_SUFFIXES = ['s', 'ed', 'er'];
 
-export function isValidAnswer(answer, round) {
+export function isTrivialSuffix(answer, root) {
   const answerLower = answer.toLowerCase();
-  const rootLower = round.root.toLowerCase();
+  const rootLower = root.toLowerCase();
+  return TRIVIAL_SUFFIXES.some(suffix => answerLower === rootLower + suffix);
+}
 
-  for (const suffix of TRIVIAL_SUFFIXES) {
-    if (answerLower === rootLower + suffix) return false;
+export function isValidAnswer(answer, round) {
+  if (isTrivialSuffix(answer, round.root)) return false;
+
+  const answerLower = answer.toLowerCase();
+  const offered = round.offeredLetters || [];
+  for (const [key, words] of Object.entries(round.expansions)) {
+    if (!isKeySubsetOfOffered(key, offered)) continue;
+    if (words.some(w => w.toLowerCase() === answerLower)) return true;
   }
+  return false;
+}
 
+function isInExpansions(answer, round) {
+  const answerLower = answer.toLowerCase();
   const offered = round.offeredLetters || [];
   for (const [key, words] of Object.entries(round.expansions)) {
     if (!isKeySubsetOfOffered(key, offered)) continue;
@@ -34,7 +46,7 @@ export function getAnswersForRound(round) {
   for (const [key, words] of Object.entries(round.expansions)) {
     if (!isKeySubsetOfOffered(key, offered)) continue;
     for (const w of words) {
-      results.push(w);
+      if (!isTrivialSuffix(w, round.root)) results.push(w);
     }
   }
   return results;
@@ -139,6 +151,7 @@ export function getSubmitFeedbackType(answer, round) {
   const maxLen = round.root.length + (round.offeredLetters ? round.offeredLetters.length : 0);
   if (answer.length < minLen || answer.length > maxLen) return 'invalid-length';
   if (isValidAnswer(answer, round)) return 'correct';
+  if (isTrivialSuffix(answer, round.root) && isInExpansions(answer, round)) return 'trivial-suffix';
   return 'wrong';
 }
 
