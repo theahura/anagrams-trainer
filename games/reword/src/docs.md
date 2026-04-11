@@ -28,7 +28,7 @@ Path: @/games/reword/src
   - All game state lives in a `reactive()` object: `{ currentRound, completedRounds, inputLetters, startTime, roundStartTime, roundDeadline, transitioning }`. UI flags (`loading`, `gameComplete`, `muted`, `showHowToPlay`, `timerDisabled`, etc.) are individual `ref()` values. `timerDisabled` is persisted to `reword-timer-disabled` in localStorage and restored on mount. A `gameInProgress` computed (`startTime !== null && !gameComplete`) prevents the timer toggle from being changed mid-game
   - On mount: checks `reword-seen-how-to-play` localStorage to auto-show `HowToPlay` on first visit, fetches `puzzles.json`, derives UTC date string, selects daily puzzle, and checks for saved game (with fallback read from old `anagram-trainer-*` keys)
   - `handleKeyInput(key)` dispatches to `processKeyPress` from `game.js` for letter processing, and to `handleSubmit` for Enter
-  - `handleSubmit()` and `handleSkip()` use `state.transitioning` flag and `state.currentRound >= 11` guard to prevent double-submission
+  - `handleSubmit()` and `handleSkip()` use `state.transitioning` flag and `state.currentRound >= 11` guard to prevent double-submission. `handleSubmit()` uses `getSubmitFeedbackType()` to dispatch to different error messages: `'invalid-length'` shows length constraints, `'trivial-suffix'` shows "Not a true anagram", and `'wrong'` shows generic invalid message
   - `showScore(savedResults?)` dual mode: fresh game results or saved replay. On fresh completion, persists to `reword-{date}` (including a `timerDisabled` flag alongside results and totalTimeMs), updates `reword-stats` via `updateStreakStats`, and updates `reword-lifetime-stats` via `updateLifetimeStats` (passing `timerDisabled`). Lifetime stats are only written on fresh completion (not saved game restore) to prevent double-counting. Both streak and lifetime stats are loaded for display in both paths. When restoring a saved game, the saved `timerDisabled` value is applied to the current session
   - Physical keyboard handled via a document-level `keydown` listener that guards against `gameComplete`, `loading`, and `showHowToPlay` states
   - Audio lazily initialized via `ensureAudio()` on first user interaction
@@ -46,7 +46,7 @@ Path: @/games/reword/src
   - Accepts a `timerDisabled` prop; when true, the "Total Time" stat is hidden from the stats row
   - Conditionally renders a "Lifetime Stats" section (via `v-if` on the `lifetimeStats` prop) showing cumulative totals, fastest time, average time, best letter score, and longest word. Fastest time and average time are derived exclusively from perfect games (`perfectGamesPlayed`, `perfectGamesTotalTimeMs`); displays "N/A" when no perfect games exist. Uses a local `formatTime(ms)` helper for time display
 
-- **`components/HowToPlay.vue`** -- Tutorial modal with example tiles, closes on overlay click or X button. Accepts `timerDisabled` and `gameInProgress` props and emits `toggle-timer`. Contains a "Disable Timer" checkbox (`data-testid="timer-toggle"`) that is disabled when `gameInProgress` is true, preventing timer toggling mid-game
+- **`components/HowToPlay.vue`** -- Tutorial modal with example tiles, closes on overlay click or X button. Accepts `timerDisabled` and `gameInProgress` props and emits `toggle-timer`. Contains a "Disable Timer" checkbox (`data-testid="timer-toggle"`) that is disabled when `gameInProgress` is true, preventing timer toggling mid-game. Instructions explicitly state that simply adding a letter to the end doesn't count -- the word must be a true anagram
 
 - **`components/ScrabbleTile.vue`** -- Single tile displaying an uppercase letter. No Scrabble point subscripts
 
@@ -61,13 +61,16 @@ Path: @/games/reword/src
 
 - **`game.js`** -- Puzzle selection, answer validation, share text, and countdown utilities
   - `selectDailyPuzzle(puzzleData, dateStr)` selects 11 rounds using date-seeded PRNG, difficulty progression (3+3+3+1+1)
-  - `isValidAnswer(answer, round)` checks expansion dictionary and offered-letter availability, and rejects trivial suffix appends (s, ed, er) via `TRIVIAL_SUFFIXES` constant
+  - `isTrivialSuffix(answer, root)` is a standalone exported check for whether a word is just root + one of the `TRIVIAL_SUFFIXES` (`s`, `ed`, `er`). Used by `isValidAnswer`, `getSubmitFeedbackType`, and `getAnswersForRound` to enforce the "true anagram" rule consistently
+  - `isValidAnswer(answer, round)` checks expansion dictionary and offered-letter availability, and rejects trivial suffix appends via `isTrivialSuffix()`
   - `generateShareText(results, dateStr, totalTimeMs, timerDisabled)` produces share string with "Reword" header (not "Anagram Trainer"). When `timerDisabled` is true, the time portion is omitted from the share text
   - `matchTypedToTiles(typedLetters, rootLetters, offeredLetters)` maps each typed character to a tile position with root-first priority, used by `GameBoard.vue` for real-time feedback
   - `formatCountdown(ms)` converts milliseconds to `HH:MM:SS` string
   - `getTimeUntilMidnightUTC()` returns milliseconds until next UTC midnight
   - `updateLifetimeStats(existingStats, completedRounds, totalTimeMs, timerDisabled)` accumulates cross-game stats: totalLetters, totalWords, fastestTimeMs, totalTimeMs, gamesPlayed, bestLetterScore, longestWord, totalSkips, perfectGamesPlayed, perfectGamesTotalTimeMs. A game is "perfect" when `completedRounds.length === 11 && gameSkips === 0 && !timerDisabled`. Games with the timer disabled are excluded from perfect game tracking. `fastestTimeMs` is only updated by perfect games (returns `null` when no perfect games have been played). Returns a fresh stats object on first game, or merges with existing stats using min (fastest time, perfect only), max (best score, longest word), and sum (totals) semantics
-  - Other pure functions: `getOfferedLetters`, `getAnswersForRound`, `getSubmitFeedbackType`, `isConsecutiveDay`, `updateStreakStats`, `processKeyPress`, `calculateScore`
+  - `getSubmitFeedbackType(answer, round)` returns one of `'invalid-length'`, `'correct'`, `'trivial-suffix'`, or `'wrong'`. The `'trivial-suffix'` type allows `App.vue` to show a distinct error message ("Not a true anagram -- try rearranging the letters") instead of the generic "Not a valid answer" message
+  - `getAnswersForRound(round)` returns all valid answers for a round, filtering out trivial suffix words so the "possible words" shown on skip/score screens only includes words the game would actually accept
+  - Other pure functions: `getOfferedLetters`, `isConsecutiveDay`, `updateStreakStats`, `processKeyPress`, `calculateScore`
 
 - **`words.js`** -- Anagram computation (used at both build-time and runtime validation)
   - `letterSignature(word)` sorts a word's letters alphabetically -- two words are anagrams iff their signatures match

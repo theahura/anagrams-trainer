@@ -167,6 +167,13 @@ function handleSubmit() {
     return;
   }
 
+  if (feedback === 'trivial-suffix') {
+    message.value = 'Not a true anagram — try rearranging the letters';
+    messageType.value = 'error';
+    playSound('playWrong');
+    return;
+  }
+
   if (feedback === 'wrong') {
     message.value = 'Not a valid answer. Try again!';
     messageType.value = 'error';
