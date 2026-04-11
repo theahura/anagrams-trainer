@@ -464,9 +464,9 @@ describe('getSubmitFeedbackType', () => {
     expect(getSubmitFeedbackType('rinds', round)).toBe('trivial-suffix');
   });
 
-  it('returns wrong (not trivial-suffix) when suffix letter is not offered', () => {
+  it('returns trivial-suffix even when suffix letter is not offered', () => {
     const round = { root: 'rind', expansions: { e: ['diner'] }, offeredLetters: ['e', 'g', 'x'] };
-    expect(getSubmitFeedbackType('rinds', round)).toBe('wrong');
+    expect(getSubmitFeedbackType('rinds', round)).toBe('trivial-suffix');
   });
 });
 

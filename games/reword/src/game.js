@@ -20,16 +20,6 @@ export function isValidAnswer(answer, round) {
   return false;
 }
 
-function isInExpansions(answer, round) {
-  const answerLower = answer.toLowerCase();
-  const offered = round.offeredLetters || [];
-  for (const [key, words] of Object.entries(round.expansions)) {
-    if (!isKeySubsetOfOffered(key, offered)) continue;
-    if (words.some(w => w.toLowerCase() === answerLower)) return true;
-  }
-  return false;
-}
-
 function isKeySubsetOfOffered(key, offeredLetters) {
   const available = [...offeredLetters];
   for (const ch of key) {
@@ -151,7 +141,7 @@ export function getSubmitFeedbackType(answer, round) {
   const maxLen = round.root.length + (round.offeredLetters ? round.offeredLetters.length : 0);
   if (answer.length < minLen || answer.length > maxLen) return 'invalid-length';
   if (isValidAnswer(answer, round)) return 'correct';
-  if (isTrivialSuffix(answer, round.root) && isInExpansions(answer, round)) return 'trivial-suffix';
+  if (isTrivialSuffix(answer, round.root)) return 'trivial-suffix';
   return 'wrong';
 }
 
