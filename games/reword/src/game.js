@@ -57,7 +57,7 @@ export function selectDailyPuzzle(puzzleData, dateStr) {
   };
 
   rounds.push(...pick(puzzleData[3], 3));
-  rounds.push(...pick(puzzleData[4], 3));
+  rounds.push(...pick(puzzleData[4], 2));
   rounds.push(...pick(puzzleData[5], 3));
   rounds.push(...pick(puzzleData[6], 1));
 
@@ -194,7 +194,7 @@ export function updateLifetimeStats(existingStats, completedRounds, totalTimeMs,
   const gameLongestWord = solvedRounds.reduce(
     (longest, r) => r.answer.length > longest.length ? r.answer : longest, ''
   );
-  const isPerfect = completedRounds.length === 11 && gameSkips === 0 && !timerDisabled;
+  const isPerfect = completedRounds.length === 10 && gameSkips === 0 && !timerDisabled;
 
   if (!existingStats) {
     return {

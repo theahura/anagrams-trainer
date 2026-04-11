@@ -18,7 +18,7 @@
         <div class="example-answer">GRIND</div>
       </div>
       <ul>
-        <li>11 rounds with increasing difficulty</li>
+        <li>10 rounds with increasing difficulty</li>
         <li>A new puzzle every day</li>
         <li>Score is based on total letters used</li>
         <li>Simply adding an 's' doesn't count — the word must be a true anagram</li>

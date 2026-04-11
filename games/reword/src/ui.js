@@ -84,7 +84,7 @@ export function initUI(puzzle, dateStr) {
   const gameInfo = document.createElement('div');
   gameInfo.className = 'game-info';
   gameInfo.innerHTML = `
-    <span id="round-indicator">Round 1 of 11</span>
+    <span id="round-indicator">Round 1 of 10</span>
     <span id="letter-score">Letters: 0</span>
     <span id="timer">0:00</span>
   `;
@@ -191,7 +191,7 @@ export function initUI(puzzle, dateStr) {
   function renderRound() {
     const round = puzzle[state.currentRound];
     document.getElementById('round-indicator').textContent =
-      `Round ${state.currentRound + 1} of 11`;
+      `Round ${state.currentRound + 1} of 10`;
 
     // Root tiles
     rootRack.innerHTML = '';
@@ -301,7 +301,7 @@ export function initUI(puzzle, dateStr) {
   function handleSubmit() {
     ensureAudio();
     if (state.transitioning) return;
-    if (state.currentRound >= 11) return;
+    if (state.currentRound >= 10) return;
     if (!state.startTime) startTimer();
     const round = puzzle[state.currentRound];
     const answer = state.inputLetters.join('');
@@ -337,7 +337,7 @@ export function initUI(puzzle, dateStr) {
   function handleSkip() {
     ensureAudio();
     if (state.transitioning) return;
-    if (state.currentRound >= 11) return;
+    if (state.currentRound >= 10) return;
     if (!state.startTime) startTimer();
     const round = puzzle[state.currentRound];
     const timeMs = Date.now() - state.roundStartTime;
@@ -381,7 +381,7 @@ export function initUI(puzzle, dateStr) {
 
   function advanceRound() {
     state.currentRound++;
-    if (state.currentRound >= 11) {
+    if (state.currentRound >= 10) {
       showScore();
       return;
     }
@@ -438,7 +438,7 @@ export function initUI(puzzle, dateStr) {
     scoreScreen.innerHTML = `
       <h2>Game Complete!</h2>
       <div class="stats-row">
-        <div class="stat">Words Solved<br><span class="stat-value">${score.roundsCompleted} / 11</span></div>
+        <div class="stat">Words Solved<br><span class="stat-value">${score.roundsCompleted} / 10</span></div>
         <div class="stat">Total Letters<br><span class="stat-value">${score.totalLetters}</span></div>
         <div class="stat">Total Time<br><span class="stat-value">${mins}:${secs.toString().padStart(2, '0')}</span></div>
       </div>
@@ -506,7 +506,7 @@ export function initUI(puzzle, dateStr) {
 
   function handleKeyInput(key) {
     ensureAudio();
-    if (state.currentRound >= 11) return;
+    if (state.currentRound >= 10) return;
     if (!state.startTime) startTimer();
     if (key === 'Enter') {
       handleSubmit();
@@ -525,7 +525,7 @@ export function initUI(puzzle, dateStr) {
   // Physical keyboard handling
   hiddenInput.addEventListener('input', (e) => {
     ensureAudio();
-    if (state.currentRound >= 11) return;
+    if (state.currentRound >= 10) return;
     if (!state.startTime) startTimer();
     const round = puzzle[state.currentRound];
     const maxLen = round.root.length + round.offeredLetters.length;
