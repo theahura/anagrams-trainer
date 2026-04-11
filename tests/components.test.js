@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { mount } from '@vue/test-utils';
+import { flushPromises } from '@vue/test-utils';
 import ScrabbleTile from '../games/reword/src/components/ScrabbleTile.vue';
 import TileRack from '../games/reword/src/components/TileRack.vue';
 import VirtualKeyboard from '../games/reword/src/components/VirtualKeyboard.vue';
@@ -7,6 +8,7 @@ import ScoreScreen from '../games/reword/src/components/ScoreScreen.vue';
 import GameBoard from '../games/reword/src/components/GameBoard.vue';
 import HowToPlay from '../games/reword/src/components/HowToPlay.vue';
 import LoadingScreen from '../games/reword/src/components/LoadingScreen.vue';
+import App from '../games/reword/src/components/App.vue';
 
 describe('ScrabbleTile', () => {
   it('renders the letter in uppercase', () => {
@@ -270,6 +272,22 @@ describe('GameBoard', () => {
     expect(wrapper.emitted('skip')).toBeTruthy();
   });
 
+  it('renders all input tiles in the input area when there are many letters', () => {
+    const bigRound = {
+      root: 'strange',
+      expansions: { r: ['granters'], i: ['astringe'], er: ['estrangers'] },
+      offeredLetters: ['r', 'e', 's'],
+    };
+    const inputLetters = ['e', 's', 't', 'r', 'a', 'n', 'g', 'e', 'r', 's'];
+    const wrapper = mount(GameBoard, {
+      props: { round: bigRound, roundNumber: 1, inputLetters, message: '', messageType: '' },
+    });
+    const inputArea = wrapper.find('#input-area');
+    const tiles = inputArea.findAll('.tile');
+    expect(tiles.length).toBe(10);
+    expect(tiles.every(t => t.text().length > 0)).toBe(true);
+  });
+
   it('applies fly-up class to game-board when flyUp prop is true', () => {
     const wrapper = mount(GameBoard, {
       props: { round, roundNumber: 1, inputLetters: ['c', 'o', 'a', 't'], message: '', messageType: '', flyUp: true },
@@ -361,6 +379,95 @@ describe('HowToPlay', () => {
     const toggle = wrapper.find('[data-testid="timer-toggle"]');
     await toggle.trigger('click');
     expect(wrapper.emitted('toggle-timer')).toBeFalsy();
+  });
+});
+
+describe('App – typing during transition', () => {
+  const puzzleData = {
+    3: [
+      { root: 'cat', expansions: { o: ['coat', 'taco'], r: ['cart'] } },
+      { root: 'dog', expansions: { s: ['gods'] } },
+      { root: 'pen', expansions: { i: ['pine'] } },
+      { root: 'bat', expansions: { e: ['beat'] } },
+    ],
+    4: [
+      { root: 'rind', expansions: { e: ['diner'] } },
+      { root: 'lamp', expansions: { c: ['clamp'] } },
+      { root: 'tone', expansions: { s: ['stone'] } },
+      { root: 'mare', expansions: { d: ['dream'] } },
+    ],
+    5: [
+      { root: 'bread', expansions: { k: ['barked'] } },
+      { root: 'flame', expansions: { r: ['flamer'] } },
+      { root: 'plant', expansions: { e: ['planet'] } },
+      { root: 'heart', expansions: { d: ['thread'] } },
+    ],
+    6: [
+      { root: 'garden', expansions: { e: ['angered'] } },
+      { root: 'listen', expansions: { g: ['singlet'] } },
+    ],
+    7: [
+      { root: 'strange', expansions: { r: ['granters'] } },
+      { root: 'pointed', expansions: { s: ['deposits'] } },
+    ],
+  };
+
+  let fetchSpy;
+
+  beforeEach(() => {
+    fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      json: () => Promise.resolve(puzzleData),
+    });
+    vi.spyOn(Storage.prototype, 'getItem').mockReturnValue(null);
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('does not clear the suggested words message when typing after skip', async () => {
+    const wrapper = mount(App, {
+      global: { stubs: { Transition: true } },
+    });
+    await flushPromises();
+
+    // Skip the first round
+    await wrapper.find('#skip-btn').trigger('click');
+    await flushPromises();
+
+    // Message should show possible answers
+    const messageEl = wrapper.find('#message');
+    expect(messageEl.text()).toMatch(/Possible:/);
+
+    // Simulate typing via virtual keyboard during the transition
+    const keyboard = wrapper.findComponent(VirtualKeyboard);
+    keyboard.vm.$emit('key-press', 'a');
+    await flushPromises();
+
+    // Message should still show the possible answers, not be cleared
+    expect(wrapper.find('#message').text()).toMatch(/Possible:/);
+  });
+
+  it('does not add input letters when typing during transition', async () => {
+    const wrapper = mount(App, {
+      global: { stubs: { Transition: true } },
+    });
+    await flushPromises();
+
+    // Skip the first round
+    await wrapper.find('#skip-btn').trigger('click');
+    await flushPromises();
+
+    // Type via virtual keyboard during transition
+    const keyboard = wrapper.findComponent(VirtualKeyboard);
+    keyboard.vm.$emit('key-press', 'x');
+    await flushPromises();
+
+    // Input area should not have any typed letters (only empty placeholder tiles)
+    const inputTiles = wrapper.find('#input-area').findAll('.tile');
+    const nonEmptyTiles = inputTiles.filter(t => t.text().trim().length > 0);
+    expect(nonEmptyTiles.length).toBe(0);
   });
 });
 

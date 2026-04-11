@@ -287,7 +287,7 @@ function showScore(savedResults) {
 
 function handleKeyInput(key) {
   ensureAudio();
-  if (state.currentRound >= 11) return;
+  if (state.transitioning || state.currentRound >= 11) return;
   if (!state.startTime) startTimer();
   if (key === 'Enter') {
     handleSubmit();
