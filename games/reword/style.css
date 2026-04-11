@@ -202,7 +202,6 @@ header h1 {
 #input-area {
   display: flex;
   justify-content: center;
-  flex-wrap: wrap;
   min-height: 60px;
   padding: 8px;
   background: rgba(255,255,255,0.03);
@@ -211,6 +210,7 @@ header h1 {
 }
 
 #input-area .tile {
+  flex: 0 1 52px;
   animation: pop-in 0.15s ease-out;
 }
 
@@ -880,6 +880,9 @@ header h1 {
     height: 40px;
     font-size: 18px;
     margin: 2px;
+  }
+  #input-area .tile {
+    flex-basis: 40px;
   }
   header h1 {
     font-size: 24px;
