@@ -366,10 +366,10 @@ describe('HowToPlay', () => {
     expect(toggle.element.disabled).toBe(true);
   });
 
-  it('mentions that words must be true anagrams', () => {
+  it('mentions that words must be rearranged', () => {
     const wrapper = mount(HowToPlay);
     const text = wrapper.text().toLowerCase();
-    expect(text).toMatch(/true anagram/);
+    expect(text).toMatch(/rearrange/);
   });
 
   it('does not emit toggle-timer when toggle is disabled and clicked', async () => {
