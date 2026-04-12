@@ -10,7 +10,7 @@ Path: @/games/speedrun
 
 ### How it fits into the larger codebase
 
-- `@/speedrun/index.html` is the Vite entry point (thin HTML shell with `<canvas>` and results overlay div), linked from the games index at `@/index.html`. Includes OpenGraph and Twitter Card meta tags pointing to `@/games/speedrun/og-image.png`
+- `@/speedrun/index.html` is the Vite entry point (thin HTML shell with `<canvas>` and results overlay div), linked from the games index at `@/index.html`. Includes OpenGraph and Twitter Card meta tags pointing to `@/games/speedrun/og-image.png`. A copy lives at `@/public/speedrun/og-image.png` because Vite does not process `<meta content="">` as asset references -- files in `@/public/` are copied as-is to `dist/` during build, which is how the og-image ends up at the URL path declared in the meta tags
 - `@/games/speedrun/og-card.html` is the design template for the OG image (1200x630px) -- rendered and screenshotted to produce `og-image.png`. Same pattern as Reword's `og-card.html`
 - `@/vite.config.js` includes the speedrun entry in its multi-page rollup inputs alongside the games index and Reword
 - Source modules live in `@/games/speedrun/src/` -- pure-logic modules with no DOM dependencies except `main.js` and `renderer.js`

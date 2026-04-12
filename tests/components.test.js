@@ -366,10 +366,10 @@ describe('HowToPlay', () => {
     expect(toggle.element.disabled).toBe(true);
   });
 
-  it('mentions that words must be rearranged', () => {
+  it('mentions that simply adding an s is not allowed', () => {
     const wrapper = mount(HowToPlay);
     const text = wrapper.text().toLowerCase();
-    expect(text).toMatch(/rearrange/);
+    expect(text).toMatch(/simply adding an 's' doesn't count/i);
   });
 
   it('does not emit toggle-timer when toggle is disabled and clicked', async () => {

@@ -45,6 +45,22 @@ describe('reword meta tags', () => {
   it('has an og:image file that exists on disk', () => {
     expect(fs.existsSync(path.join(repoRoot, 'games/reword/og-image.png'))).toBe(true);
   });
+
+  it('has og:image in public/ so it deploys to the correct URL', () => {
+    const ogImageUrl = getMeta(doc, 'og:image');
+    const urlPath = new URL(ogImageUrl).pathname.replace('/games/', '');
+    expect(fs.existsSync(path.join(repoRoot, 'public', urlPath))).toBe(true);
+  });
+});
+
+describe('speedrun meta tags', () => {
+  const doc = parseHTML('speedrun/index.html');
+
+  it('has og:image in public/ so it deploys to the correct URL', () => {
+    const ogImageUrl = getMeta(doc, 'og:image');
+    const urlPath = new URL(ogImageUrl).pathname.replace('/games/', '');
+    expect(fs.existsSync(path.join(repoRoot, 'public', urlPath))).toBe(true);
+  });
 });
 
 describe('games index meta tags', () => {
