@@ -95,7 +95,7 @@ describe('ScoreScreen', () => {
     const wrapper = mount(ScoreScreen, {
       props: { results, dateStr: '2026-04-05', totalTimeMs: 12000 },
     });
-    expect(wrapper.text()).toContain('2 / 11');
+    expect(wrapper.text()).toContain('2 / 10');
   });
 
   it('displays total letters', () => {
@@ -244,7 +244,7 @@ describe('GameBoard', () => {
     const wrapper = mount(GameBoard, {
       props: { round, roundNumber: 5, inputLetters: [], message: '', messageType: '' },
     });
-    expect(wrapper.text()).toContain('Round 5 of 11');
+    expect(wrapper.text()).toContain('Round 5 of 10');
   });
 
   it('displays an error message', () => {

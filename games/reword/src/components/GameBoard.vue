@@ -1,7 +1,7 @@
 <template>
   <div :class="['game-board', { 'fly-up': flyUp, 'tiles-fade-in': tilesFadingIn }]">
     <div class="game-info">
-      <span id="round-indicator">Round {{ roundNumber }} of 11</span>
+      <span id="round-indicator">Round {{ roundNumber }} of 10</span>
       <span id="timer"><slot name="timer"></slot></span>
     </div>
 

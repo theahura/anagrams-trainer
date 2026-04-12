@@ -48,29 +48,29 @@ const testPuzzleData = {
 };
 
 describe('selectDailyPuzzle', () => {
-  it('returns exactly 11 rounds', () => {
+  it('returns exactly 10 rounds', () => {
     const puzzle = selectDailyPuzzle(testPuzzleData, '2026-04-05');
-    expect(puzzle).toHaveLength(11);
+    expect(puzzle).toHaveLength(10);
   });
 
-  it('has correct difficulty progression', () => {
+  it('has correct difficulty progression (2+3+3+1+1)', () => {
     const puzzle = selectDailyPuzzle(testPuzzleData, '2026-04-05');
-    // First 3 roots should be 3 letters
-    for (let i = 0; i < 3; i++) {
+    // First 2 roots should be 3 letters
+    for (let i = 0; i < 2; i++) {
       expect(puzzle[i].root.length).toBe(3);
     }
     // Next 3 roots should be 4 letters
-    for (let i = 3; i < 6; i++) {
+    for (let i = 2; i < 5; i++) {
       expect(puzzle[i].root.length).toBe(4);
     }
     // Next 3 roots should be 5 letters
-    for (let i = 6; i < 9; i++) {
+    for (let i = 5; i < 8; i++) {
       expect(puzzle[i].root.length).toBe(5);
     }
-    // 10th root should be 6 letters
-    expect(puzzle[9].root.length).toBe(6);
-    // 11th root should be 7+ letters
-    expect(puzzle[10].root.length).toBeGreaterThanOrEqual(7);
+    // 9th root should be 6 letters
+    expect(puzzle[8].root.length).toBe(6);
+    // 10th root should be 7+ letters
+    expect(puzzle[9].root.length).toBeGreaterThanOrEqual(7);
   });
 
   it('returns the same puzzle for the same date', () => {
@@ -308,12 +308,12 @@ describe('getAnswersForRound', () => {
 
 describe('generateShareText', () => {
   it('shows all green squares when all rounds are solved', () => {
-    const results = Array.from({ length: 11 }, () => ({ answer: 'word', timeMs: 1000, root: 'wor' }));
+    const results = Array.from({ length: 10 }, () => ({ answer: 'word', timeMs: 1000, root: 'wor' }));
     const text = generateShareText(results, '2026-04-05', 60000);
     const lines = text.split('\n');
     expect(lines[0]).toBe('Reword 2026-04-05');
-    expect(lines[1]).toBe('🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩');
-    expect(lines[2]).toBe('11/11 | 1:00');
+    expect(lines[1]).toBe('🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩');
+    expect(lines[2]).toBe('10/10 | 1:00');
   });
 
   it('shows white squares for skipped rounds', () => {
@@ -328,38 +328,37 @@ describe('generateShareText', () => {
       { answer: 'eight', timeMs: 1000, root: 'eigh' },
       { answer: 'nine', timeMs: 1000, root: 'nin' },
       { answer: 'ten', timeMs: 1000, root: 'te' },
-      { answer: 'eleven', timeMs: 1000, root: 'eleve' },
     ];
     const text = generateShareText(results, '2026-04-05', 30000);
     const lines = text.split('\n');
-    expect(lines[1]).toBe('🟩⬜🟩⬜🟩🟩⬜🟩🟩🟩🟩');
-    expect(lines[2]).toBe('8/11 | 0:30');
+    expect(lines[1]).toBe('🟩⬜🟩⬜🟩🟩⬜🟩🟩🟩');
+    expect(lines[2]).toBe('7/10 | 0:30');
   });
 
   it('shows all white squares when no rounds solved', () => {
-    const results = Array.from({ length: 11 }, () => ({ answer: '', timeMs: 1000, root: 'abc' }));
+    const results = Array.from({ length: 10 }, () => ({ answer: '', timeMs: 1000, root: 'abc' }));
     const text = generateShareText(results, '2026-04-05', 120000);
     const lines = text.split('\n');
-    expect(lines[1]).toBe('⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜');
-    expect(lines[2]).toBe('0/11 | 2:00');
+    expect(lines[1]).toBe('⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜');
+    expect(lines[2]).toBe('0/10 | 2:00');
   });
 
   it('omits time from share text when timer is disabled', () => {
-    const results = Array.from({ length: 11 }, () => ({ answer: 'word', timeMs: 1000, root: 'wor' }));
+    const results = Array.from({ length: 10 }, () => ({ answer: 'word', timeMs: 1000, root: 'wor' }));
     const text = generateShareText(results, '2026-04-05', 60000, true);
     const lines = text.split('\n');
     expect(lines[0]).toBe('Reword 2026-04-05');
-    expect(lines[1]).toBe('🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩');
-    expect(lines[2]).toBe('11/11');
+    expect(lines[1]).toBe('🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩');
+    expect(lines[2]).toBe('10/10');
     expect(text).not.toContain('|');
     expect(text).not.toContain('1:00');
   });
 
   it('includes time in share text when timer is not disabled', () => {
-    const results = Array.from({ length: 11 }, () => ({ answer: 'word', timeMs: 1000, root: 'wor' }));
+    const results = Array.from({ length: 10 }, () => ({ answer: 'word', timeMs: 1000, root: 'wor' }));
     const text = generateShareText(results, '2026-04-05', 60000, false);
     const lines = text.split('\n');
-    expect(lines[2]).toBe('11/11 | 1:00');
+    expect(lines[2]).toBe('10/10 | 1:00');
   });
 
 });
@@ -665,8 +664,8 @@ describe('updateLifetimeStats', () => {
   ];
   const gameTotalTimeMs = 45000;
 
-  // 11 solved rounds = perfect game
-  const perfectGameRounds = Array.from({ length: 11 }, (_, i) => ({
+  // 10 solved rounds = perfect game
+  const perfectGameRounds = Array.from({ length: 10 }, (_, i) => ({
     answer: 'word' + i, timeMs: 3000, root: 'wor', possibleAnswers: ['word' + i],
   }));
 
