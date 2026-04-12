@@ -56,8 +56,8 @@ export function selectDailyPuzzle(puzzleData, dateStr) {
     return result;
   };
 
-  rounds.push(...pick(puzzleData[3], 3));
-  rounds.push(...pick(puzzleData[4], 2));
+  rounds.push(...pick(puzzleData[3], 2));
+  rounds.push(...pick(puzzleData[4], 3));
   rounds.push(...pick(puzzleData[5], 3));
   rounds.push(...pick(puzzleData[6], 1));
 

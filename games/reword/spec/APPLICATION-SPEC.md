@@ -10,8 +10,8 @@ A daily word game (HTML/JS web app) where players add a single letter to rearran
 4. Example: root word "rind" + letters [g, e, r] -> player could form "grind" (using g) or "diner" (using e)
 
 ## Word Difficulty Progression
-- Words 1-3: 3-letter root words
-- Words 4-5: 4-letter root words
+- Words 1-2: 3-letter root words
+- Words 3-5: 4-letter root words
 - Words 6-8: 5-letter root words
 - Word 9: 6-letter root word
 - Word 10: 7+ letter root word

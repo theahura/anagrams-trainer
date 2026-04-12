@@ -53,14 +53,14 @@ describe('selectDailyPuzzle', () => {
     expect(puzzle).toHaveLength(10);
   });
 
-  it('has correct difficulty progression (3+2+3+1+1)', () => {
+  it('has correct difficulty progression (2+3+3+1+1)', () => {
     const puzzle = selectDailyPuzzle(testPuzzleData, '2026-04-05');
-    // First 3 roots should be 3 letters
-    for (let i = 0; i < 3; i++) {
+    // First 2 roots should be 3 letters
+    for (let i = 0; i < 2; i++) {
       expect(puzzle[i].root.length).toBe(3);
     }
-    // Next 2 roots should be 4 letters
-    for (let i = 3; i < 5; i++) {
+    // Next 3 roots should be 4 letters
+    for (let i = 2; i < 5; i++) {
       expect(puzzle[i].root.length).toBe(4);
     }
     // Next 3 roots should be 5 letters

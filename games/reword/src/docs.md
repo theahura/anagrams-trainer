@@ -60,7 +60,7 @@ Path: @/games/reword/src
   - `seededPick(array, rng)` -- picks a single random element
 
 - **`game.js`** -- Puzzle selection, answer validation, share text, and countdown utilities
-  - `selectDailyPuzzle(puzzleData, dateStr)` selects 10 rounds using date-seeded PRNG, difficulty progression (3+2+3+1+1)
+  - `selectDailyPuzzle(puzzleData, dateStr)` selects 10 rounds using date-seeded PRNG, difficulty progression (2+3+3+1+1)
   - `isTrivialSuffix(answer, root)` is a standalone exported check for whether a word is just root + one of the `TRIVIAL_SUFFIXES` (`s`, `ed`, `er`). Used by `isValidAnswer`, `getSubmitFeedbackType`, and `getAnswersForRound` to enforce the "true anagram" rule consistently
   - `isValidAnswer(answer, round)` checks expansion dictionary and offered-letter availability, and rejects trivial suffix appends via `isTrivialSuffix()`
   - `generateShareText(results, dateStr, totalTimeMs, timerDisabled)` produces share string with "Reword" header (not "Anagram Trainer"). When `timerDisabled` is true, the time portion is omitted from the share text
