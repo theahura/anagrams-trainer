@@ -49,5 +49,7 @@ Path: @/tests
 - The `game.test.js` test data includes crafted edge cases for answer validation, including a regression test ensuring "master" from root "aster" + letter "m" is accepted (not blocked by trivial suffix filter since "master" is not root + "s"/"ed"/"er")
 - Some tests use a constant RNG (`() => 0.5`) to make offered letter tests deterministic without depending on the PRNG implementation
 - Component tests mount individual components in isolation with props, not the full `App.vue` (which requires fetch and localStorage)
+- `components.test.js` also includes `App` integration tests (mounting with mocked `fetch` and `localStorage`) that verify the `state.transitioning` guard prevents typing and message clearing during round transitions
+- `tile-aspect-ratio.test.js` is a CSS regression test that reads `@/games/reword/style.css` as a string and verifies `#input-area .tile` has `aspect-ratio: 1` and `height: auto`, ensuring input tiles stay square when they shrink below their flex-basis
 
 Created and maintained by Nori.
