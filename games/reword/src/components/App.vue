@@ -152,7 +152,7 @@ function startTimer() {
 
 function handleSubmit() {
   ensureAudio();
-  if (state.transitioning || state.currentRound >= 11) return;
+  if (state.transitioning || state.currentRound >= 10) return;
   if (!state.startTime) startTimer();
   const round = puzzle.value[state.currentRound];
   const answer = state.inputLetters.join('');
@@ -194,7 +194,7 @@ function handleSubmit() {
 
 function handleSkip() {
   ensureAudio();
-  if (state.transitioning || state.currentRound >= 11) return;
+  if (state.transitioning || state.currentRound >= 10) return;
   if (!state.startTime) startTimer();
   const round = puzzle.value[state.currentRound];
   const timeMs = Date.now() - state.roundStartTime;
@@ -215,7 +215,7 @@ function handleSkip() {
 }
 
 function advanceRound() {
-  if (state.currentRound + 1 >= 11) {
+  if (state.currentRound + 1 >= 10) {
     state.currentRound++;
     showScore();
     return;
@@ -287,7 +287,7 @@ function showScore(savedResults) {
 
 function handleKeyInput(key) {
   ensureAudio();
-  if (state.transitioning || state.currentRound >= 11) return;
+  if (state.transitioning || state.currentRound >= 10) return;
   if (!state.startTime) startTimer();
   if (key === 'Enter') {
     handleSubmit();
@@ -379,7 +379,7 @@ onMounted(async () => {
     if (saved) {
       const parsed = JSON.parse(saved);
       state.completedRounds = parsed.results;
-      state.currentRound = 11;
+      state.currentRound = 10;
       timerDisabled.value = !!parsed.timerDisabled;
       showScore(parsed.results);
       return;

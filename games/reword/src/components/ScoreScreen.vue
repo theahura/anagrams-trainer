@@ -2,7 +2,7 @@
   <div id="score-screen">
     <h2>Game Complete!</h2>
     <div class="stats-row">
-      <div class="stat">Words Solved<br><span class="stat-value">{{ solved }} / 11</span></div>
+      <div class="stat">Words Solved<br><span class="stat-value">{{ solved }} / 10</span></div>
       <div class="stat">Total Letters<br><span class="stat-value">{{ totalLetters }}</span></div>
       <div v-if="!timerDisabled" class="stat">Total Time<br><span class="stat-value">{{ formattedTime }}</span></div>
     </div>
