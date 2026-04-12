@@ -21,7 +21,7 @@
         <li>10 rounds with increasing difficulty</li>
         <li>A new puzzle every day</li>
         <li>Score is based on total letters used</li>
-        <li>Simply adding an 's' doesn't count — the word must be a true anagram</li>
+        <li>Simply adding an 's' doesn't count!</li>
       </ul>
       <p class="word-source">Valid words are based on the <a href="https://scrabblewordfinder.org" target="_blank" rel="noopener noreferrer">Scrabble Dictionary</a></p>
       <div class="timer-toggle-section">
