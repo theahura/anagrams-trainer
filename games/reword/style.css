@@ -211,6 +211,8 @@ header h1 {
 
 #input-area .tile {
   flex: 0 1 52px;
+  height: auto;
+  aspect-ratio: 1;
   animation: pop-in 0.15s ease-out;
 }
 
